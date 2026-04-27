@@ -6,6 +6,7 @@ import com.delta.platform.wework.config.WeWorkConfig;
 import com.delta.platform.wework.service.WeWorkApiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.core.ParameterizedTypeReference;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(prefix = "wework", name = "enabled", havingValue = "true", matchIfMissing = false)
 @RequiredArgsConstructor
 public class WeWorkApiServiceImpl implements WeWorkApiService {
 

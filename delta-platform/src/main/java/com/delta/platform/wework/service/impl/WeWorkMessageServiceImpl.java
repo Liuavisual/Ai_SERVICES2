@@ -13,6 +13,7 @@ import com.delta.platform.wework.service.WeWorkApiService;
 import com.delta.platform.wework.service.WeWorkMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(prefix = "wework", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class WeWorkMessageServiceImpl extends BaseMessageProcessService implements WeWorkMessageService {
 
     @Autowired
