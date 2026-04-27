@@ -37,11 +37,50 @@ function rejectPending(error) {
   pendingRequests = []
 }
 
+const TOKEN_REFRESH_THRESHOLD = 2 * 60 * 1000
+
+function shouldProactivelyRefresh() {
+  const tokenExpiry = localStorage.getItem('tokenExpiry')
+  if (!tokenExpiry) return false
+  const remaining = parseInt(tokenExpiry) - Date.now()
+  return remaining > 0 && remaining < TOKEN_REFRESH_THRESHOLD
+}
+
+async function proactiveRefresh() {
+  if (!acquireRefreshLock()) return
+  const refreshToken = localStorage.getItem('refreshToken')
+  if (!refreshToken) { releaseRefreshLock(); return }
+
+  try {
+    const refreshRes = await axios.post('/api/auth/refresh', { refreshToken })
+    const refreshData = refreshRes.data?.data || refreshRes.data
+    if (refreshData && refreshData.token) {
+      localStorage.setItem('token', refreshData.token)
+      localStorage.setItem('refreshToken', refreshData.refreshToken)
+      localStorage.setItem('expiresIn', refreshData.expiresIn)
+      localStorage.setItem('tokenExpiry', Date.now() + (refreshData.expiresIn || 900) * 1000)
+      localStorage.setItem('userInfo', JSON.stringify(refreshData))
+      resolvePending(refreshData.token)
+    }
+  } catch {
+    // 主动刷新失败不阻断请求，等401再处理
+  } finally {
+    releaseRefreshLock()
+  }
+}
+
 request.interceptors.request.use(
-  config => {
+  async config => {
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    }
+    if (shouldProactivelyRefresh() && !config.url?.includes('/auth/')) {
+      await proactiveRefresh()
+      const newToken = localStorage.getItem('token')
+      if (newToken) {
+        config.headers.Authorization = `Bearer ${newToken}`
+      }
     }
     return config
   },
@@ -119,7 +158,7 @@ request.interceptors.response.use(
           localStorage.setItem('token', refreshData.token)
           localStorage.setItem('refreshToken', refreshData.refreshToken)
           localStorage.setItem('expiresIn', refreshData.expiresIn)
-          localStorage.setItem('tokenExpiry', Date.now() + (refreshData.expiresIn || 7200) * 1000)
+          localStorage.setItem('tokenExpiry', Date.now() + (refreshData.expiresIn || 900) * 1000)
           localStorage.setItem('userInfo', JSON.stringify(refreshData))
 
           refreshFailCount = 0

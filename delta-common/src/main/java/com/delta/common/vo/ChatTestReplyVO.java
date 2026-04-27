@@ -21,7 +21,12 @@ public class ChatTestReplyVO {
     /** 匹配的关键词 */    private String matchedKeyword;
     /** 关联的消息ID */    private Long messageId;
 
-    /** 回复来源标识 */    private String responseSource;
+    /** 回复来源标识 */
+    private String responseSource;
+    /** 待办消息是否创建成功 */
+    private Boolean pendingMessageCreated;
+    /** 待办消息创建失败原因 */
+    private String pendingFailureReason;
 
     public String getReplyContent() {
         return replyContent;

@@ -3,12 +3,14 @@ package com.delta.common.service.impl;
 import com.delta.common.dto.ChatTestSendDTO;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.User;
+import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.ChatTestService;
 import com.delta.common.constant.AiCustomerServiceConstants;
 import com.delta.common.vo.ChatTestReplyVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +22,7 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
     private UserMapper userMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ChatTestReplyVO sendMessage(ChatTestSendDTO sendDTO) {
         String content = sendDTO.getContent();
         String platform = sendDTO.getPlatform();
@@ -128,22 +131,35 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                 responseSource = ResponseSource.DEFAULT_FALLBACK;
             }
 
-            try {
-                messageMapper.updateById(inMessage);
-                saveOutgoingMessage(user.getId(), replyContent, isAiReply);
-            } catch (Exception e) {
-                log.error("保存消息失败", e);
-            }
+            messageMapper.updateById(inMessage);
+            saveOutgoingMessage(user.getId(), replyContent, isAiReply);
 
             if (needsHumanHandoff) {
                 try {
                     String contextSummary = buildContextSummaryForHandoff(user.getId(), content, handoffReason);
-                    pendingMessageService.createPendingMessage(inMessage.getId(), user.getId(), matchedKeyword, content, sendDTO.getPlatform(), contextSummary);
+                    boolean created = pendingMessageService.createPendingMessage(inMessage.getId(), user.getId(), matchedKeyword, content, sendDTO.getPlatform(), contextSummary);
+                    replyVO.setPendingMessageCreated(created);
+                    if (created) {
+                        log.info("待办消息创建成功: userId={}", user.getId());
+                    } else {
+                        replyVO.setPendingFailureReason("用户已有待处理工单");
+                        log.info("待办消息跳过创建(已有工单): userId={}", user.getId());
+                    }
+                } catch (BusinessException be) {
+                    log.warn("待办消息业务校验未通过: userId={}, reason={}", user.getId(), be.getMessage());
+                    replyVO.setPendingMessageCreated(false);
+                    replyVO.setPendingFailureReason(be.getMessage());
+                } catch (Exception e) {
+                    log.error("【告警】待办消息创建系统异常: userId={}", user.getId(), e);
+                    replyVO.setPendingMessageCreated(false);
+                    replyVO.setPendingFailureReason("系统异常: " + e.getMessage());
+                }
+                try {
                     boolean isEmotion = handoffReason != null && (handoffReason.contains("情绪") || handoffReason.contains("不满") || handoffReason.contains("投诉"));
                     boolean isOrderIntent = handoffReason != null && (handoffReason.contains("下单") || handoffReason.contains("预约") || handoffReason.contains("点单"));
                     customerProfileService.recordHandoffEvent(user.getId(), handoffReason, isEmotion, isOrderIntent);
                 } catch (Exception e) {
-                    log.error("创建待处理消息失败", e);
+                    log.warn("记录转人工事件失败: userId={}", user.getId(), e);
                 }
             }
 

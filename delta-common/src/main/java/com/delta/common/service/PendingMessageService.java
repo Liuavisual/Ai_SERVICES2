@@ -19,11 +19,11 @@ public interface PendingMessageService {
 
     void handlePendingMessage(PendingMessageHandleDTO handleDTO, Long currentUserId, String currentUserRole);
 
-    void createPendingMessage(Long messageId, Long userId, String keyword, String messageContent);
+    boolean createPendingMessage(Long messageId, Long userId, String keyword, String messageContent);
 
-    void createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform);
+    boolean createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform);
 
-    void createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform, String contextSummary);
+    boolean createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform, String contextSummary);
 
     Long getPendingCount();
 

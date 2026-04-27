@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -209,18 +210,18 @@ public class PendingMessageServiceImpl implements PendingMessageService {
     }
 
     @Override
-    public void createPendingMessage(Long messageId, Long userId, String keyword, String messageContent) {
-        createPendingMessage(messageId, userId, keyword, messageContent, PlatformConstants.WECHAT);
+    public boolean createPendingMessage(Long messageId, Long userId, String keyword, String messageContent) {
+        return createPendingMessage(messageId, userId, keyword, messageContent, PlatformConstants.WECHAT);
     }
 
     @Override
-    public void createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform) {
-        createPendingMessage(messageId, userId, keyword, messageContent, platform, null);
+    public boolean createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform) {
+        return createPendingMessage(messageId, userId, keyword, messageContent, platform, null);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform, String contextSummary) {
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    public boolean createPendingMessage(Long messageId, Long userId, String keyword, String messageContent, String platform, String contextSummary) {
         User user = userMapper.selectById(userId);
         if (user == null) {
             log.error("创建待处理消息失败：用户不存在, userId={}", userId);
@@ -232,7 +233,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         existWrapper.in(PendingMessage::getStatus, BusinessStatusConstants.PENDING_STATUS_PENDING, BusinessStatusConstants.PENDING_STATUS_PROCESSING);
         if (pendingMessageMapper.selectCount(existWrapper) > 0) {
             log.info("用户已有待处理工单，跳过创建: userId={}", userId);
-            return;
+            return false;
         }
 
         InterventionTypeEnum interventionType = InterventionTypeEnum.fromKeyword(keyword);
@@ -278,6 +279,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         eventPublisher.publishEvent(new PendingMessageCreatedEvent(this, notification));
 
         redisService.delete(PENDING_COUNT_KEY);
+        return true;
     }
 
     private String buildContextSummary(Long userId, String currentMessage, String keyword) {
@@ -325,9 +327,57 @@ public class PendingMessageServiceImpl implements PendingMessageService {
             CsUserCustomer assignment = csUserCustomerMapper.selectOne(csWrapper);
             if (assignment != null) {
                 pm.setAssignedCsUserId(assignment.getCsUserId());
+                log.info("客服分配成功(客户绑定): userId={}, csUserId={}", userId, assignment.getCsUserId());
+                return;
             }
+
+            User user = userMapper.selectById(userId);
+            if (user != null && user.getAssignedCsUserId() != null) {
+                pm.setAssignedCsUserId(user.getAssignedCsUserId());
+                log.info("客服分配成功(用户默认): userId={}, csUserId={}", userId, user.getAssignedCsUserId());
+                return;
+            }
+
+            Long roundRobinCsId = findLeastLoadedCsStaff();
+            if (roundRobinCsId != null) {
+                pm.setAssignedCsUserId(roundRobinCsId);
+                log.info("客服分配成功(轮询): userId={}, csUserId={}", userId, roundRobinCsId);
+                return;
+            }
+
+            log.warn("【告警】无法为用户分配客服: userId={}, 将显示给所有管理人员", userId);
         } catch (Exception e) {
-            log.debug("分配客服失败，使用默认分配: userId={}", userId, e);
+            log.error("【告警】客服分配系统异常: userId={}", userId, e);
+        }
+    }
+
+    private Long findLeastLoadedCsStaff() {
+        try {
+            LambdaQueryWrapper<SysUser> staffWrapper = new LambdaQueryWrapper<>();
+            staffWrapper.eq(SysUser::getRole, BusinessStatusConstants.ROLE_CS_STAFF);
+            staffWrapper.eq(SysUser::getStatus, BusinessStatusConstants.USER_STATUS_ACTIVE);
+            staffWrapper.eq(SysUser::getDeleted, BusinessStatusConstants.NOT_DELETED);
+            List<SysUser> csStaffList = sysUserMapper.selectList(staffWrapper);
+            if (csStaffList.isEmpty()) {
+                return null;
+            }
+
+            Long leastLoadedId = null;
+            long minLoad = Long.MAX_VALUE;
+            for (SysUser staff : csStaffList) {
+                LambdaQueryWrapper<PendingMessage> loadWrapper = new LambdaQueryWrapper<>();
+                loadWrapper.eq(PendingMessage::getAssignedCsUserId, staff.getId());
+                loadWrapper.in(PendingMessage::getStatus, BusinessStatusConstants.PENDING_STATUS_PENDING, BusinessStatusConstants.PENDING_STATUS_PROCESSING);
+                long load = pendingMessageMapper.selectCount(loadWrapper);
+                if (load < minLoad) {
+                    minLoad = load;
+                    leastLoadedId = staff.getId();
+                }
+            }
+            return leastLoadedId;
+        } catch (Exception e) {
+            log.warn("查询负载最低客服失败", e);
+            return null;
         }
     }
 

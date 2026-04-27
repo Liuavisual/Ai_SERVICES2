@@ -12,6 +12,7 @@ import com.delta.common.service.AuthService;
 import com.delta.common.service.RedisService;
 import com.delta.common.util.JwtUtils;
 import com.delta.common.vo.LoginVO;
+import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private RedisService redisService;
+
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
+
+    private static final String REFRESH_TOKEN_FAMILY_PREFIX = "token:refresh_family:";
 
     @Override
     public LoginVO login(LoginDTO loginDTO) {
@@ -149,6 +155,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("刷新令牌不能为空");
         }
 
+        if (tokenBlacklistService.isBlacklisted(refreshToken)) {
+            invalidateRefreshTokenFamily(refreshToken);
+            throw new BusinessException("检测到刷新令牌重用，请重新登录");
+        }
+
         if (!jwtUtils.isRefreshToken(refreshToken)) {
             throw new BusinessException("无效的刷新令牌");
         }
@@ -169,13 +180,28 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("账号已被禁用");
         }
 
+        try {
+            Claims claims = jwtUtils.parseToken(refreshToken);
+            long remainingMillis = claims.getExpiration().getTime() - System.currentTimeMillis();
+            if (remainingMillis > 0) {
+                tokenBlacklistService.blacklistToken(refreshToken, remainingMillis);
+            }
+        } catch (Exception e) {
+            log.warn("旧刷新令牌加入黑名单失败: {}", e.getMessage());
+        }
+
         String newAccessToken = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
         String newRefreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
         long expiresIn = jwtUtils.getExpirationFromNow() / 1000;
 
+        String familyKey = REFRESH_TOKEN_FAMILY_PREFIX + userId;
+        if (newRefreshToken != null) {
+            redisService.set(familyKey, newRefreshToken, jwtUtils.getRefreshExpirationFromNow() / 1000, TimeUnit.SECONDS);
+        }
+
         RoleEnum roleEnum = RoleEnum.fromCode(user.getRole());
 
-        log.info("令牌刷新成功: userId={}, username={}", userId, username);
+        log.info("令牌刷新成功(轮换): userId={}, username={}", userId, username);
 
         return new LoginVO(
                 newAccessToken,
@@ -187,6 +213,19 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole(),
                 roleEnum != null ? roleEnum.getDesc() : user.getRole()
         );
+    }
+
+    private void invalidateRefreshTokenFamily(String reusedToken) {
+        try {
+            Long userId = jwtUtils.getUserIdFromToken(reusedToken);
+            String familyKey = REFRESH_TOKEN_FAMILY_PREFIX + userId;
+            redisService.delete(familyKey);
+            String forceLogoutKey = "session:force_logout:" + userId;
+            redisService.set(forceLogoutKey, "1", 5, TimeUnit.MINUTES);
+            log.warn("【安全告警】检测到刷新令牌重用，已使整个令牌家族失效: userId={}", userId);
+        } catch (Exception e) {
+            log.error("使令牌家族失效异常", e);
+        }
     }
 
     private void checkLoginAttempts(String username, String clientIp) {

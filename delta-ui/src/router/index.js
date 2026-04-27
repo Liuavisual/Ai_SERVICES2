@@ -233,7 +233,7 @@ router.beforeEach(async (to, from, next) => {
         localStorage.setItem('token', data.token)
         localStorage.setItem('refreshToken', data.refreshToken)
         localStorage.setItem('expiresIn', data.expiresIn)
-        localStorage.setItem('tokenExpiry', Date.now() + (data.expiresIn || 7200) * 1000)
+        localStorage.setItem('tokenExpiry', Date.now() + (data.expiresIn || 900) * 1000)
         localStorage.setItem('userInfo', JSON.stringify(data))
       } else {
         ElMessage.warning('登录已过期，请重新登录')
@@ -273,8 +273,122 @@ router.beforeEach(async (to, from, next) => {
   next()
 })
 
+function detectEnvironment() {
+  const ua = navigator.userAgent
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
+  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua)
+  return { isMobile, isTablet, isDesktop: !isMobile && !isTablet }
+}
+
+const SessionManager = {
+  config: {
+    idleTimeoutDesktop: 30 * 60 * 1000,
+    idleTimeoutMobile: 15 * 60 * 1000,
+    heartbeatInterval: 2 * 60 * 1000,
+    heartbeatGrace: 5 * 60 * 1000
+  },
+
+  state: {
+    lastActivityTime: Date.now(),
+    heartbeatTimer: null
+  },
+
+  init() {
+    this.setupActivityTracking()
+    this.setupBeforeUnload()
+    this.startHeartbeat()
+    this.setupOnlineHandler()
+  },
+
+  setupActivityTracking() {
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart']
+    let throttleTimer = null
+    const handler = () => {
+      if (throttleTimer) return
+      throttleTimer = setTimeout(() => { throttleTimer = null }, 5000)
+      this.state.lastActivityTime = Date.now()
+    }
+    events.forEach(evt => document.addEventListener(evt, handler, { passive: true }))
+  },
+
+  getIdleDuration() {
+    return Date.now() - this.state.lastActivityTime
+  },
+
+  getIdleTimeout() {
+    const env = detectEnvironment()
+    return env.isMobile ? this.config.idleTimeoutMobile : this.config.idleTimeoutDesktop
+  },
+
+  setupBeforeUnload() {
+    window.addEventListener('beforeunload', () => {
+      const env = detectEnvironment()
+      if (env.isMobile) {
+        clearAuthData()
+        return
+      }
+      const payload = JSON.stringify({
+        eventType: 'SESSION_END',
+        userId: getUserInfo().id,
+        timestamp: Date.now(),
+        idleDuration: this.getIdleDuration()
+      })
+      navigator.sendBeacon('/api/auth/session-event', new Blob([payload], { type: 'application/json' }))
+    })
+  },
+
+  startHeartbeat() {
+    this.state.heartbeatTimer = setInterval(() => {
+      if (!hasAnyToken()) return
+      this.checkIdleTimeout()
+    }, this.config.heartbeatInterval)
+  },
+
+  checkIdleTimeout() {
+    const idleDuration = this.getIdleDuration()
+    const timeout = this.getIdleTimeout()
+    if (idleDuration >= timeout) {
+      ElMessage.warning('由于长时间未操作，已自动退出登录')
+      redirectToLogin(router.currentRoute.value?.fullPath)
+    }
+  },
+
+  setupOnlineHandler() {
+    window.addEventListener('online', () => {
+      if (hasAnyToken() && isTokenExpired()) {
+        const refreshToken = localStorage.getItem('refreshToken')
+        if (refreshToken) {
+          axios.post('/api/auth/refresh', { refreshToken }, { timeout: 10000 })
+            .then(res => {
+              const data = res.data?.data || res.data
+              if (data && data.token) {
+                localStorage.setItem('token', data.token)
+                localStorage.setItem('refreshToken', data.refreshToken)
+                localStorage.setItem('expiresIn', data.expiresIn)
+                localStorage.setItem('tokenExpiry', Date.now() + (data.expiresIn || 900) * 1000)
+                localStorage.setItem('userInfo', JSON.stringify(data))
+              }
+            })
+            .catch(() => {
+              redirectToLogin(router.currentRoute.value?.fullPath)
+            })
+        }
+      }
+    })
+  },
+
+  destroy() {
+    if (this.state.heartbeatTimer) {
+      clearInterval(this.state.heartbeatTimer)
+    }
+  }
+}
+
+SessionManager.init()
+
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
+    SessionManager.state.lastActivityTime = Date.now()
     if (hasAnyToken() && isTokenExpired()) {
       const refreshToken = localStorage.getItem('refreshToken')
       if (!refreshToken) {

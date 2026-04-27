@@ -5,6 +5,7 @@ import com.delta.common.dto.LoginDTO;
 import com.delta.common.dto.RefreshTokenDTO;
 import com.delta.common.dto.RegisterDTO;
 import com.delta.common.service.AuthService;
+import com.delta.common.service.RedisService;
 import com.delta.common.service.impl.TokenBlacklistService;
 import com.delta.common.util.JwtUtils;
 import com.delta.common.util.RateLimiter;
@@ -15,10 +16,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +54,12 @@ public class AuthController {
 
     @Autowired
     private TokenBlacklistService tokenBlacklistService;
+
+    @Autowired
+    private RedisService redisService;
+
+    private static final String HEARTBEAT_KEY_PREFIX = "session:heartbeat:";
+    private static final long HEARTBEAT_TTL_MINUTES = 5;
 
     /**
      * 用户登录
@@ -139,6 +149,63 @@ public class AuthController {
         request.getSession().invalidate();
         response.setStatus(HttpServletResponse.SC_OK);
         return Result.success(null);
+    }
+
+    @PostMapping("/heartbeat")
+    public Result<Void> heartbeat(HttpServletRequest request) {
+        Object userIdAttr = request.getAttribute("userId");
+        if (userIdAttr == null) {
+            String bearerToken = request.getHeader("Authorization");
+            if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+                try {
+                    String jwt = bearerToken.substring(ExportConstants.BEARER_PREFIX_LENGTH);
+                    if (!tokenBlacklistService.isBlacklisted(jwt)) {
+                        Claims claims = jwtUtils.parseToken(jwt);
+                        userIdAttr = claims.get("userId", Long.class);
+                    }
+                } catch (Exception e) {
+                    log.debug("心跳请求Token解析失败", e);
+                }
+            }
+            if (userIdAttr == null) {
+                return Result.success();
+            }
+        }
+        Long userId = (Long) userIdAttr;
+        String key = HEARTBEAT_KEY_PREFIX + userId;
+        redisService.set(key, String.valueOf(System.currentTimeMillis()), HEARTBEAT_TTL_MINUTES, TimeUnit.MINUTES);
+
+        Boolean forceLogout = redisService.hasKey("session:force_logout:" + userId);
+        if (Boolean.TRUE.equals(forceLogout)) {
+            redisService.delete("session:force_logout:" + userId);
+            return Result.error(401, "账户已在其他设备登录，请重新登录");
+        }
+
+        return Result.success();
+    }
+
+    @PostMapping(value = "/session-event", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Result<Void> sessionEvent(@RequestBody Map<String, Object> event, HttpServletRequest request) {
+        String eventType = (String) event.get("eventType");
+        Object userIdObj = event.get("userId");
+        if (userIdObj == null) {
+            return Result.success();
+        }
+
+        Long userId;
+        try {
+            userId = Long.parseLong(userIdObj.toString());
+        } catch (NumberFormatException e) {
+            return Result.success();
+        }
+
+        if ("SESSION_END".equals(eventType)) {
+            String key = HEARTBEAT_KEY_PREFIX + userId;
+            redisService.delete(key);
+            log.info("会话结束事件: userId={}", userId);
+        }
+
+        return Result.success();
     }
 
     /**

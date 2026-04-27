@@ -141,7 +141,7 @@ public class TokenConsumptionStressTest {
         when(deepSeekService.getChatReplyWithHistory(any(), any())).thenReturn("这是AI的模拟回复~");
         when(redisService.get(anyString())).thenReturn(null);
         when(redisService.increment(anyString())).thenReturn(1L);
-        doNothing().when(pendingMessageService).createPendingMessage(any(), any(), any(), any(), any(), any());
+        when(pendingMessageService.createPendingMessage(any(), any(), any(), any(), any(), any())).thenReturn(true);
     }
 
     /**

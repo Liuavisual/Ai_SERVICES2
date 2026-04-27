@@ -112,12 +112,15 @@ public class WeChatMessageServiceImpl extends BaseMessageProcessService implemen
             if (needsHumanHandoff) {
                 try {
                     String contextSummary = buildContextSummaryForHandoff(user.getId(), content, handoffReason);
-                    pendingMessageService.createPendingMessage(inMessage.getId(), user.getId(), matchedKeyword, content, PlatformConstants.WECHAT, contextSummary);
+                    boolean created = pendingMessageService.createPendingMessage(inMessage.getId(), user.getId(), matchedKeyword, content, PlatformConstants.WECHAT, contextSummary);
+                    if (!created) {
+                        log.info("微信待办消息跳过创建(已有工单): userId={}", user.getId());
+                    }
                     boolean isEmotion = handoffReason != null && (handoffReason.contains("情绪") || handoffReason.contains("不满") || handoffReason.contains("投诉"));
                     boolean isOrderIntent = handoffReason != null && (handoffReason.contains("下单") || handoffReason.contains("预约") || handoffReason.contains("点单"));
                     customerProfileService.recordHandoffEvent(user.getId(), handoffReason, isEmotion, isOrderIntent);
                 } catch (Exception e) {
-                    log.error("创建待处理消息失败", e);
+                    log.error("【告警】创建微信待处理消息失败: userId={}", user.getId(), e);
                 }
             }
 

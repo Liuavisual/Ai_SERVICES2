@@ -238,9 +238,12 @@ public class WeWorkMessageServiceImpl extends BaseMessageProcessService implemen
                                               String negativeEmotion, String orderIntent) {
         try {
             String contextSummary = buildContextSummaryForHandoff(user.getId(), content, handoffReason);
-            pendingMessageService.createPendingMessage(
+            boolean created = pendingMessageService.createPendingMessage(
                     inMessage.getId(), user.getId(), matchedKeyword, content,
                     PlatformConstants.WEWORK, contextSummary);
+            if (!created) {
+                log.info("企业微信待办消息跳过创建(已有工单): userId={}", user.getId());
+            }
 
             boolean isEmotion = handoffReason != null
                     && (handoffReason.contains("情绪") || handoffReason.contains("不满") || handoffReason.contains("投诉"));
@@ -248,7 +251,7 @@ public class WeWorkMessageServiceImpl extends BaseMessageProcessService implemen
                     && (handoffReason.contains("下单") || handoffReason.contains("预约") || handoffReason.contains("点单"));
             customerProfileService.recordHandoffEvent(user.getId(), handoffReason, isEmotion, isOrderIntent);
         } catch (Exception e) {
-            log.error("创建企业微信待处理消息失败: userId={}", user.getId(), e);
+            log.error("【告警】创建企业微信待处理消息失败: userId={}", user.getId(), e);
         }
     }
 
