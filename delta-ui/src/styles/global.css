@@ -1,0 +1,440 @@
+:root {
+  --gu-bg: #f5f0e8;
+  --gu-bg-secondary: #ede6d9;
+  --gu-bg-tertiary: #e0d5c3;
+  --gu-bg-card: #faf7f2;
+  --gu-bg-stripe: #f5ede0;
+  --gu-bg-hover: #f0e9dc;
+  --gu-border: #d4c4a8;
+  --gu-border-light: #e0d4b8;
+  --gu-text-primary: #2c2416;
+  --gu-text-secondary: #6b5c4a;
+  --gu-text-muted: #9a8a72;
+  --gu-accent: #8B3A3A;
+  --gu-accent-hover: #722d2d;
+  --gu-accent-light: rgba(139, 58, 58, 0.08);
+  --gu-gold: #b8860b;
+  --gu-success: #5a8a5a;
+  --gu-warning: #c97630;
+  --gu-danger: #a63d40;
+  --gu-info: #6b7c85;
+  --gu-sidebar-width: 220px;
+  --gu-header-height: 56px;
+  --gu-radius: 4px;
+  --gu-radius-lg: 8px;
+  --gu-shadow: 0 1px 3px rgba(44, 36, 22, 0.08), 0 1px 2px rgba(44, 36, 22, 0.06);
+  --gu-shadow-lg: 0 4px 20px rgba(44, 36, 22, 0.12);
+  --gu-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "STSong", serif;
+  background: var(--gu-bg);
+  color: var(--gu-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gu-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gu-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gu-text-muted);
+}
+
+.el-card {
+  background: var(--gu-bg-card) !important;
+  border: 1px solid var(--gu-border) !important;
+  border-radius: var(--gu-radius-lg) !important;
+  color: var(--gu-text-primary) !important;
+  box-shadow: var(--gu-shadow) !important;
+}
+
+.el-card__header {
+  border-bottom: 1px solid var(--gu-border) !important;
+  padding: 16px 20px !important;
+  color: var(--gu-text-primary) !important;
+}
+
+.el-card__body {
+  padding: 20px !important;
+  color: var(--gu-text-primary) !important;
+}
+
+.el-table {
+  --el-table-bg-color: var(--gu-bg-card) !important;
+  --el-table-tr-bg-color: var(--gu-bg-card) !important;
+  --el-table-header-bg-color: var(--gu-bg-secondary) !important;
+  --el-table-row-hover-bg-color: var(--gu-bg-hover) !important;
+  --el-table-border-color: var(--gu-border-light) !important;
+  --el-table-text-color: var(--gu-text-primary) !important;
+  --el-table-header-text-color: var(--gu-text-secondary) !important;
+  color: var(--gu-text-primary) !important;
+}
+
+.el-table th.el-table__cell {
+  background: var(--gu-bg-secondary) !important;
+  color: var(--gu-text-secondary) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+/* ===== 普通行（非条纹）- 确保所有td都有不透明背景 ===== */
+.el-table__body tr > td.el-table__cell {
+  background-color: var(--gu-bg-card) !important;
+}
+
+/* ===== 条纹行样式 ===== */
+.el-table--striped .el-table__body tr.el-table__row--striped > td.el-table__cell {
+  background-color: var(--gu-bg-stripe) !important;
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped > td.el-table__cell .cell {
+  background: transparent !important;
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped:hover > td.el-table__cell {
+  background: var(--gu-bg-hover) !important;
+}
+
+/* ===== 固定列（sticky）- 普通行背景 ===== */
+.el-table__body tr > td.el-table-fixed-column--left,
+.el-table__body tr > td.el-table-fixed-column--right {
+  background-color: var(--gu-bg-card) !important;
+}
+
+/* ===== 固定列（sticky）- 条纹行背景 ===== */
+.el-table--striped .el-table__body tr.el-table__row--striped > td.el-table-fixed-column--left,
+.el-table--striped .el-table__body tr.el-table__row--striped > td.el-table-fixed-column--right {
+  background-color: var(--gu-bg-stripe) !important;
+}
+
+/* ===== 固定列（sticky）- hover 行背景 ===== */
+.el-table__body tr.hover-row > td.el-table-fixed-column--left,
+.el-table__body tr.hover-row > td.el-table-fixed-column--right {
+  background-color: var(--gu-bg-hover) !important;
+}
+
+/* ===== 固定列（sticky）- 条纹行 hover 背景 ===== */
+.el-table--striped .el-table__body tr.el-table__row--striped.hover-row > td.el-table-fixed-column--left,
+.el-table--striped .el-table__body tr.el-table__row--striped.hover-row > td.el-table-fixed-column--right {
+  background-color: var(--gu-bg-hover) !important;
+}
+
+/* ===== 固定列（sticky）- 表头背景 ===== */
+.el-table__header-wrapper tr > th.el-table-fixed-column--left,
+.el-table__header-wrapper tr > th.el-table-fixed-column--right {
+  background-color: var(--gu-bg-secondary) !important;
+}
+
+/* ===== fixed-right-patch 修复硬编码白色 ===== */
+.el-table__body-wrapper tr td.el-table__fixed-right-patch,
+.el-table__body-wrapper tr th.el-table__fixed-right-patch {
+  background-color: var(--gu-bg-card) !important;
+}
+
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__fixed-right-patch {
+  background-color: var(--gu-bg-stripe) !important;
+}
+
+.el-table td.el-table__cell {
+  border-bottom: 1px solid var(--gu-border-light) !important;
+}
+
+.el-pagination {
+  --el-pagination-bg-color: var(--gu-bg-secondary) !important;
+  --el-pagination-text-color: var(--gu-text-secondary) !important;
+  --el-pagination-button-bg-color: var(--gu-bg-secondary) !important;
+  --el-pagination-hover-color: var(--gu-accent) !important;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.el-pagination .btn-prev,
+.el-pagination .btn-next,
+.el-pagination .el-pager li {
+  background: var(--gu-bg-secondary) !important;
+  color: var(--gu-text-secondary) !important;
+  border: 1px solid var(--gu-border) !important;
+  border-radius: var(--gu-radius) !important;
+}
+
+.el-pagination .el-pager li.is-active {
+  background: var(--gu-accent) !important;
+  color: #fff !important;
+  border-color: var(--gu-accent) !important;
+}
+
+.el-button--primary {
+  --el-button-bg-color: var(--gu-accent) !important;
+  --el-button-border-color: var(--gu-accent) !important;
+  --el-button-hover-bg-color: var(--gu-accent-hover) !important;
+  --el-button-hover-border-color: var(--gu-accent-hover) !important;
+}
+
+.el-button--default {
+  --el-button-bg-color: var(--gu-bg-secondary) !important;
+  --el-button-border-color: var(--gu-border) !important;
+  --el-button-text-color: var(--gu-text-secondary) !important;
+  --el-button-hover-bg-color: var(--gu-bg-hover) !important;
+  --el-button-hover-border-color: var(--gu-accent) !important;
+  --el-button-hover-text-color: var(--gu-accent) !important;
+}
+
+.el-button--danger {
+  --el-button-bg-color: var(--gu-danger) !important;
+  --el-button-border-color: var(--gu-danger) !important;
+}
+
+.el-input__wrapper {
+  background: var(--gu-bg) !important;
+  border: 1px solid var(--gu-border) !important;
+  box-shadow: none !important;
+  border-radius: var(--gu-radius) !important;
+}
+
+.el-input__wrapper:hover {
+  border-color: var(--gu-border-light) !important;
+}
+
+.el-input__wrapper.is-focus {
+  border-color: var(--gu-accent) !important;
+  box-shadow: 0 0 0 1px var(--gu-accent-light) !important;
+}
+
+.el-input__inner {
+  color: var(--gu-text-primary) !important;
+}
+
+.el-input__inner::placeholder {
+  color: var(--gu-text-muted) !important;
+}
+
+.el-select-dropdown {
+  background: var(--gu-bg-card) !important;
+  border: 1px solid var(--gu-border) !important;
+  z-index: 9999 !important;
+}
+
+.el-select-dropdown__item {
+  color: var(--gu-text-secondary) !important;
+}
+
+.el-select-dropdown__item.hover,
+.el-select-dropdown__item:hover {
+  background: var(--gu-bg-hover) !important;
+  color: var(--gu-accent) !important;
+}
+
+.el-popper {
+  z-index: 9999 !important;
+}
+
+.el-dialog {
+  background: var(--gu-bg-card) !important;
+  border: 1px solid var(--gu-border) !important;
+  border-radius: var(--gu-radius-lg) !important;
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid var(--gu-border) !important;
+  padding: 16px 20px !important;
+}
+
+.el-dialog__title {
+  color: var(--gu-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.el-dialog__body {
+  padding: 20px !important;
+  color: var(--gu-text-primary) !important;
+}
+
+.el-dialog__footer {
+  border-top: 1px solid var(--gu-border) !important;
+  padding: 12px 20px !important;
+}
+
+.el-form-item__label {
+  color: var(--gu-text-secondary) !important;
+}
+
+.el-tag {
+  border-radius: 3px !important;
+}
+
+.el-tag--info {
+  background: rgba(107, 124, 133, 0.10) !important;
+  border-color: rgba(107, 124, 133, 0.25) !important;
+  color: var(--gu-info) !important;
+}
+
+.el-tag--success {
+  background: rgba(90, 138, 90, 0.10) !important;
+  border-color: rgba(90, 138, 90, 0.25) !important;
+  color: var(--gu-success) !important;
+}
+
+.el-tag--warning {
+  background: rgba(201, 118, 48, 0.10) !important;
+  border-color: rgba(201, 118, 48, 0.25) !important;
+  color: var(--gu-warning) !important;
+}
+
+.el-tag--danger {
+  background: rgba(166, 61, 64, 0.10) !important;
+  border-color: rgba(166, 61, 64, 0.25) !important;
+  color: var(--gu-danger) !important;
+}
+
+.el-switch {
+  --el-switch-on-color: var(--gu-accent) !important;
+}
+
+.el-textarea__inner {
+  background: var(--gu-bg) !important;
+  border: 1px solid var(--gu-border) !important;
+  color: var(--gu-text-primary) !important;
+  border-radius: var(--gu-radius) !important;
+}
+
+.el-textarea__inner:focus {
+  border-color: var(--gu-accent) !important;
+  box-shadow: 0 0 0 1px var(--gu-accent-light) !important;
+}
+
+.el-alert--info {
+  background: var(--gu-bg-stripe) !important;
+  border: 1px solid var(--gu-border-light) !important;
+}
+
+.el-alert__title {
+  color: var(--gu-text-secondary) !important;
+}
+
+.el-loading-mask {
+  background: rgba(245, 240, 232, 0.75) !important;
+}
+
+.el-tabs__item {
+  color: var(--gu-text-muted) !important;
+}
+
+.el-tabs__item.is-active {
+  color: var(--gu-accent) !important;
+}
+
+.el-tabs__active-bar {
+  background: var(--gu-accent) !important;
+}
+
+.el-tabs__nav-wrap::after {
+  background: var(--gu-border) !important;
+}
+
+.el-overlay {
+  background: rgba(44, 36, 22, 0.45) !important;
+}
+
+.el-message-box {
+  background: var(--gu-bg-card) !important;
+  border: 1px solid var(--gu-border) !important;
+}
+
+.el-message-box__title {
+  color: var(--gu-text-primary) !important;
+}
+
+.el-message-box__message {
+  color: var(--gu-text-secondary) !important;
+}
+
+.page-container {
+  padding: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header span {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gu-text-primary);
+}
+
+a { color: var(--gu-accent); text-decoration: none; transition: color var(--gu-transition); }
+a:hover { color: var(--gu-accent-hover); }
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.el-button { transition: all var(--gu-transition) !important; }
+.el-button:focus-visible { outline: 2px solid var(--gu-accent-light) !important; outline-offset: 2px !important; }
+
+.el-card { transition: box-shadow var(--gu-transition), transform var(--gu-transition) !important; }
+.el-card:hover { box-shadow: var(--gu-shadow-lg) !important; }
+
+.el-dialog { animation: dialogFadeIn 0.2s ease !important; }
+@keyframes dialogFadeIn {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.el-table__row { transition: background-color 0.15s ease !important; }
+
+.el-input-number { --el-input-number-unit-offset-x: 0 !important; }
+
+.el-date-editor { --el-date-editor-datetimerange-width: 100% !important; }
+
+.el-form-item.is-error .el-input__wrapper {
+  border-color: var(--gu-danger) !important;
+  box-shadow: 0 0 0 1px rgba(166, 61, 64, 0.15) !important;
+}
+
+.el-form-item__error { color: var(--gu-danger) !important; }
+
+.el-descriptions { --el-descriptions-table-border: 1px solid var(--gu-border-light) !important; }
+.el-descriptions__label { color: var(--gu-text-secondary) !important; background: var(--gu-bg-secondary) !important; }
+.el-descriptions__content { color: var(--gu-text-primary) !important; background: var(--gu-bg-card) !important; }
+
+.el-empty__description p { color: var(--gu-text-muted) !important; }
+
+.el-badge__content { border: none !important; }
+
+.el-tooltip__trigger { outline: none !important; }
+
+@media (max-width: 768px) {
+  .content-main { padding: 12px !important; }
+  .el-dialog { width: 92% !important; }
+}

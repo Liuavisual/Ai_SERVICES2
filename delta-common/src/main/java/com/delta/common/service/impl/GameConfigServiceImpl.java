@@ -1,0 +1,80 @@
+package com.delta.common.service.impl;
+
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.delta.common.constant.BusinessStatusConstants;
+import com.delta.common.dto.GameConfigDTO;
+import com.delta.common.entity.GameConfig;
+import com.delta.common.exception.BusinessException;
+import com.delta.common.mapper.GameConfigMapper;
+import com.delta.common.service.GameConfigService;
+import com.delta.common.vo.GameConfigVO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class GameConfigServiceImpl implements GameConfigService {
+
+    @Autowired
+    private GameConfigMapper gameConfigMapper;
+
+    @Override
+    public List<GameConfigVO> getByClubId(Long clubConfigId) {
+        LambdaQueryWrapper<GameConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(GameConfig::getClubConfigId, clubConfigId);
+        wrapper.orderByAsc(GameConfig::getSortOrder);
+        return gameConfigMapper.selectList(wrapper).stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public GameConfigVO getById(Long id) {
+        GameConfig config = gameConfigMapper.selectById(id);
+        if (config == null) {
+            throw new BusinessException("游戏配置不存在");
+        }
+        return convertToVO(config);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void create(GameConfigDTO dto) {
+        GameConfig config = new GameConfig();
+        BeanUtil.copyProperties(dto, config);
+        if (config.getEnabled() == null) config.setEnabled(1);
+        if (config.getSortOrder() == null) config.setSortOrder(0);
+        if (config.getGameType() == null) config.setGameType(BusinessStatusConstants.GAME_TYPE_FPS);
+        gameConfigMapper.insert(config);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(GameConfigDTO dto) {
+        if (dto.getId() == null || gameConfigMapper.selectById(dto.getId()) == null) {
+            throw new BusinessException("游戏配置不存在");
+        }
+        GameConfig config = new GameConfig();
+        BeanUtil.copyProperties(dto, config);
+        gameConfigMapper.updateById(config);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(Long id) {
+        if (gameConfigMapper.selectById(id) == null) {
+            throw new BusinessException("游戏配置不存在");
+        }
+        gameConfigMapper.deleteById(id);
+    }
+
+    private GameConfigVO convertToVO(GameConfig config) {
+        GameConfigVO vo = new GameConfigVO();
+        BeanUtil.copyProperties(config, vo);
+        return vo;
+    }
+}
