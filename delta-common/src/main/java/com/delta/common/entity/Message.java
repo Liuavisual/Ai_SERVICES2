@@ -1,5 +1,6 @@
 package com.delta.common.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,7 +28,8 @@ public class Message extends BaseEntity {
     private String content;
 
     /** 是否AI自动回复 */
-    private Boolean isAi;
+    @TableField("is_ai")
+    private Boolean ai;
 
     /** 是否由关键词触发 */
     private Boolean keywordTriggered;

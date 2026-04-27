@@ -38,13 +38,13 @@
         </el-form-item>
         <el-form-item label="AI发送">
           <el-select 
-            id="messages-isAi"
-            v-model="queryParams.isAi" 
+            id="messages-ai"
+            v-model="queryParams.ai" 
             placeholder="请选择" 
             clearable 
             style="width: 180px" 
             :teleported="false"
-            name="isAi"
+            name="ai"
           >
             <el-option label="是" value="true" />
             <el-option label="否" value="false" />
@@ -97,9 +97,9 @@
           </template>
         </el-table-column>
         <el-table-column prop="content" label="消息内容" show-overflow-tooltip min-width="200" />
-        <el-table-column prop="isAi" label="AI发送" width="100">
+        <el-table-column prop="ai" label="AI发送" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.isAi ? 'primary' : 'info'">{{ row.isAi ? 'AI' : '人工' }}</el-tag>
+            <el-tag :type="row.ai ? 'primary' : 'info'">{{ row.ai ? 'AI' : '人工' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="keywordTriggered" label="触发关键词" width="120">
@@ -146,7 +146,7 @@ const queryParams = reactive({
   userId: null,
   platform: null,
   direction: null,
-  isAi: null,
+  ai: null,
   keywordTriggered: null,
   keyword: ''
 })
@@ -174,14 +174,14 @@ const handleQuery = async () => {
   try {
     const params = {
       ...queryParams,
-      isAi: queryParams.isAi === 'true' ? true : queryParams.isAi === 'false' ? false : null,
+      ai: queryParams.ai === 'true' ? true : queryParams.ai === 'false' ? false : null,
       keywordTriggered: queryParams.keywordTriggered === 'true' ? true : queryParams.keywordTriggered === 'false' ? false : null
     }
     const res = await messageApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data.records.map(item => ({
         ...item,
-        isAi: Boolean(item.isAi),
+        ai: Boolean(item.ai),
         keywordTriggered: Boolean(item.keywordTriggered)
       }))
       total.value = res.data.total
@@ -198,7 +198,7 @@ const handleReset = () => {
   queryParams.pageNum = 1
   queryParams.platform = null
   queryParams.direction = null
-  queryParams.isAi = null
+  queryParams.ai = null
   queryParams.keywordTriggered = null
   queryParams.keyword = ''
   handleQuery()

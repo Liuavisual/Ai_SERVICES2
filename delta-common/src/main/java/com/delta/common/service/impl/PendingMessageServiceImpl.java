@@ -198,7 +198,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
             satisfactionMsg.setUserId(pm.getUserId());
             satisfactionMsg.setDirection(MessageConstants.DIRECTION_OUT);
             satisfactionMsg.setContent(AiCustomerServiceConstants.SATISFACTION_PROMPT);
-            satisfactionMsg.setIsAi(false);
+            satisfactionMsg.setAi(false);
             satisfactionMsg.setKeywordTriggered(false);
             satisfactionMsg.setCreatedAt(LocalDateTime.now());
             messageMapper.insert(satisfactionMsg);
@@ -298,7 +298,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
 
             for (int i = recentMessages.size() - 1; i >= 0; i--) {
                 Message msg = recentMessages.get(i);
-                String role = MessageConstants.DIRECTION_IN.equals(msg.getDirection()) ? "客户" : (msg.getIsAi() ? "AI" : "客服");
+                String role = MessageConstants.DIRECTION_IN.equals(msg.getDirection()) ? "客户" : (msg.getAi() ? "AI" : "客服");
                 String content = msg.getContent();
                 if (content == null) {
                     content = "";

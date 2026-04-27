@@ -256,7 +256,7 @@ public class StatsServiceImpl implements StatsService {
         LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(Message::getUserId, customerIds);
         wrapper.eq(Message::getDirection, MessageConstants.DIRECTION_OUT);
-        wrapper.eq(Message::getIsAi, true);
+        wrapper.eq(Message::getAi, true);
         wrapper.ge(Message::getCreatedAt, start);
         wrapper.le(Message::getCreatedAt, end);
         return messageMapper.selectCount(wrapper);
@@ -289,7 +289,7 @@ public class StatsServiceImpl implements StatsService {
     private Long countAllAiReplies(LocalDateTime start, LocalDateTime end) {
         LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Message::getDirection, MessageConstants.DIRECTION_OUT);
-        wrapper.eq(Message::getIsAi, true);
+        wrapper.eq(Message::getAi, true);
         wrapper.ge(Message::getCreatedAt, start);
         wrapper.le(Message::getCreatedAt, end);
         return messageMapper.selectCount(wrapper);

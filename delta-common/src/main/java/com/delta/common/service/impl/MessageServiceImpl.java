@@ -56,7 +56,7 @@ public class MessageServiceImpl implements MessageService {
         }
 
         if (isAi != null) {
-            wrapper.eq(Message::getIsAi, isAi);
+            wrapper.eq(Message::getAi, isAi);
         }
 
         if (keywordTriggered != null) {

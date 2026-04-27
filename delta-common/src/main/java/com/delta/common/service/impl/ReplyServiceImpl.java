@@ -131,7 +131,7 @@ public class ReplyServiceImpl implements ReplyService {
 
         Page<Reply> page = replyMapper.selectPage(new Page<>(1, 1), wrapper);
         Reply reply = page.getRecords().isEmpty() ? null : page.getRecords().get(0);
-        String content = reply != null && reply.getContent() != null ? reply.getContent() : "您好！欢迎咨询！";
+        String content = (reply != null && reply.getContent() != null) ? reply.getContent() : "您好！欢迎咨询！";
         
         redisService.set(REPLIES_WELCOME_KEY, content);
         return content;
@@ -150,7 +150,12 @@ public class ReplyServiceImpl implements ReplyService {
 
         Page<Reply> page = replyMapper.selectPage(new Page<>(1, 1), wrapper);
         Reply reply = page.getRecords().isEmpty() ? null : page.getRecords().get(0);
-        String content = reply != null && reply.getContent() != null ? reply.getContent() : "感谢您的咨询！人工客服正在赶来的路上，请稍候...";
+        String content;
+        if (reply != null && reply.getContent() != null) {
+            content = reply.getContent();
+        } else {
+            content = "感谢您的咨询！人工客服正在赶来的路上，请稍候...";
+        }
         
         redisService.set(REPLIES_DEFAULT_KEY, content);
         return content;

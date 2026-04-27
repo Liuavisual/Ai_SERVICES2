@@ -106,7 +106,7 @@ public class ChatTestServiceImplTest {
 
         assertNotNull(result.getReplyContent());
         assertTrue(result.getReplyContent().contains("50"));
-        assertFalse(result.getIsAiReply());
+        assertFalse(result.getAiReply());
         assertEquals("KEYWORD_DIRECT", result.getResponseSource());
         verify(deepSeekService, never()).getChatReplyWithHistory(any(), any());
     }
@@ -125,7 +125,7 @@ public class ChatTestServiceImplTest {
 
         assertNotNull(result.getReplyContent());
         assertTrue(result.getReplyContent().contains("转接"));
-        assertFalse(result.getIsAiReply());
+        assertFalse(result.getAiReply());
         assertEquals("HANDOFF_REPLY", result.getResponseSource());
         verify(pendingMessageService).createPendingMessage(any(), eq(1L), any(), eq("我要找人工"), any(), any());
         verify(deepSeekService, never()).getChatReplyWithHistory(any(), any());
@@ -291,7 +291,7 @@ public class ChatTestServiceImplTest {
         ChatTestReplyVO result = chatTestService.sendMessage(dto);
 
         assertNotNull(result.getReplyContent());
-        assertTrue(result.getIsAiReply());
+        assertTrue(result.getAiReply());
         assertEquals("AI_REPLY", result.getResponseSource());
     }
 
@@ -309,7 +309,7 @@ public class ChatTestServiceImplTest {
 
         ChatTestReplyVO result = chatTestService.sendMessage(dto);
 
-        assertTrue(result.getIsAiReply());
+        assertTrue(result.getAiReply());
         verify(deepSeekService).getChatReplyWithHistory(any(), any());
     }
 
@@ -327,7 +327,7 @@ public class ChatTestServiceImplTest {
         ChatTestReplyVO result = chatTestService.sendMessage(dto);
 
         assertNotNull(result.getReplyContent());
-        assertFalse(result.getIsAiReply());
+        assertFalse(result.getAiReply());
         assertEquals("DEFAULT_FALLBACK", result.getResponseSource());
     }
 
@@ -344,7 +344,7 @@ public class ChatTestServiceImplTest {
         ChatTestReplyVO result = chatTestService.sendMessage(dto);
 
         assertNotNull(result.getReplyContent());
-        assertFalse(result.getIsAiReply());
+        assertFalse(result.getAiReply());
     }
 
     @SuppressWarnings("null")

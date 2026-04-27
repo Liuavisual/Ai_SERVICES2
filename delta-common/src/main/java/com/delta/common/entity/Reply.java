@@ -3,6 +3,7 @@ package com.delta.common.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.lang.NonNull;
 
 /**
  * 自动回复规则实体
@@ -24,6 +25,7 @@ public class Reply extends BaseEntity {
     private String triggerKey;
 
     /** 回复内容 */
+    @NonNull
     private String content;
 
     /** 是否启用 */

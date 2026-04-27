@@ -27,7 +27,7 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
         Long csUserId = sendDTO.getCsUserId();
 
         ChatTestReplyVO replyVO = new ChatTestReplyVO();
-        replyVO.setIsAiReply(false);
+        replyVO.setAiReply(false);
         replyVO.setKeywordTriggered(false);
 
         try {
@@ -40,7 +40,7 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                 log.info("【客服服务中】userId={}，AI完全静默", user.getId());
                 saveOutgoingMessage(user.getId(), IN_SERVICE_REPLY, false);
                 replyVO.setReplyContent(IN_SERVICE_REPLY);
-                replyVO.setIsAiReply(false);
+                replyVO.setAiReply(false);
                 replyVO.setResponseSource("HANDOFF_IN_SERVICE");
                 return replyVO;
             }
@@ -50,7 +50,7 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                 String waitingReply = getWaitingReplyWithQueueInfo();
                 saveOutgoingMessage(user.getId(), waitingReply, false);
                 replyVO.setReplyContent(waitingReply);
-                replyVO.setIsAiReply(false);
+                replyVO.setAiReply(false);
                 replyVO.setResponseSource("HANDOFF_WAITING");
                 return replyVO;
             }
@@ -148,7 +148,7 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
             }
 
             replyVO.setReplyContent(replyContent);
-            replyVO.setIsAiReply(isAiReply);
+            replyVO.setAiReply(isAiReply);
             replyVO.setMatchedKeyword(matchedKeyword);
             replyVO.setMessageId(inMessage.getId());
             replyVO.setResponseSource(responseSource.name());
@@ -156,7 +156,7 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
         } catch (Exception e) {
             log.error("消息处理异常", e);
             replyVO.setReplyContent(AiCustomerServiceConstants.CHAT_TEST_ERROR_REPLY);
-            replyVO.setIsAiReply(false);
+            replyVO.setAiReply(false);
             replyVO.setResponseSource(ResponseSource.DEFAULT_FALLBACK.name());
         }
 

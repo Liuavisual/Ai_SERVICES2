@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 public class ChatTestReplyVO {
 
     /** 回复内容 */    private String replyContent;
-    /** 是否AI回复 */    private Boolean isAiReply;
+    /** 是否AI回复 */
+    private Boolean aiReply;
     /** 是否关键词触发 */    private Boolean keywordTriggered;
     /** 匹配的关键词 */    private String matchedKeyword;
     /** 关联的消息ID */    private Long messageId;
@@ -30,12 +31,12 @@ public class ChatTestReplyVO {
         this.replyContent = replyContent;
     }
 
-    public Boolean getIsAiReply() {
-        return isAiReply;
+    public Boolean getAiReply() {
+        return aiReply;
     }
 
-    public void setIsAiReply(Boolean isAiReply) {
-        this.isAiReply = isAiReply;
+    public void setAiReply(Boolean aiReply) {
+        this.aiReply = aiReply;
     }
 
     public Boolean getKeywordTriggered() {

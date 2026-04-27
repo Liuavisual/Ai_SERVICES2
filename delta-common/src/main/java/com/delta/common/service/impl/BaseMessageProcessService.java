@@ -227,7 +227,7 @@ public abstract class BaseMessageProcessService {
 
             for (int i = recentMessages.size() - 1; i >= 0; i--) {
                 Message msg = recentMessages.get(i);
-                String role = MessageConstants.DIRECTION_IN.equals(msg.getDirection()) ? "客户" : (msg.getIsAi() ? "AI" : "客服");
+                String role = MessageConstants.DIRECTION_IN.equals(msg.getDirection()) ? "客户" : (msg.getAi() ? "AI" : "客服");
                 sb.append(role).append(": ").append(truncate(msg.getContent(), ExportConstants.CONTEXT_MESSAGE_TRUNCATION_LENGTH)).append("\n");
             }
 
@@ -528,7 +528,7 @@ public abstract class BaseMessageProcessService {
         inMessage.setUserId(userId);
         inMessage.setDirection(MessageConstants.DIRECTION_IN);
         inMessage.setContent(content);
-        inMessage.setIsAi(false);
+        inMessage.setAi(false);
         inMessage.setKeywordTriggered(false);
         inMessage.setCreatedAt(LocalDateTime.now());
         messageMapper.insert(inMessage);
@@ -546,7 +546,7 @@ public abstract class BaseMessageProcessService {
         outMessage.setUserId(userId);
         outMessage.setDirection(MessageConstants.DIRECTION_OUT);
         outMessage.setContent(content);
-        outMessage.setIsAi(isAi);
+        outMessage.setAi(isAi);
         outMessage.setKeywordTriggered(false);
         outMessage.setCreatedAt(LocalDateTime.now());
         messageMapper.insert(outMessage);

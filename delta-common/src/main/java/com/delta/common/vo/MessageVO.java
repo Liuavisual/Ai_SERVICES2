@@ -11,7 +11,7 @@ public class MessageVO {
     private Long userId;
     private String direction;
     private String content;
-    private Boolean isAi;
+    private Boolean ai;
     private Boolean keywordTriggered;
     private String userNickname;
     private String userPlatform;
@@ -51,12 +51,12 @@ public class MessageVO {
         this.content = content;
     }
 
-    public Boolean getIsAi() {
-        return isAi;
+    public Boolean getAi() {
+        return ai;
     }
 
-    public void setIsAi(Boolean isAi) {
-        this.isAi = isAi;
+    public void setAi(Boolean ai) {
+        this.ai = ai;
     }
 
     public Boolean getKeywordTriggered() {
