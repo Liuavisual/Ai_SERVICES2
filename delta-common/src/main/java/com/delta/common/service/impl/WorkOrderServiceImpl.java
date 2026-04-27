@@ -188,7 +188,6 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             throw new BusinessException("满意度评分必须在1-5之间");
         }
 
-        String oldStatus = order.getStatus();
         order.setStatus(WorkOrderConstants.STATUS_COMPLETED);
         order.setResolvedAt(LocalDateTime.now());
         order.setSatisfactionScore(dto.getSatisfactionScore());

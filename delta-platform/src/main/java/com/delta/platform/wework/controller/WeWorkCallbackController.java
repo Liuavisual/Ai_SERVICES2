@@ -26,12 +26,10 @@ import java.io.StringReader;
 @ConditionalOnProperty(prefix = "wework", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class WeWorkCallbackController {
 
-    private final WeWorkConfig weWorkConfig;
     private final WeWorkMessageService weWorkMessageService;
     private final WeWorkCryptoUtils weWorkCryptoUtils;
 
-    public WeWorkCallbackController(WeWorkConfig weWorkConfig, WeWorkMessageService weWorkMessageService, WeWorkCryptoUtils weWorkCryptoUtils) {
-        this.weWorkConfig = weWorkConfig;
+    public WeWorkCallbackController(WeWorkMessageService weWorkMessageService, WeWorkCryptoUtils weWorkCryptoUtils) {
         this.weWorkMessageService = weWorkMessageService;
         this.weWorkCryptoUtils = weWorkCryptoUtils;
     }
