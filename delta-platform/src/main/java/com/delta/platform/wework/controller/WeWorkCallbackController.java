@@ -2,7 +2,6 @@ package com.delta.platform.wework.controller;
 
 import com.delta.common.constant.WeWorkConstants;
 import com.delta.common.dto.WeWorkCallbackDTO;
-import com.delta.platform.wework.config.WeWorkConfig;
 import com.delta.platform.wework.crypto.WeWorkCryptoUtils;
 import com.delta.platform.wework.service.WeWorkMessageService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,14 +35,14 @@ public class WeWorkCallbackController {
 
     @GetMapping("/callback")
     public String verifyCallback(
-            @RequestParam("msg_signature") String msgSignature,
-            @RequestParam("timestamp") String timestamp,
-            @RequestParam("nonce") String nonce,
-            @RequestParam("echostr") String echostr) {
+            @RequestParam String msg_signature,
+            @RequestParam String timestamp,
+            @RequestParam String nonce,
+            @RequestParam String echostr) {
         log.info("收到企业微信验证请求: timestamp={}, nonce={}", timestamp, nonce);
 
         try {
-            String result = weWorkCryptoUtils.verifySignature(msgSignature, timestamp, nonce, echostr);
+            String result = weWorkCryptoUtils.verifySignature(msg_signature, timestamp, nonce, echostr);
             log.info("企业微信验证成功");
             return result;
         } catch (Exception e) {
@@ -54,9 +53,9 @@ public class WeWorkCallbackController {
 
     @PostMapping("/callback")
     public String handleCallback(
-            @RequestParam("msg_signature") String msgSignature,
-            @RequestParam("timestamp") String timestamp,
-            @RequestParam("nonce") String nonce,
+            @RequestParam String msg_signature,
+            @RequestParam String timestamp,
+            @RequestParam String nonce,
             @RequestBody String requestBody) {
         log.info("收到企业微信回调消息");
 
@@ -67,7 +66,7 @@ public class WeWorkCallbackController {
                 return "success";
             }
 
-            String decryptedXml = weWorkCryptoUtils.decryptMessage(msgSignature, timestamp, nonce, encryptedContent);
+            String decryptedXml = weWorkCryptoUtils.decryptMessage(msg_signature, timestamp, nonce, encryptedContent);
             log.info("企业微信消息解密成功");
 
             WeWorkCallbackDTO callbackDTO = parseCallbackMessage(decryptedXml);
@@ -82,12 +81,7 @@ public class WeWorkCallbackController {
 
     private String extractEncryptContent(String xmlBody) {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setNamespaceAware(false);
-
+            DocumentBuilderFactory factory = createSecureDocumentBuilderFactory();
             Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(xmlBody)));
             if (doc.getElementsByTagName("Encrypt").getLength() == 0) {
                 return null;
@@ -102,12 +96,7 @@ public class WeWorkCallbackController {
     private WeWorkCallbackDTO parseCallbackMessage(String xml) {
         WeWorkCallbackDTO dto = new WeWorkCallbackDTO();
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setNamespaceAware(false);
-
+            DocumentBuilderFactory factory = createSecureDocumentBuilderFactory();
             Document doc = factory.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
 
             String msgType = getTagValue(doc, "MsgType");
@@ -128,6 +117,19 @@ public class WeWorkCallbackController {
             log.error("解析企业微信回调XML失败: {}", e.getMessage(), e);
         }
         return dto;
+    }
+
+    private DocumentBuilderFactory createSecureDocumentBuilderFactory() {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try {
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        } catch (Exception e) {
+            log.warn("XML安全特性设置失败: {}", e.getMessage());
+        }
+        factory.setNamespaceAware(false);
+        return factory;
     }
 
     private String getTagValue(Document doc, String tagName) {

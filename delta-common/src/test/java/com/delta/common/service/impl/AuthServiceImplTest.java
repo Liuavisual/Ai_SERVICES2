@@ -44,6 +44,7 @@ public class AuthServiceImplTest {
 
     private SysUser activeUser;
 
+    @SuppressWarnings("null")
     @BeforeEach
     void setUp() {
         activeUser = new SysUser();
@@ -108,6 +109,7 @@ public class AuthServiceImplTest {
         assertThrows(Exception.class, () -> authService.login(dto));
     }
 
+    @SuppressWarnings("null")
     @Test
     @DisplayName("连续5次登录失败后应锁定15分钟")
     void testLoginLockAfterMaxAttempts() {

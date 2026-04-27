@@ -128,6 +128,9 @@ public class SysUserServiceImpl implements SysUserService {
     }
     
     private SysUserVO convertToVO(SysUser user) {
+        if (user == null) {
+            return null;
+        }
         SysUserVO vo = new SysUserVO();
         BeanUtils.copyProperties(user, vo);
         

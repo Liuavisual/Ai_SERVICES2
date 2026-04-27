@@ -342,7 +342,9 @@ public class StatsServiceImpl implements StatsService {
         for (Message msg : messages) {
             if (msg.getCreatedAt() != null) {
                 String dayKey = msg.getCreatedAt().toLocalDate().format(dayFormatter);
-                dailyCounts.merge(dayKey, 1L, Long::sum);
+                dailyCounts.merge(dayKey, 1L, (oldVal, newVal) -> Long.sum(
+                        oldVal != null ? oldVal.longValue() : 0L,
+                        newVal != null ? newVal.longValue() : 0L));
             }
         }
 

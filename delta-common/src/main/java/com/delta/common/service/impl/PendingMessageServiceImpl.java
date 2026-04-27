@@ -345,6 +345,9 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         LambdaQueryWrapper<PendingMessage> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(PendingMessage::getStatus, PendingMessageStatusEnum.PENDING.getCode());
         Long count = pendingMessageMapper.selectCount(wrapper);
+        if (count == null) {
+            count = 0L;
+        }
 
         redisService.set(PENDING_COUNT_KEY, count, PENDING_COUNT_TTL, TimeUnit.MINUTES);
         return count;

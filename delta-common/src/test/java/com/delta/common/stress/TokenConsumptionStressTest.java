@@ -118,6 +118,7 @@ public class TokenConsumptionStressTest {
 
     private static final List<String> DIRECT_KEYWORDS = AiCustomerServiceConstants.DIRECT_REPLY_KEYWORDS;
 
+    @SuppressWarnings("null")
     @BeforeEach
     void setUp() {
         testUser = new User();

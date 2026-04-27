@@ -89,6 +89,9 @@ public class DeepSeekServiceImpl implements DeepSeekService {
         }
 
         String cacheKey = buildCacheKey(userMessage);
+        if (cacheKey == null) {
+            cacheKey = "ai:cache:default";
+        }
         try {
             Object cached = redisService.get(cacheKey);
             if (cached != null) {

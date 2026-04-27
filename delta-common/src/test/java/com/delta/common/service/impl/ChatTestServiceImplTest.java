@@ -66,6 +66,7 @@ public class ChatTestServiceImplTest {
 
     private User testUser;
 
+    @SuppressWarnings("null")
     @BeforeEach
     void setUp() {
         testUser = new User();
@@ -252,6 +253,7 @@ public class ChatTestServiceImplTest {
         verify(pendingMessageService).createPendingMessage(any(), any(), any(), any(), any(), any());
     }
 
+    @SuppressWarnings("null")
     @Test
     @DisplayName("AI连续回复3次后应自动触发转人工")
     void testAiConsecutiveFailureTriggersHandoff() {
@@ -345,6 +347,7 @@ public class ChatTestServiceImplTest {
         assertFalse(result.getIsAiReply());
     }
 
+    @SuppressWarnings("null")
     @Test
     @DisplayName("验证DIRECT_REPLY_KEYWORDS中的关键词走直接回复路径")
     void testDirectReplyKeywordsNeverCallAi() {

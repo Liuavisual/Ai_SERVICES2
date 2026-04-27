@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -52,6 +53,9 @@ public class WeWorkApiServiceImpl implements WeWorkApiService {
             }
 
             token = refreshToken(tokenType);
+            if (token == null) {
+                throw new BusinessException("获取企业微信access_token返回为空");
+            }
             redisTemplate.opsForValue().set(key, token, WeWorkConstants.TOKEN_TTL_SECONDS, TimeUnit.SECONDS);
             return token;
         } finally {
@@ -117,15 +121,23 @@ public class WeWorkApiServiceImpl implements WeWorkApiService {
     }
 
     private Map<String, Object> getForMap(String url) {
-        RequestEntity<Void> request = new RequestEntity<>(HttpMethod.GET, URI.create(url));
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(request, MAP_TYPE);
-        return response.getBody();
+        URI uri = Objects.requireNonNull(URI.create(url), "URI不能为空");
+        HttpMethod method = Objects.requireNonNull(HttpMethod.GET, "HttpMethod.GET不能为空");
+        RequestEntity<Void> request = new RequestEntity<>(method, uri);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                request, Objects.requireNonNull(MAP_TYPE, "MAP_TYPE不能为空"));
+        Map<String, Object> body = response.getBody();
+        return body != null ? body : Map.of();
     }
 
     private Map<String, Object> postForMap(String url, Map<String, Object> body) {
-        RequestEntity<Map<String, Object>> request = new RequestEntity<>(body, HttpMethod.POST, URI.create(url));
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(request, MAP_TYPE);
-        return response.getBody();
+        URI uri = Objects.requireNonNull(URI.create(url), "URI不能为空");
+        HttpMethod method = Objects.requireNonNull(HttpMethod.POST, "HttpMethod.POST不能为空");
+        RequestEntity<Map<String, Object>> request = new RequestEntity<>(body, method, uri);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                request, Objects.requireNonNull(MAP_TYPE, "MAP_TYPE不能为空"));
+        Map<String, Object> result = response.getBody();
+        return result != null ? result : Map.of();
     }
 
     private String refreshToken(String tokenType) {

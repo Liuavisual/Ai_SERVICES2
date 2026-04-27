@@ -56,6 +56,9 @@ public class AiConfigServiceImpl implements AiConfigService {
     }
 
     private AiConfigVO convertToVO(AiConfig config) {
+        if (config == null) {
+            return null;
+        }
         AiConfigVO vo = new AiConfigVO();
         BeanUtils.copyProperties(config, vo);
         return vo;

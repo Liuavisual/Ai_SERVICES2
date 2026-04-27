@@ -8,6 +8,7 @@ import com.delta.common.dto.ClubLevelPriceDTO;
 import com.delta.common.entity.ClubConfig;
 import com.delta.common.entity.ClubLevelPrice;
 import com.delta.common.entity.CompanionLevel;
+import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.ClubConfigMapper;
 import com.delta.common.mapper.ClubLevelPriceMapper;
 import com.delta.common.mapper.CompanionLevelMapper;
@@ -99,6 +100,9 @@ public class ClubConfigServiceImpl implements ClubConfigService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateClubConfig(ClubConfigDTO configDTO) {
+        if (configDTO == null) {
+            throw new BusinessException("俱乐部配置参数不能为空");
+        }
         ClubConfig existing = getClubConfig();
         ClubConfig config = new ClubConfig();
         BeanUtils.copyProperties(configDTO, config);

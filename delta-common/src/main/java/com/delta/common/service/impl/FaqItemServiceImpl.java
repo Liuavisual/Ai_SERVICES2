@@ -43,6 +43,9 @@ public class FaqItemServiceImpl implements FaqItemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addFaqItem(FaqItemDTO dto) {
+        if (dto == null) {
+            throw new BusinessException("FAQ条目参数不能为空");
+        }
         FaqItem item = new FaqItem();
         BeanUtils.copyProperties(dto, item);
         faqItemMapper.insert(item);
@@ -51,7 +54,7 @@ public class FaqItemServiceImpl implements FaqItemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateFaqItem(FaqItemDTO dto) {
-        if (dto.getId() == null || faqItemMapper.selectById(dto.getId()) == null) {
+        if (dto == null || dto.getId() == null || faqItemMapper.selectById(dto.getId()) == null) {
             throw new BusinessException("FAQ条目不存在");
         }
         FaqItem item = new FaqItem();

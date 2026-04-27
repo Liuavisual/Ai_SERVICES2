@@ -78,6 +78,9 @@ public class CsUserCustomerServiceImpl implements CsUserCustomerService {
         ).stream().collect(Collectors.toMap(SysUser::getId, SysUser::getRealName));
         
         voPage.setRecords(resultPage.getRecords().stream().map(item -> {
+            if (item == null) {
+                return null;
+            }
             CsUserCustomerVO vo = new CsUserCustomerVO();
             BeanUtils.copyProperties(item, vo);
             
@@ -118,6 +121,9 @@ public class CsUserCustomerServiceImpl implements CsUserCustomerService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void create(CsUserCustomerDTO dto) {
+        if (dto == null) {
+            throw new BusinessException("分配关系参数不能为空");
+        }
         LambdaQueryWrapper<CsUserCustomer> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CsUserCustomer::getCsUserId, dto.getCsUserId())
                .eq(CsUserCustomer::getCustomerUserId, dto.getCustomerUserId());
@@ -144,6 +150,9 @@ public class CsUserCustomerServiceImpl implements CsUserCustomerService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(CsUserCustomerDTO dto) {
+        if (dto == null) {
+            throw new BusinessException("分配关系参数不能为空");
+        }
         CsUserCustomer entity = csUserCustomerMapper.selectById(dto.getId());
         if (entity == null) {
             throw new BusinessException("分配关系不存在");

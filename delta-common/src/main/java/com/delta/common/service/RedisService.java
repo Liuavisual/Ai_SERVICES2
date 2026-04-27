@@ -1,5 +1,7 @@
 package com.delta.common.service;
 
+import org.springframework.lang.NonNull;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,85 +15,85 @@ import java.util.concurrent.TimeUnit;
  */
 public interface RedisService {
 
-    void set(String key, Object value);
+    void set(@NonNull String key, @NonNull Object value);
 
-    void set(String key, Object value, long timeout, TimeUnit unit);
+    void set(@NonNull String key, @NonNull Object value, long timeout, @NonNull TimeUnit unit);
 
-    Boolean setIfAbsent(String key, Object value);
+    Boolean setIfAbsent(@NonNull String key, @NonNull Object value);
 
-    Boolean setIfAbsent(String key, Object value, long timeout, TimeUnit unit);
+    Boolean setIfAbsent(@NonNull String key, @NonNull Object value, long timeout, @NonNull TimeUnit unit);
 
-    Object get(String key);
+    Object get(@NonNull String key);
 
-    List<Object> multiGet(Collection<String> keys);
+    List<Object> multiGet(@NonNull Collection<String> keys);
 
-    void multiSet(Map<String, Object> map);
+    void multiSet(@NonNull Map<String, Object> map);
 
-    Boolean delete(String key);
+    Boolean delete(@NonNull String key);
 
-    Long delete(Collection<String> keys);
+    Long delete(@NonNull Collection<String> keys);
 
-    Boolean hasKey(String key);
+    Boolean hasKey(@NonNull String key);
 
-    Boolean expire(String key, long timeout, TimeUnit unit);
+    Boolean expire(@NonNull String key, long timeout, @NonNull TimeUnit unit);
 
-    Long getExpire(String key);
+    Long getExpire(@NonNull String key);
 
-    void hSet(String key, String hashKey, Object value);
+    void hSet(@NonNull String key, @NonNull String hashKey, @NonNull Object value);
 
-    Object hGet(String key, String hashKey);
+    Object hGet(@NonNull String key, @NonNull String hashKey);
 
-    Map<Object, Object> hGetAll(String key);
+    Map<Object, Object> hGetAll(@NonNull String key);
 
-    void hSetAll(String key, Map<String, Object> map);
+    void hSetAll(@NonNull String key, @NonNull Map<String, Object> map);
 
-    List<Object> hMultiGet(String key, Collection<String> hashKeys);
+    List<Object> hMultiGet(@NonNull String key, @NonNull Collection<String> hashKeys);
 
-    Boolean hHasKey(String key, String hashKey);
+    Boolean hHasKey(@NonNull String key, @NonNull String hashKey);
 
-    Long hDelete(String key, Object... hashKeys);
+    Long hDelete(@NonNull String key, @NonNull Object... hashKeys);
 
-    void lPush(String key, Object value);
+    void lPush(@NonNull String key, @NonNull Object value);
 
-    void rPush(String key, Object value);
+    void rPush(@NonNull String key, @NonNull Object value);
 
-    Object lPop(String key);
+    Object lPop(@NonNull String key);
 
-    Object rPop(String key);
+    Object rPop(@NonNull String key);
 
-    List<Object> lRange(String key, long start, long end);
+    List<Object> lRange(@NonNull String key, long start, long end);
 
-    Long lSize(String key);
+    Long lSize(@NonNull String key);
 
-    void sAdd(String key, Object... values);
+    void sAdd(@NonNull String key, @NonNull Object... values);
 
-    Set<Object> sMembers(String key);
+    Set<Object> sMembers(@NonNull String key);
 
-    Boolean sIsMember(String key, Object value);
+    Boolean sIsMember(@NonNull String key, @NonNull Object value);
 
-    Long sSize(String key);
+    Long sSize(@NonNull String key);
 
-    Long sRemove(String key, Object... values);
+    Long sRemove(@NonNull String key, @NonNull Object... values);
 
-    void zAdd(String key, Object value, double score);
+    void zAdd(@NonNull String key, @NonNull Object value, double score);
 
-    Set<Object> zRange(String key, long start, long end);
+    Set<Object> zRange(@NonNull String key, long start, long end);
 
-    Set<Object> zReverseRange(String key, long start, long end);
+    Set<Object> zReverseRange(@NonNull String key, long start, long end);
 
-    Long zSize(String key);
+    Long zSize(@NonNull String key);
 
-    Long zRemove(String key, Object... values);
+    Long zRemove(@NonNull String key, @NonNull Object... values);
 
-    void deleteByPattern(String pattern);
+    void deleteByPattern(@NonNull String pattern);
 
-    Set<String> scanKeys(String pattern);
+    Set<String> scanKeys(@NonNull String pattern);
 
-    Long increment(String key);
+    Long increment(@NonNull String key);
 
-    Long increment(String key, long delta);
+    Long increment(@NonNull String key, long delta);
 
-    Long decrement(String key);
+    Long decrement(@NonNull String key);
 
-    Long decrement(String key, long delta);
+    Long decrement(@NonNull String key, long delta);
 }
