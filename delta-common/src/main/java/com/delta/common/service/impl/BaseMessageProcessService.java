@@ -188,6 +188,88 @@ public abstract class BaseMessageProcessService {
         return true;
     }
 
+    protected String checkServiceInquiry(String content) {
+        if (content == null || content.trim().isEmpty()) return null;
+        for (String keyword : AiCustomerServiceConstants.SERVICE_INQUIRY_KEYWORDS) {
+            if (content.contains(keyword)) return keyword;
+        }
+        return null;
+    }
+
+    protected String checkScheduleInquiry(String content) {
+        if (content == null || content.trim().isEmpty()) return null;
+        for (String keyword : AiCustomerServiceConstants.SCHEDULE_INQUIRY_KEYWORDS) {
+            if (content.contains(keyword)) return keyword;
+        }
+        return null;
+    }
+
+    protected boolean isVipCustomer(Long userId) {
+        if (userId == null || customerProfileService == null) {
+            return false;
+        }
+        try {
+            var profile = customerProfileService.getProfileByUserId(userId);
+            if (profile == null) {
+                return false;
+            }
+            String memberLevel = profile.getMemberLevel();
+            if (memberLevel == null) {
+                return false;
+            }
+            return AiCustomerServiceConstants.VIP_MEMBER_LEVELS.contains(memberLevel);
+        } catch (Exception e) {
+            log.debug("VIP判定异常: userId={}", userId, e);
+            return false;
+        }
+    }
+
+    protected String appendPriceConversionSuffix(String replyContent) {
+        if (replyContent == null || replyContent.isEmpty()) return replyContent;
+        return replyContent + AiCustomerServiceConstants.PRICE_INQUIRY_CONVERSION_SUFFIX;
+    }
+
+    protected static class InquiryReplyResult {
+        public final String replyContent;
+        public final boolean isAiReply;
+        public final ResponseSource responseSource;
+
+        InquiryReplyResult(String replyContent, boolean isAiReply, ResponseSource responseSource) {
+            this.replyContent = replyContent;
+            this.isAiReply = isAiReply;
+            this.responseSource = responseSource;
+        }
+    }
+
+    protected InquiryReplyResult handleInquiryWithAiChannel(
+            Long userId, String content, String contextHint,
+            String keyword, boolean appendConversionSuffix) {
+        String replyContent = null;
+        boolean isAiReply = false;
+        ResponseSource responseSource = ResponseSource.DEFAULT_FALLBACK;
+
+        String aiReply = tryDeepSeekAI(userId, content, contextHint);
+        if (aiReply != null) {
+            replyContent = appendConversionSuffix ? appendPriceConversionSuffix(aiReply) : aiReply;
+            isAiReply = true;
+            responseSource = ResponseSource.AI_REPLY;
+        } else {
+            String directReply = tryDirectKeywordReply(keyword, content);
+            if (directReply != null) {
+                replyContent = appendConversionSuffix ? appendPriceConversionSuffix(directReply) : directReply;
+                isAiReply = false;
+                responseSource = ResponseSource.KEYWORD_DIRECT;
+            }
+        }
+
+        if (replyContent == null) {
+            replyContent = AiCustomerServiceConstants.DEFAULT_FALLBACK_REPLY;
+            responseSource = ResponseSource.DEFAULT_FALLBACK;
+        }
+
+        return new InquiryReplyResult(replyContent, isAiReply, responseSource);
+    }
+
     protected String checkHumanExplicit(String content) {
         if (content == null || content.trim().isEmpty()) {
             return null;

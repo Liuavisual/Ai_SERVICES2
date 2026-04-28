@@ -76,11 +76,17 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
 
             String orderIntent = checkOrderIntent(content);
             String priceInquiry = checkPriceInquiry(content);
+            String serviceInquiry = checkServiceInquiry(content);
+            String scheduleInquiry = checkScheduleInquiry(content);
             String humanExplicit = checkHumanExplicit(content);
             String negativeEmotion = checkNegativeEmotion(content);
             boolean aiConsecutiveFailure = checkAiConsecutiveFailure(user.getId());
+            boolean isVip = isVipCustomer(user.getId());
             boolean needsHumanHandoff = false;
             boolean isPriceInquiryOnly = false;
+            boolean isServiceInquiryOnly = false;
+            boolean isScheduleInquiryOnly = false;
+            boolean isVipHandoff = false;
             String handoffReason = null;
 
             if (humanExplicit != null) {
@@ -93,16 +99,31 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                 needsHumanHandoff = true;
                 if (matchedKeyword == null) matchedKeyword = negativeEmotion;
                 handoffReason = negativeEmotion;
+            } else if (orderIntent != null) {
+                log.info("【检测到预约/下单意图】关键词: {}，转人工确认时间", orderIntent);
+                needsHumanHandoff = true;
+                if (matchedKeyword == null) matchedKeyword = orderIntent;
+                handoffReason = orderIntent;
             } else if (priceInquiry != null && isPurePriceInquiry(content, priceInquiry)) {
                 log.info("【检测到纯价格咨询】关键词: {}，走AI价格通道", priceInquiry);
                 isPriceInquiryOnly = true;
                 if (matchedKeyword == null) matchedKeyword = priceInquiry;
                 resetAiConsecutiveFailure(user.getId());
-            } else if (orderIntent != null) {
-                log.info("【检测到下单/预约意图】关键词: {}", orderIntent);
+            } else if (serviceInquiry != null) {
+                log.info("【检测到服务咨询】关键词: {}，走AI服务介绍通道", serviceInquiry);
+                isServiceInquiryOnly = true;
+                if (matchedKeyword == null) matchedKeyword = serviceInquiry;
+                resetAiConsecutiveFailure(user.getId());
+            } else if (scheduleInquiry != null) {
+                log.info("【检测到时间咨询】关键词: {}，走AI排班通道", scheduleInquiry);
+                isScheduleInquiryOnly = true;
+                if (matchedKeyword == null) matchedKeyword = scheduleInquiry;
+                resetAiConsecutiveFailure(user.getId());
+            } else if (isVip && aiConsecutiveFailure) {
+                log.info("【VIP客户+AI未解决】优先转人工");
                 needsHumanHandoff = true;
-                if (matchedKeyword == null) matchedKeyword = orderIntent;
-                handoffReason = orderIntent;
+                isVipHandoff = true;
+                handoffReason = "VIP客户专属服务";
             } else if (aiConsecutiveFailure) {
                 log.info("【AI连续未解决】自动触发转人工");
                 needsHumanHandoff = true;
@@ -115,29 +136,35 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
             ResponseSource responseSource = ResponseSource.UNKNOWN;
 
             if (needsHumanHandoff) {
-                replyContent = getHandoffReply(handoffReason, negativeEmotion, aiConsecutiveFailure);
+                if (isVipHandoff) {
+                    replyContent = AiCustomerServiceConstants.VIP_HANDOFF_REPLY;
+                } else {
+                    replyContent = getHandoffReply(handoffReason, negativeEmotion, aiConsecutiveFailure);
+                }
                 isAiReply = false;
                 responseSource = ResponseSource.HANDOFF_REPLY;
                 resetAiConsecutiveFailure(user.getId());
             } else if (isPriceInquiryOnly) {
-                String contextHint = "[客户咨询价格信息，请根据陪玩等级、服务项目价格表准确回答]";
-                String aiReply = tryDeepSeekAI(user.getId(), content, contextHint);
-                if (aiReply != null) {
-                    replyContent = aiReply;
-                    isAiReply = true;
-                    responseSource = ResponseSource.AI_REPLY;
-                } else {
-                    String directReply = tryDirectKeywordReply(priceInquiry, content);
-                    if (directReply != null) {
-                        replyContent = directReply;
-                        isAiReply = false;
-                        responseSource = ResponseSource.KEYWORD_DIRECT;
-                    }
-                }
-                if (replyContent == null) {
-                    replyContent = AiCustomerServiceConstants.DEFAULT_FALLBACK_REPLY;
-                    responseSource = ResponseSource.DEFAULT_FALLBACK;
-                }
+                InquiryReplyResult result = handleInquiryWithAiChannel(
+                        user.getId(), content, AiCustomerServiceConstants.PRICE_INQUIRY_CONTEXT_HINT,
+                        priceInquiry, true);
+                replyContent = result.replyContent;
+                isAiReply = result.isAiReply;
+                responseSource = result.responseSource;
+            } else if (isServiceInquiryOnly) {
+                InquiryReplyResult result = handleInquiryWithAiChannel(
+                        user.getId(), content, AiCustomerServiceConstants.SERVICE_INQUIRY_CONTEXT_HINT,
+                        serviceInquiry, false);
+                replyContent = result.replyContent;
+                isAiReply = result.isAiReply;
+                responseSource = result.responseSource;
+            } else if (isScheduleInquiryOnly) {
+                InquiryReplyResult result = handleInquiryWithAiChannel(
+                        user.getId(), content, AiCustomerServiceConstants.SCHEDULE_INQUIRY_CONTEXT_HINT,
+                        scheduleInquiry, false);
+                replyContent = result.replyContent;
+                isAiReply = result.isAiReply;
+                responseSource = result.responseSource;
             } else if (matchedKeyword != null) {
                 String directReply = tryDirectKeywordReply(matchedKeyword, content);
                 if (directReply != null) {
