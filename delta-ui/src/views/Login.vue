@@ -1,22 +1,24 @@
-<!--
-  登录页面，支持用户名密码登录，古风印章风格设计
-
-  @author delta
--->
 <template>
   <div class="login-container">
-    <div class="bg-pattern"></div>
+    <div class="login-bg">
+      <div class="bg-gradient"></div>
+      <div class="bg-grid"></div>
+      <div class="bg-orb bg-orb-1"></div>
+      <div class="bg-orb bg-orb-2"></div>
+      <div class="bg-orb bg-orb-3"></div>
+    </div>
+
     <div class="login-card">
-      <div class="card-inner">
+      <div class="card-glass">
         <div class="login-header">
-          <div class="seal">
-            <svg viewBox="0 0 48 48" fill="none" width="44" height="44">
-              <rect x="4" y="4" width="40" height="40" rx="4" stroke="#8B3A3A" stroke-width="2" fill="none"/>
-              <path d="M14 24h20M24 14v20" stroke="#8B3A3A" stroke-width="2.5" stroke-linecap="round"/>
+          <div class="logo-wrap">
+            <svg viewBox="0 0 40 40" fill="none" width="44" height="44">
+              <rect x="2" y="2" width="36" height="36" rx="10" fill="#6366F1"/>
+              <path d="M14 20h12M20 14v12" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
           </div>
-          <h1 class="title">三角洲行动</h1>
-          <p class="subtitle">陪玩俱乐部 · 客服管理系统</p>
+          <h1 class="title">Delta Companion</h1>
+          <p class="subtitle">AI-Powered Customer Service Platform</p>
         </div>
 
         <el-tabs v-model="activeTab" class="login-tabs">
@@ -48,7 +50,7 @@
         </el-tabs>
 
         <div class="login-footer">
-          <span>Δ DELTA OPS · AUTHORIZED ACCESS ONLY</span>
+          <span>Delta Companion &copy; 2025</span>
         </div>
       </div>
     </div>
@@ -144,89 +146,134 @@ const handleRegister = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gu-bg);
   position: relative;
   overflow: hidden;
+  background: #0F172A;
 }
 
-.bg-pattern {
+.login-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.bg-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+}
+
+.bg-grid {
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(139,58,58,0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(184,134,11,0.04) 0%, transparent 50%);
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 8s ease-in-out infinite;
+}
+
+.bg-orb-1 {
+  width: 400px;
+  height: 400px;
+  background: rgba(99, 102, 241, 0.15);
+  top: -100px;
+  right: -100px;
+  animation-delay: 0s;
+}
+
+.bg-orb-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(139, 92, 246, 0.12);
+  bottom: -80px;
+  left: -80px;
+  animation-delay: -3s;
+}
+
+.bg-orb-3 {
+  width: 200px;
+  height: 200px;
+  background: rgba(249, 115, 22, 0.08);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: -5s;
 }
 
 .login-card {
-  width: min(400px, 90vw);
+  width: min(420px, 90vw);
   position: relative;
   z-index: 1;
 }
 
-.card-inner {
-  background: var(--gu-bg-card);
-  border: 2px solid var(--gu-border);
-  border-radius: var(--gu-radius-lg);
-  padding: 36px 32px 28px;
-  box-shadow: var(--gu-shadow-lg);
-  position: relative;
-}
-
-.card-inner::before {
-  content: '';
-  position: absolute;
-  top: -1px; left: 16%; right: 16%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--gu-accent), transparent);
+.card-glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--gu-radius-xl);
+  padding: 40px 36px 32px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
-.seal {
+.logo-wrap {
   display: inline-flex;
-  margin-bottom: 12px;
-  animation: sealFloat 4s ease-in-out infinite;
-}
-
-@keyframes sealFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  margin-bottom: 16px;
+  animation: float 4s ease-in-out infinite;
 }
 
 .title {
-  font-size: 22px;
+  font-family: var(--gu-font-heading);
+  font-size: 24px;
   font-weight: 700;
   color: var(--gu-text-primary);
-  letter-spacing: 6px;
+  letter-spacing: -0.02em;
   margin-bottom: 6px;
 }
 
 .subtitle {
-  font-size: 12px;
+  font-family: var(--gu-font-heading);
+  font-size: 13px;
   color: var(--gu-text-muted);
-  letter-spacing: 3px;
+  letter-spacing: 0.02em;
+  font-weight: 400;
 }
 
-.login-tabs { margin-top: 20px; }
+.login-tabs { margin-top: 24px; }
 
 .submit-btn {
   width: 100%;
-  letter-spacing: 8px;
+  height: 44px;
+  font-size: 15px;
   font-weight: 600;
-  border-radius: var(--gu-radius) !important;
+  letter-spacing: 0.1em;
+  border-radius: var(--gu-radius-lg) !important;
 }
 
 .register-tip { margin-top: 12px; }
 
 .login-footer {
-  margin-top: 24px;
+  margin-top: 28px;
   text-align: center;
-  font-size: 10px;
-  color: var(--gu-border);
-  letter-spacing: 2px;
-  font-family: "Courier New", monospace;
+  font-size: 11px;
+  color: var(--gu-text-muted);
+  font-family: var(--gu-font-heading);
+  letter-spacing: 0.02em;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 </style>

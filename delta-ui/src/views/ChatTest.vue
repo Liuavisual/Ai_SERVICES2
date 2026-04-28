@@ -1,14 +1,12 @@
-<!--
-  对话测试页面，模拟客户对话测试AI客服回复效果
-
-  @author delta
--->
 <template>
   <div class="chat-test-container">
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>通讯终端</span>
+          <div class="header-left">
+            <span>通讯终端</span>
+            <el-tag type="info" size="small">AI Chat</el-tag>
+          </div>
           <el-button type="danger" size="small" plain @click="handleReset">
             <el-icon><Refresh /></el-icon>
             重置
@@ -68,16 +66,16 @@
 
       <div class="chat-viewport" ref="messagesContainer">
         <div v-if="messages.length === 0 && !loading" class="empty-state">
-          <svg viewBox="0 0 48 48" fill="none" width="40" height="40">
-            <path d="M24 4C13 4 4 13 4 24s9 20 20 20 20-9 20-20S35 4 24 4z" stroke="#2a3a52" stroke-width="1.5" stroke-dasharray="3 3"/>
-            <circle cx="18" cy="22" r="1.5" fill="#5a6b82"/>
-            <circle cx="30" cy="22" r="1.5" fill="#5a6b82"/>
-            <path d="M17 30c0 0 3 4 7 4s7-4 7-4" stroke="#5a6b82" stroke-width="1.5" stroke-linecap="round"/>
+          <svg viewBox="0 0 48 48" fill="none" width="48" height="48">
+            <rect x="4" y="8" width="40" height="28" rx="6" stroke="#94A3B8" stroke-width="1.5" fill="none"/>
+            <path d="M16 20h16M16 26h10" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M24 36l-4 4h8l-4-4z" fill="#E2E8F0"/>
           </svg>
           <p>等待建立连接...</p>
         </div>
 
         <div v-for="(msg, index) in messages" :key="index" :class="['msg-row', msg.role]">
+          <div v-if="msg.role === 'customer'" class="msg-avatar customer-avatar">C</div>
           <div class="msg-bubble">
             <div class="msg-meta">
               <el-tag v-if="msg.isAi" type="info" size="small">AI</el-tag>
@@ -86,13 +84,16 @@
             </div>
             <div class="msg-text">{{ msg.content }}</div>
           </div>
+          <div v-if="msg.role === 'service'" class="msg-avatar service-avatar">S</div>
         </div>
 
         <div v-if="loading" class="typing-indicator">
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="typing-label">处理中</span>
+          <div class="msg-avatar service-avatar">S</div>
+          <div class="typing-bubble">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
         </div>
       </div>
 
@@ -236,8 +237,8 @@ onMounted(() => {
 }
 
 .config-bar {
-  padding: 14px;
-  background: var(--gu-bg-secondary);
+  padding: 16px 20px;
+  background: var(--gu-bg-stripe);
   border-radius: var(--gu-radius-lg);
   margin-bottom: 16px;
   border: 1px solid var(--gu-border);
@@ -254,31 +255,33 @@ onMounted(() => {
 .quick-label {
   font-size: 12px;
   color: var(--gu-text-muted);
-  letter-spacing: 1px;
+  font-weight: 500;
   margin-right: 4px;
 }
 
 .quick-btn {
-  padding: 4px 12px;
+  padding: 5px 14px;
   font-size: 12px;
   color: var(--gu-text-secondary);
-  background: transparent;
+  background: var(--gu-bg-card);
   border: 1px solid var(--gu-border);
-  border-radius: var(--gu-radius);
+  border-radius: var(--gu-radius-full);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--gu-transition);
+  font-weight: 500;
 }
 
 .quick-btn:hover {
-  border-color: var(--gu-accent);
-  color: var(--gu-accent);
-  background: var(--gu-accent-light);
+  border-color: var(--gu-primary);
+  color: var(--gu-primary);
+  background: var(--gu-primary-light);
+  box-shadow: var(--gu-shadow-primary);
 }
 
 .chat-viewport {
-  height: 420px;
+  height: 440px;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px;
   background: var(--gu-bg);
   border-radius: var(--gu-radius-lg);
   border: 1px solid var(--gu-border);
@@ -291,8 +294,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 10px;
-  opacity: 0.4;
+  gap: 12px;
+  opacity: 0.5;
 }
 
 .empty-state p {
@@ -302,7 +305,9 @@ onMounted(() => {
 
 .msg-row {
   display: flex;
-  margin-bottom: 16px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 10px;
 }
 
 .msg-row.customer {
@@ -313,8 +318,32 @@ onMounted(() => {
   justify-content: flex-end;
 }
 
+.msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: var(--gu-font-heading);
+}
+
+.customer-avatar {
+  background: var(--gu-bg-secondary);
+  color: var(--gu-text-secondary);
+  border: 1px solid var(--gu-border);
+}
+
+.service-avatar {
+  background: linear-gradient(135deg, var(--gu-primary), var(--gu-secondary));
+  color: white;
+}
+
 .msg-bubble {
-  max-width: 70%;
+  max-width: 65%;
   padding: 10px 14px;
   border-radius: var(--gu-radius-lg);
   position: relative;
@@ -323,13 +352,13 @@ onMounted(() => {
 .msg-row.customer .msg-bubble {
   background: var(--gu-bg-card);
   border: 1px solid var(--gu-border);
-  border-bottom-left-radius: 2px;
+  border-bottom-left-radius: 4px;
 }
 
 .msg-row.service .msg-bubble {
-  background: var(--gu-accent-light);
-  border: 1px solid rgba(139, 58, 58, 0.2);
-  border-bottom-right-radius: 2px;
+  background: var(--gu-primary-light);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-bottom-right-radius: 4px;
 }
 
 .msg-meta {
@@ -343,6 +372,7 @@ onMounted(() => {
   font-size: 11px;
   color: var(--gu-text-muted);
   margin-left: auto;
+  font-family: var(--gu-font-mono);
 }
 
 .msg-text {
@@ -356,17 +386,26 @@ onMounted(() => {
 .typing-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  color: var(--gu-text-muted);
-  font-size: 12px;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: var(--gu-primary-light);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--gu-radius-lg);
+  border-bottom-right-radius: 4px;
 }
 
 .dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--gu-accent);
+  background: var(--gu-primary);
   animation: bounce 1.4s infinite ease-in-out both;
 }
 
@@ -376,10 +415,6 @@ onMounted(() => {
 @keyframes bounce {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1); opacity: 1; }
-}
-
-.typing-label {
-  letter-spacing: 1px;
 }
 
 .input-area {
