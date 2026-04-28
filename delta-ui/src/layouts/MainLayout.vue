@@ -122,6 +122,7 @@ const allMenus = [
   { path: '/companion-levels', title: '陪玩等级', icon: 'Trophy', roles: ['SYS_ADMIN','CS_LEADER'] },
   { path: '/companions', title: '陪玩师', icon: 'Timer', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/companion-schedule', title: '排班管理', icon: 'Calendar', roles: ['SYS_ADMIN','CS_LEADER'] },
+  { path: '/orders', title: '订单管理', icon: 'Shop', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: 'd5', title: '', icon: '', roles: [], divider: true },
   { path: '/ai-config', title: 'AI配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
   { path: '/platform-configs', title: '平台配置', icon: 'Tools', roles: ['SYS_ADMIN'] }

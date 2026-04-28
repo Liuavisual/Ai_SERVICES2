@@ -37,6 +37,14 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
             User user = getOrCreateUser(platform, customerNickname, csUserId);
             Message inMessage = saveIncomingMessage(user.getId(), content);
 
+            if (detectServiceCompletion(user.getId(), content)) {
+                log.info("【检测到服务完成信号】userId={}", user.getId());
+                boolean completed = handleServiceCompletion(user.getId(), content);
+                if (completed) {
+                    log.info("【自动完成订单+触发评价】userId={}", user.getId());
+                }
+            }
+
             HandoffState handoffState = getHandoffState(user.getId());
 
             if (handoffState == HandoffState.IN_SERVICE) {

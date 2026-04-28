@@ -37,12 +37,6 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
     @Autowired
     private CompanionMapper companionMapper;
 
-    private static final List<String> DEFAULT_TIME_SLOTS = List.of(
-            "08:00-10:00", "10:00-12:00", "12:00-14:00",
-            "14:00-16:00", "16:00-18:00", "18:00-20:00",
-            "20:00-22:00", "22:00-24:00"
-    );
-
     private static final int MAX_BATCH_DAYS = 31;
 
     @Override
@@ -203,7 +197,7 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
             throw new BusinessException("批量创建日期范围不能超过" + MAX_BATCH_DAYS + "天");
         }
         if (timeSlots == null || timeSlots.isEmpty()) {
-            timeSlots = DEFAULT_TIME_SLOTS;
+            throw new BusinessException("批量创建时必须指定时间段列表，或使用时间范围接口");
         }
 
         List<CompanionSchedule> existingSchedules = getExistingSchedules(companionId, startDate, endDate);
@@ -326,6 +320,105 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
 
         int count = companionScheduleMapper.delete(wrapper);
         log.info("删除陪玩师指定日期时间成功: companionId={}, date={}, count={}", companionId, scheduleDate, count);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createTimeRange(Long companionId, LocalDate scheduleDate, LocalTime rangeStart, LocalTime rangeEnd) {
+        if (companionId == null) {
+            throw new BusinessException("陪玩师ID不能为空");
+        }
+        Companion companion = companionMapper.selectById(companionId);
+        if (companion == null) {
+            throw new BusinessException("陪玩师不存在");
+        }
+        if (scheduleDate == null) {
+            throw new BusinessException("排班日期不能为空");
+        }
+        if (rangeStart == null || rangeEnd == null) {
+            throw new BusinessException("开始时间和结束时间不能为空");
+        }
+        if (!rangeStart.isBefore(rangeEnd)) {
+            throw new BusinessException("开始时间必须早于结束时间");
+        }
+
+        checkTimeConflict(companionId, scheduleDate, rangeStart, rangeEnd, null);
+
+        CompanionSchedule schedule = new CompanionSchedule();
+        schedule.setCompanionId(companionId);
+        schedule.setScheduleDate(scheduleDate);
+        String timeSlotStr = formatTimeSlot(rangeStart, rangeEnd);
+        schedule.setTimeSlot(timeSlotStr);
+        schedule.setStartTime(rangeStart);
+        schedule.setEndTime(rangeEnd);
+        schedule.setStatus(BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE);
+        companionScheduleMapper.insert(schedule);
+        log.info("创建自由时间段成功: companionId={}, date={}, time={}", companionId, scheduleDate, timeSlotStr);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void createTimeRangeBatch(Long companionId, LocalDate startDate, LocalDate endDate, LocalTime dailyStart, LocalTime dailyEnd) {
+        if (companionId == null) {
+            throw new BusinessException("陪玩师ID不能为空");
+        }
+        Companion companion = companionMapper.selectById(companionId);
+        if (companion == null) {
+            throw new BusinessException("陪玩师不存在");
+        }
+        if (startDate == null || endDate == null) {
+            throw new BusinessException("开始日期和结束日期不能为空");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new BusinessException("开始日期不能晚于结束日期");
+        }
+        if (dailyStart == null || dailyEnd == null) {
+            throw new BusinessException("每日开始和结束时间不能为空");
+        }
+        if (!dailyStart.isBefore(dailyEnd)) {
+            throw new BusinessException("每日开始时间必须早于结束时间");
+        }
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        if (daysBetween > MAX_BATCH_DAYS) {
+            throw new BusinessException("批量创建日期范围不能超过" + MAX_BATCH_DAYS + "天");
+        }
+
+        List<CompanionSchedule> existingSchedules = getExistingSchedules(companionId, startDate, endDate);
+        Set<String> existingKeys = existingSchedules.stream()
+                .map(s -> s.getScheduleDate() + "|" + s.getStartTime() + "|" + s.getEndTime())
+                .collect(Collectors.toSet());
+
+        List<CompanionSchedule> toInsert = new ArrayList<>();
+        LocalDate currentDate = startDate;
+        while (!currentDate.isAfter(endDate)) {
+            String key = currentDate + "|" + dailyStart + "|" + dailyEnd;
+            if (!existingKeys.contains(key)) {
+                checkTimeConflict(companionId, currentDate, dailyStart, dailyEnd, null);
+
+                CompanionSchedule schedule = new CompanionSchedule();
+                schedule.setCompanionId(companionId);
+                schedule.setScheduleDate(currentDate);
+                schedule.setTimeSlot(formatTimeSlot(dailyStart, dailyEnd));
+                schedule.setStartTime(dailyStart);
+                schedule.setEndTime(dailyEnd);
+                schedule.setStatus(BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE);
+                toInsert.add(schedule);
+            } else {
+                log.debug("跳过已存在的排班: companionId={}, date={}", companionId, currentDate);
+            }
+            currentDate = currentDate.plusDays(1);
+        }
+
+        for (CompanionSchedule schedule : toInsert) {
+            companionScheduleMapper.insert(schedule);
+        }
+
+        log.info("批量创建自由时间段成功: companionId={}, days={}, inserted={}, skipped={}",
+            companionId, daysBetween, toInsert.size(), existingKeys.size());
+    }
+
+    private String formatTimeSlot(LocalTime start, LocalTime end) {
+        return start.toString() + "-" + end.toString();
     }
 
     private void checkTimeConflict(Long companionId, LocalDate scheduleDate, LocalTime startTime, LocalTime endTime, Long excludeId) {

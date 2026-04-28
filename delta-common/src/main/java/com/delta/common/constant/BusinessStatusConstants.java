@@ -25,8 +25,19 @@ public final class BusinessStatusConstants {
     public static final String PRICE_UNIT_NIGHT = "NIGHT";
     public static final String PRICE_UNIT_ORDER = "ORDER";
 
+    public static final String ORDER_STATUS_PENDING = "PENDING";
+    public static final String ORDER_STATUS_CONFIRMED = "CONFIRMED";
+    public static final String ORDER_STATUS_IN_PROGRESS = "IN_PROGRESS";
     public static final String ORDER_STATUS_COMPLETED = "COMPLETED";
+    public static final String ORDER_STATUS_PENDING_REVIEW = "PENDING_REVIEW";
+    public static final String ORDER_STATUS_CANCELLED = "CANCELLED";
     public static final String ORDER_STATUS_REFUNDED = "REFUNDED";
+    public static final String ORDER_STATUS_ABNORMAL = "ABNORMAL";
+    public static final String ORDER_STATUS_ARCHIVED = "ARCHIVED";
+
+    public static final String PAYMENT_STATUS_UNPAID = "UNPAID";
+    public static final String PAYMENT_STATUS_PARTIAL = "PARTIAL";
+    public static final String PAYMENT_STATUS_PAID = "PAID";
 
     public static final int ENABLED_INT = 1;
     public static final int DISABLED_INT = 0;

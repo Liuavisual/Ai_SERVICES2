@@ -282,7 +282,11 @@ export const companionScheduleApi = {
   updateStatus: (params) => request({ url: '/companion-schedules/status', method: 'put', params }),
   delete: (id) => request({ url: `/companion-schedules/${id}`, method: 'delete' }),
   /** 按陪玩师+日期删除排班 */
-  deleteByCompanionDate: (params) => request({ url: '/companion-schedules/by-companion-date', method: 'delete', params })
+  deleteByCompanionDate: (params) => request({ url: '/companion-schedules/by-companion-date', method: 'delete', params }),
+  /** 创建自由时间段(单日) */
+  createTimeRange: (params) => request({ url: '/companion-schedules/time-range', method: 'post', params }),
+  /** 批量创建自由时间段(多日) */
+  createTimeRangeBatch: (params) => request({ url: '/companion-schedules/time-range-batch', method: 'post', params })
 }
 
 /** 俱乐部配置API */
@@ -338,4 +342,17 @@ export const activityPackageApi = {
   create: (data) => request({ url: '/activity-packages', method: 'post', data }),
   update: (data) => request({ url: '/activity-packages', method: 'put', data }),
   delete: (id) => request({ url: `/activity-packages/${id}`, method: 'delete' })
+}
+
+/** 订单管理API */
+export const orderApi = {
+  getById: (id) => request({ url: `/orders/${id}`, method: 'get' }),
+  create: (data) => request({ url: '/orders', method: 'post', data }),
+  confirm: (id) => request({ url: `/orders/${id}/confirm`, method: 'put' }),
+  startService: (id) => request({ url: `/orders/${id}/start`, method: 'put' }),
+  completeOrder: (id) => request({ url: `/orders/${id}/complete`, method: 'put' }),
+  cancelOrder: (id, params) => request({ url: `/orders/${id}/cancel`, method: 'put', params }),
+  getActiveByUser: (userId) => request({ url: `/orders/active/user/${userId}`, method: 'get' }),
+  getByCompanion: (companionId) => request({ url: `/orders/companion/${companionId}`, method: 'get' }),
+  queryOrders: (params) => request({ url: '/orders/query', method: 'get', params })
 }

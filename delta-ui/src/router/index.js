@@ -123,6 +123,12 @@ const routes = [
         meta: { title: '排班管理', roles: ['SYS_ADMIN', 'CS_LEADER'] }
       },
       {
+        path: 'orders',
+        name: 'Orders',
+        component: () => import('@/views/Orders.vue'),
+        meta: { title: '订单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+      },
+      {
         path: 'ai-config',
         name: 'AIConfig',
         component: () => import('@/views/AIConfig.vue'),

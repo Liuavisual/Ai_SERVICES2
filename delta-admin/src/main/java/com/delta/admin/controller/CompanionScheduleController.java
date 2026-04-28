@@ -101,6 +101,31 @@ public class CompanionScheduleController {
         return Result.success();
     }
 
+    @Operation(summary = "创建自由时间段(单日)")
+    @PostMapping("/time-range")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    public Result<Void> createTimeRange(
+            @RequestParam(name = "companionId") Long companionId,
+            @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
+            @RequestParam(name = "rangeStart") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime rangeStart,
+            @RequestParam(name = "rangeEnd") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime rangeEnd) {
+        companionScheduleService.createTimeRange(companionId, scheduleDate, rangeStart, rangeEnd);
+        return Result.success();
+    }
+
+    @Operation(summary = "批量创建自由时间段(多日)")
+    @PostMapping("/time-range-batch")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    public Result<Void> createTimeRangeBatch(
+            @RequestParam(name = "companionId") Long companionId,
+            @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(name = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(name = "dailyStart") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime dailyStart,
+            @RequestParam(name = "dailyEnd") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime dailyEnd) {
+        companionScheduleService.createTimeRangeBatch(companionId, startDate, endDate, dailyStart, dailyEnd);
+        return Result.success();
+    }
+
     @Operation(summary = "更新陪玩师时间")
     @PutMapping
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")

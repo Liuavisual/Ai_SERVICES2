@@ -25,6 +25,7 @@ import com.delta.common.mapper.ServicePriceRuleMapper;
 import com.delta.common.mapper.CompanionMapper;
 import com.delta.common.service.CustomerProfileService;
 import com.delta.common.service.DeepSeekService;
+import com.delta.common.service.OrderService;
 import com.delta.common.service.PendingMessageService;
 import com.delta.common.service.RedisService;
 import com.delta.common.service.ReplyService;
@@ -91,6 +92,9 @@ public abstract class BaseMessageProcessService {
 
     @Autowired
     protected CompanionMapper companionMapper;
+
+    @Autowired(required = false)
+    protected OrderService orderService;
 
     protected HandoffState getHandoffState(Long userId) {
         try {
@@ -291,6 +295,11 @@ public abstract class BaseMessageProcessService {
                 messageWithContext = userMessage + "\n\n" + contextHint;
             }
 
+            String orderContext = buildOrderContextForUser(userId);
+            if (orderContext != null && !orderContext.isEmpty()) {
+                messageWithContext = messageWithContext + "\n\n" + orderContext;
+            }
+
             if (!personalityPrompt.isEmpty()) {
                 conversationHistory.add(0, new DeepSeekService.ChatMessage("system", personalityPrompt));
             }
@@ -325,6 +334,68 @@ public abstract class BaseMessageProcessService {
         } catch (Exception e) {
             log.debug("构建AI人格提示词失败", e);
             return "";
+        }
+    }
+
+    protected String buildOrderContextForUser(Long userId) {
+        if (orderService == null || userId == null) return null;
+        try {
+            List<com.delta.common.vo.OrderVO> activeOrders = orderService.getActiveOrdersByUserId(userId);
+            if (activeOrders == null || activeOrders.isEmpty()) return null;
+            StringBuilder sb = new StringBuilder("\n【用户活跃订单信息】\n");
+            for (com.delta.common.vo.OrderVO order : activeOrders) {
+                String startStr = order.getScheduledStart() != null ? 
+                    order.getScheduledStart().format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm")) : "未设置";
+                String endStr = order.getScheduledEnd() != null ? 
+                    order.getScheduledEnd().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) : "未设置";
+                sb.append(String.format("- 订单号:%s | 陪玩师:%s | 游戏:%s | 预约时间:%s~%s | 状态:%s | 金额:%s元\n",
+                    order.getOrderNo(),
+                    order.getCompanionName() != null ? order.getCompanionName() : "未知",
+                    order.getGameType() != null ? order.getGameType() : "-",
+                    startStr, endStr,
+                    order.getOrderStatusText(),
+                    order.getTotalAmount() != null ? order.getTotalAmount().toString() : "0"));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.debug("构建订单上下文失败: userId={}", userId, e);
+            return null;
+        }
+    }
+
+    protected boolean detectServiceCompletion(Long userId, String userMessage) {
+        if (userMessage == null || userMessage.isEmpty()) return false;
+        String trimmed = userMessage.trim();
+        for (String keyword : AiCustomerServiceConstants.SERVICE_COMPLETE_KEYWORDS) {
+            if (trimmed.contains(keyword)) return true;
+        }
+        return false;
+    }
+
+    protected boolean handleServiceCompletion(Long userId, String userMessage) {
+        if (orderService == null) return false;
+        try {
+            List<com.delta.common.vo.OrderVO> inProgressOrders = new ArrayList<>();
+            for (com.delta.common.vo.OrderVO vo : orderService.getActiveOrdersByUserId(userId)) {
+                if (BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS.equals(vo.getOrderStatus())) {
+                    inProgressOrders.add(vo);
+                }
+            }
+            if (!inProgressOrders.isEmpty()) {
+                for (com.delta.common.vo.OrderVO order : inProgressOrders) {
+                    try {
+                        orderService.completeOrder(order.getId());
+                        log.info("服务完成(自动检测): orderId={}, companion={}", order.getId(), order.getCompanionName());
+                    } catch (Exception e) {
+                        log.warn("自动完成订单失败: orderId={}", order.getId(), e);
+                    }
+                }
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("处理服务完成异常: userId={}", userId, e);
+            return false;
         }
     }
 

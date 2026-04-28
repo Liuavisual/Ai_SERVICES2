@@ -38,18 +38,19 @@
             <el-icon><Download /></el-icon>
             导出
           </el-button>
-          <el-button @click="importRef?.click()">
-            <el-icon><Upload /></el-icon>
-            导入
-          </el-button>
-          <input ref="importRef" type="file" accept=".xlsx,.xls" style="display:none" @change="handleImport" />
-          <el-button type="primary" @click="showBatchCreateDialog">批量生成</el-button>
+          <el-button type="primary" @click="showTimeRangeDialog">设置可用时间</el-button>
+          <el-button type="success" @click="showBatchRangeDialog">批量设置(多日)</el-button>
           <el-button @click="clearCurrentDay">清空当天</el-button>
         </div>
       </div>
 
-      <div class="schedule-grid" v-if="selectedCompanionId">
-        <el-table :data="timeSlots" stripe style="width: 100%">
+      <div class="time-range-panel" v-if="selectedCompanionId">
+        <div class="panel-header">
+          <span class="panel-title">{{ currentDate }} 可用时段</span>
+          <span class="panel-count">共 {{ schedules.length }} 条记录</span>
+        </div>
+        
+        <el-table :data="schedules" stripe style="width: 100%" v-if="schedules.length > 0">
           <el-table-column label="时间段" width="160">
             <template #default="{ row }">
               <strong>{{ row.timeSlot }}</strong>
@@ -86,43 +87,86 @@
                   <el-button link type="danger" size="small" @click="deleteSchedule(row)">删除</el-button>
                 </template>
               </template>
-              <template v-else>
-                <el-button type="primary" size="small" @click="addSchedule(row)">添加</el-button>
-              </template>
             </template>
           </el-table-column>
         </el-table>
+        <el-empty v-else description="当日暂无排班，请点击「设置可用时间」添加" />
       </div>
       <el-empty v-else description="请先选择陪玩师" />
     </el-card>
 
-    <el-dialog v-model="batchDialogVisible" title="批量生成时间" width="600px">
-      <el-form :model="batchForm" label-width="100px">
-        <el-form-item label="开始日期">
-          <el-date-picker
-            v-model="batchForm.startDate"
-            type="date"
-            value-format="YYYY-MM-DD"
-            placeholder="选择开始日期"
+    <el-dialog v-model="rangeDialogVisible" title="设置可用时间" width="500px">
+      <el-form :model="rangeForm" label-width="100px">
+        <el-form-item label="开始时间" required>
+          <el-time-picker
+            v-model="rangeForm.rangeStart"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            placeholder="选择开始时间"
+            style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="结束日期">
-          <el-date-picker
-            v-model="batchForm.endDate"
-            type="date"
-            value-format="YYYY-MM-DD"
-            placeholder="选择结束日期"
+        <el-form-item label="结束时间" required>
+          <el-time-picker
+            v-model="rangeForm.rangeEnd"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            placeholder="选择结束时间"
+            style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="时间段">
-          <el-checkbox-group v-model="batchForm.timeSlots">
-            <el-checkbox v-for="slot in defaultTimeSlots" :key="slot" :value="slot">{{ slot }}</el-checkbox>
-          </el-checkbox-group>
+        <el-form-item label="备注">
+          <el-input v-model="rangeForm.remark" type="textarea" :rows="2" placeholder="可选，如：晚饭休息" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="batchDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitBatchCreate" :loading="batchLoading">确定</el-button>
+        <el-button @click="rangeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitTimeRange" :loading="rangeLoading">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="batchRangeDialogVisible" title="批量设置可用时间（多日）" width="550px">
+      <el-form :model="batchRangeForm" label-width="100px">
+        <el-form-item label="开始日期" required>
+          <el-date-picker
+            v-model="batchRangeForm.startDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择开始日期"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="结束日期" required>
+          <el-date-picker
+            v-model="batchRangeForm.endDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            placeholder="选择结束日期"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="每日开始" required>
+          <el-time-picker
+            v-model="batchRangeForm.dailyStart"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            placeholder="如: 19:00"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="每日结束" required>
+          <el-time-picker
+            v-model="batchRangeForm.dailyEnd"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            placeholder="如: 23:30"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchRangeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitBatchRange" :loading="batchRangeLoading">确定</el-button>
       </template>
     </el-dialog>
 
@@ -148,10 +192,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, ArrowRight, Download, Upload } from '@element-plus/icons-vue'
-import { companionScheduleApi, companionApi, downloadExcel, uploadExcel } from '@/api'
+import { ArrowLeft, ArrowRight, Download } from '@element-plus/icons-vue'
+import { companionScheduleApi, companionApi, downloadExcel } from '@/api'
 
 const props = defineProps({
   companionId: {
@@ -160,26 +204,31 @@ const props = defineProps({
   }
 })
 
+defineExpose({ refresh: fetchSchedules })
+
 const emit = defineEmits(['refresh'])
 
 const companionList = ref([])
 const selectedCompanionId = ref(null)
 const currentDate = ref(new Date().toISOString().split('T')[0])
 const schedules = ref([])
-const batchDialogVisible = ref(false)
+const rangeDialogVisible = ref(false)
+const batchRangeDialogVisible = ref(false)
 const editDialogVisible = ref(false)
-const batchLoading = ref(false)
+const rangeLoading = ref(false)
+const batchRangeLoading = ref(false)
 
-const defaultTimeSlots = [
-  '08:00-10:00', '10:00-12:00', '12:00-14:00',
-  '14:00-16:00', '16:00-18:00', '18:00-20:00',
-  '20:00-22:00', '22:00-24:00'
-]
+const rangeForm = reactive({
+  rangeStart: '',
+  rangeEnd: '',
+  remark: ''
+})
 
-const batchForm = reactive({
+const batchRangeForm = reactive({
   startDate: null,
   endDate: null,
-  timeSlots: []
+  dailyStart: '',
+  dailyEnd: ''
 })
 
 const editForm = reactive({
@@ -189,24 +238,6 @@ const editForm = reactive({
 })
 
 const activeCompanionId = computed(() => props.companionId || selectedCompanionId.value)
-
-const timeSlots = computed(() => {
-  return defaultTimeSlots.map(slot => {
-    const existing = schedules.value.find(s => s.timeSlot === slot)
-    if (existing) {
-      return { ...existing, exists: true }
-    }
-    const [start, end] = slot.split('-')
-    return {
-      timeSlot: slot,
-      startTime: start + ':00',
-      endTime: end + ':00',
-      status: null,
-      remark: '',
-      exists: false
-    }
-  })
-})
 
 const getStatusType = (status) => {
   const map = { 'AVAILABLE': 'success', 'BOOKED': 'warning', 'UNAVAILABLE': 'danger' }
@@ -237,7 +268,7 @@ const fetchSchedules = async () => {
       scheduleDate: currentDate.value
     })
     if (res.code === 200) {
-      schedules.value = res.data
+      schedules.value = (res.data || []).map(s => ({ ...s, exists: true }))
     }
   } catch (error) {
     ElMessage.error('获取排班失败')
@@ -262,23 +293,73 @@ const nextDay = () => {
   currentDate.value = date.toISOString().split('T')[0]
 }
 
-const addSchedule = async (slot) => {
+const showTimeRangeDialog = () => {
+  rangeForm.rangeStart = ''
+  rangeForm.rangeEnd = ''
+  rangeForm.remark = ''
+  rangeDialogVisible.value = true
+}
+
+const submitTimeRange = async () => {
+  if (!rangeForm.rangeStart || !rangeForm.rangeEnd) {
+    ElMessage.warning('请选择开始和结束时间')
+    return
+  }
+  rangeLoading.value = true
   try {
-    const [start, end] = slot.timeSlot.split('-')
-    await companionScheduleApi.create({
+    await companionScheduleApi.createTimeRange({
       companionId: activeCompanionId.value,
       scheduleDate: currentDate.value,
-      timeSlot: slot.timeSlot,
-      startTime: start + ':00',
-      endTime: end + ':00',
-      status: 'AVAILABLE',
-      remark: ''
+      rangeStart: rangeForm.rangeStart,
+      rangeEnd: rangeForm.rangeEnd
     })
     ElMessage.success('添加成功')
+    rangeDialogVisible.value = false
     fetchSchedules()
   } catch (error) {
     console.error('添加失败', error)
-    ElMessage.error('添加失败')
+    ElMessage.error(error?.response?.data?.message || '添加失败')
+  } finally {
+    rangeLoading.value = false
+  }
+}
+
+const showBatchRangeDialog = () => {
+  batchRangeForm.startDate = currentDate.value
+  const endDate = new Date(currentDate.value)
+  endDate.setDate(endDate.getDate() + 6)
+  batchRangeForm.endDate = endDate.toISOString().split('T')[0]
+  batchRangeForm.dailyStart = ''
+  batchRangeForm.dailyEnd = ''
+  batchRangeDialogVisible.value = true
+}
+
+const submitBatchRange = async () => {
+  if (!batchRangeForm.startDate || !batchRangeForm.endDate) {
+    ElMessage.warning('请选择日期范围')
+    return
+  }
+  if (!batchRangeForm.dailyStart || !batchRangeForm.dailyEnd) {
+    ElMessage.warning('请选择每日时间范围')
+    return
+  }
+  batchRangeLoading.value = true
+  try {
+    await companionScheduleApi.createTimeRangeBatch({
+      companionId: activeCompanionId.value,
+      startDate: batchRangeForm.startDate,
+      endDate: batchRangeForm.endDate,
+      dailyStart: batchRangeForm.dailyStart,
+      dailyEnd: batchRangeForm.dailyEnd
+    })
+    ElMessage.success('批量创建成功')
+    batchRangeDialogVisible.value = false
+    fetchSchedules()
+  } catch (error) {
+    console.error('批量创建失败', error)
+    ElMessage.error(error?.response?.data?.message || '批量创建失败')
+  } finally {
+    batchRangeLoading.value = false
   }
 }
 
@@ -336,44 +417,6 @@ const deleteSchedule = (row) => {
   }).catch(() => {})
 }
 
-const showBatchCreateDialog = () => {
-  batchForm.startDate = currentDate.value
-  const endDate = new Date(currentDate.value)
-  endDate.setDate(endDate.getDate() + 6)
-  batchForm.endDate = endDate.toISOString().split('T')[0]
-  batchForm.timeSlots = [...defaultTimeSlots]
-  batchDialogVisible.value = true
-}
-
-const submitBatchCreate = async () => {
-  if (!batchForm.startDate || !batchForm.endDate) {
-    ElMessage.warning('请选择日期范围')
-    return
-  }
-  if (batchForm.timeSlots.length === 0) {
-    ElMessage.warning('请选择时间段')
-    return
-  }
-
-  batchLoading.value = true
-  try {
-    const params = {
-      companionId: activeCompanionId.value,
-      startDate: batchForm.startDate,
-      endDate: batchForm.endDate
-    }
-    await companionScheduleApi.createBatch(params, batchForm.timeSlots)
-    ElMessage.success('批量生成成功')
-    batchDialogVisible.value = false
-    fetchSchedules()
-  } catch (error) {
-    console.error('批量生成失败', error)
-    ElMessage.error('批量生成失败')
-  } finally {
-    batchLoading.value = false
-  }
-}
-
 const clearCurrentDay = () => {
   ElMessageBox.confirm('确定要清空当天所有时间吗？', '提示', {
     confirmButtonText: '确定',
@@ -394,27 +437,11 @@ const clearCurrentDay = () => {
   }).catch(() => {})
 }
 
-const importRef = ref(null)
-
 const handleExport = () => {
   const params = {}
   if (activeCompanionId.value) params.companionId = activeCompanionId.value
   if (currentDate.value) params.scheduleDate = currentDate.value
   downloadExcel('/companion-schedules/export', params, '排班管理.xlsx')
-}
-
-const handleImport = async (event) => {
-  const file = event.target.files?.[0]
-  if (!file) return
-  try {
-    const res = await uploadExcel('/companion-schedules/import', file)
-    ElMessage.success(`导入完成：成功${res.data.success}条，失败${res.data.fail}条，共${res.data.total}条`)
-    fetchSchedules()
-  } catch (e) {
-    ElMessage.error('导入失败')
-  } finally {
-    event.target.value = ''
-  }
 }
 
 watch(() => props.companionId, (val) => {
@@ -435,8 +462,6 @@ onMounted(() => {
     fetchSchedules()
   }
 })
-
-defineExpose({ refresh: fetchSchedules })
 </script>
 
 <style scoped>
@@ -466,5 +491,18 @@ defineExpose({ refresh: fetchSchedules })
   flex-wrap: wrap;
 }
 
-.schedule-grid { margin-top: 10px; }
+.time-range-panel { margin-top: 10px; }
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.panel-title { font-size: 15px; font-weight: 600; color: #303133; }
+
+.panel-count { font-size: 13px; color: #909399; }
 </style>

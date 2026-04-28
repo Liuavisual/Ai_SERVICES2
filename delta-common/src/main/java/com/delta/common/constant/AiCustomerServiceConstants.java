@@ -34,6 +34,17 @@ public final class AiCustomerServiceConstants {
             "再也不来了", "差评", "举报", "拉黑", "骗子", "黑心"
     ));
 
+    public static final List<String> SERVICE_COMPLETE_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
+            "打完了", "结束了", "完事了", "结束服务", "打完了局",
+            "游戏结束", "不玩了", "下线了", "收工了", "今天到这",
+            "就到这里", "差不多了", "可以了", "够了", "好了不用了"
+    ));
+
+    public static final List<String> REVIEW_REQUEST_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
+            "给好评", "给个好评", "好评", "评价一下", "打个分",
+            "评分", "五星好评", "写个评价", "要评价", "想评价"
+    ));
+
     public static final int AI_CONSECUTIVE_FAILURE_THRESHOLD = 3;
 
     public static final String AI_CONSECUTIVE_KEY_PREFIX = "delta:ai:consecutive:";

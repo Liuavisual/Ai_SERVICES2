@@ -5,6 +5,7 @@ import com.delta.common.dto.CompanionScheduleDTO;
 import com.delta.common.vo.CompanionScheduleVO;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -25,6 +26,10 @@ public interface CompanionScheduleService {
     void create(CompanionScheduleDTO dto);
 
     void createBatch(Long companionId, LocalDate startDate, LocalDate endDate, List<String> timeSlots);
+
+    void createTimeRange(Long companionId, LocalDate scheduleDate, LocalTime rangeStart, LocalTime rangeEnd);
+
+    void createTimeRangeBatch(Long companionId, LocalDate startDate, LocalDate endDate, LocalTime dailyStart, LocalTime dailyEnd);
 
     void update(CompanionScheduleDTO dto);
 

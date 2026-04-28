@@ -30,6 +30,14 @@ public class WeChatMessageServiceImpl extends BaseMessageProcessService implemen
             User user = getOrCreateUser(fromUser);
             Message inMessage = saveIncomingMessage(user.getId(), content);
 
+            if (detectServiceCompletion(user.getId(), content)) {
+                log.info("【检测到服务完成信号(微信)】fromUser={}", fromUser);
+                boolean completed = handleServiceCompletion(user.getId(), content);
+                if (completed) {
+                    log.info("【自动完成订单+触发评价(微信)】fromUser={}", fromUser);
+                }
+            }
+
             HandoffState handoffState = getHandoffState(user.getId());
 
             if (handoffState == HandoffState.IN_SERVICE) {
