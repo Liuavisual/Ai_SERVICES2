@@ -816,7 +816,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
             score += 0.5;
         }
 
-        if ("DECREASING".equals(p.getSpendingTrend())) score += 1.0;
+        if (CustomerProfileConstants.SPENDING_TREND_DECREASING.equals(p.getSpendingTrend())) score += 1.0;
 
         return BigDecimal.valueOf(Math.min(score, 10.0)).setScale(1, RoundingMode.HALF_UP);
     }

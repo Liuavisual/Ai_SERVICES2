@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.FaqItemDTO;
 import com.delta.common.entity.FaqItem;
@@ -90,7 +91,7 @@ public class FaqItemController {
             map.put("question", item.getQuestion());
             map.put("answer", item.getAnswer());
             map.put("sortOrder", item.getSortOrder());
-            map.put("enabled", item.getEnabled() != null && item.getEnabled() == 1 ? "启用" : "禁用");
+            map.put("enabled", item.getEnabled() != null && Integer.valueOf(BusinessStatusConstants.ENABLED_INT).equals(item.getEnabled()) ? "启用" : "禁用");
             return map;
         });
     }

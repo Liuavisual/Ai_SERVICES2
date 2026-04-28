@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.dto.ActivityPackageDTO;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.ActivityPackageService;
 import com.delta.common.util.ExcelUtils;
 import com.delta.common.vo.ActivityPackageVO;
@@ -105,7 +106,7 @@ public class ActivityPackageController {
             map.put("packagePrice", item.getPackagePrice());
             map.put("originalPrice", item.getOriginalPrice());
             map.put("serviceItemNames", item.getServiceItemNames());
-            map.put("enabled", item.getEnabled() != null && item.getEnabled() == 1 ? "启用" : "禁用");
+            map.put("enabled", item.getEnabled() != null && Integer.valueOf(BusinessStatusConstants.ENABLED_INT).equals(item.getEnabled()) ? "启用" : "禁用");
             map.put("startTime", item.getStartTime() != null ? item.getStartTime().toString() : "");
             map.put("endTime", item.getEndTime() != null ? item.getEndTime().toString() : "");
             map.put("description", item.getDescription());

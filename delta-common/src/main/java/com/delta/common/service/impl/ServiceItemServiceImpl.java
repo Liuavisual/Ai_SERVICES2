@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.delta.common.dto.ServiceItemDTO;
 import com.delta.common.dto.ServicePriceRuleDTO;
 import com.delta.common.entity.CompanionLevel;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.entity.GameConfig;
 import com.delta.common.entity.ServiceItem;
 import com.delta.common.entity.ServicePriceRule;
@@ -76,9 +77,9 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     public void create(ServiceItemDTO dto) {
         ServiceItem item = new ServiceItem();
         BeanUtil.copyProperties(dto, item);
-        if (item.getEnabled() == null) item.setEnabled(1);
-        if (item.getSortOrder() == null) item.setSortOrder(0);
-        if (item.getPriceUnit() == null) item.setPriceUnit("HOUR");
+        if (item.getEnabled() == null) item.setEnabled(BusinessStatusConstants.ENABLED_INT);
+        if (item.getSortOrder() == null) item.setSortOrder(BusinessStatusConstants.DISABLED_INT);
+        if (item.getPriceUnit() == null) item.setPriceUnit(BusinessStatusConstants.PRICE_UNIT_HOUR);
         serviceItemMapper.insert(item);
     }
 
@@ -119,8 +120,8 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     public void savePriceRule(ServicePriceRuleDTO dto) {
         ServicePriceRule rule = new ServicePriceRule();
         BeanUtil.copyProperties(dto, rule);
-        if (rule.getEnabled() == null) rule.setEnabled(1);
-        if (rule.getPriceUnit() == null) rule.setPriceUnit("HOUR");
+        if (rule.getEnabled() == null) rule.setEnabled(BusinessStatusConstants.ENABLED_INT);
+        if (rule.getPriceUnit() == null) rule.setPriceUnit(BusinessStatusConstants.PRICE_UNIT_HOUR);
 
         if (dto.getId() != null) {
             servicePriceRuleMapper.updateById(rule);

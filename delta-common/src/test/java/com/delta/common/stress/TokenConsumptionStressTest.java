@@ -116,7 +116,7 @@ public class TokenConsumptionStressTest {
             "人工", "好的，马上为您转接人工客服！"
     );
 
-    private static final List<String> DIRECT_KEYWORDS = AiCustomerServiceConstants.DIRECT_REPLY_KEYWORDS;
+    private static final Set<String> DIRECT_KEYWORDS = AiCustomerServiceConstants.DIRECT_REPLY_KEYWORDS;
 
     @SuppressWarnings("null")
     @BeforeEach

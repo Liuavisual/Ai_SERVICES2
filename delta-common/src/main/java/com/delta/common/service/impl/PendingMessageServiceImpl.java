@@ -264,7 +264,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         String nickname = user.getNickname();
 
         NotificationVO notification = new NotificationVO();
-        notification.setType("pending_message");
+        notification.setType(BusinessStatusConstants.NOTIFICATION_TYPE_PENDING_MESSAGE);
         notification.setPendingMessageId(pendingMessage.getId());
         notification.setUserId(userId);
         notification.setUserNickname(nickname);

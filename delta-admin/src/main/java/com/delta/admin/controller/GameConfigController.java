@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.dto.GameConfigDTO;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.GameConfigService;
 import com.delta.common.util.ExcelUtils;
 import com.delta.common.vo.GameConfigVO;
@@ -86,7 +87,7 @@ public class GameConfigController {
             map.put("gameName", item.getGameName());
             map.put("gameCode", item.getGameCode());
             map.put("gameType", item.getGameType());
-            map.put("enabled", item.getEnabled() != null && item.getEnabled() == 1 ? "启用" : "禁用");
+            map.put("enabled", item.getEnabled() != null && Integer.valueOf(BusinessStatusConstants.ENABLED_INT).equals(item.getEnabled()) ? "启用" : "禁用");
             map.put("sortOrder", item.getSortOrder());
             map.put("description", item.getDescription());
             map.put("createdAt", item.getCreatedAt() != null ? item.getCreatedAt().toString() : "");

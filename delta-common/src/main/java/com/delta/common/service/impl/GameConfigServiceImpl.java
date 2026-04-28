@@ -46,8 +46,8 @@ public class GameConfigServiceImpl implements GameConfigService {
     public void create(GameConfigDTO dto) {
         GameConfig config = new GameConfig();
         BeanUtil.copyProperties(dto, config);
-        if (config.getEnabled() == null) config.setEnabled(1);
-        if (config.getSortOrder() == null) config.setSortOrder(0);
+        if (config.getEnabled() == null) config.setEnabled(BusinessStatusConstants.ENABLED_INT);
+        if (config.getSortOrder() == null) config.setSortOrder(BusinessStatusConstants.DISABLED_INT);
         if (config.getGameType() == null) config.setGameType(BusinessStatusConstants.GAME_TYPE_FPS);
         gameConfigMapper.insert(config);
     }

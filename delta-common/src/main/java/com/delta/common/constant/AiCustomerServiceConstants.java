@@ -2,7 +2,9 @@ package com.delta.common.constant;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public final class AiCustomerServiceConstants {
 
@@ -62,12 +64,12 @@ public final class AiCustomerServiceConstants {
             "排班", "时间表", "可约时间", "什么时候可以"
     ));
 
-    public static final List<String> VIP_MEMBER_LEVELS = Collections.unmodifiableList(Arrays.asList(
+    public static final Set<String> VIP_MEMBER_LEVELS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             CustomerProfileConstants.MEMBER_LEVEL_SILVER,
             CustomerProfileConstants.MEMBER_LEVEL_GOLD,
             CustomerProfileConstants.MEMBER_LEVEL_PLATINUM,
             CustomerProfileConstants.MEMBER_LEVEL_DIAMOND
-    ));
+    )));
 
     public static final List<String> REVIEW_REQUEST_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
             "给好评", "给个好评", "好评", "评价一下", "打个分",
@@ -80,9 +82,9 @@ public final class AiCustomerServiceConstants {
 
     public static final long AI_CONSECUTIVE_TTL_MINUTES = 30;
 
-    public static final List<String> DIRECT_REPLY_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
+    public static final Set<String> DIRECT_REPLY_KEYWORDS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "价格"
-    ));
+    )));
 
     public static final int CONVERSATION_HISTORY_LIMIT = 6;
 

@@ -72,8 +72,8 @@ public class ActivityPackageServiceImpl implements ActivityPackageService {
     public void create(ActivityPackageDTO dto) {
         ActivityPackage pkg = new ActivityPackage();
         BeanUtil.copyProperties(dto, pkg);
-        if (pkg.getEnabled() == null) pkg.setEnabled(1);
-        if (pkg.getSortOrder() == null) pkg.setSortOrder(0);
+        if (pkg.getEnabled() == null) pkg.setEnabled(BusinessStatusConstants.ENABLED_INT);
+        if (pkg.getSortOrder() == null) pkg.setSortOrder(BusinessStatusConstants.DISABLED_INT);
         activityPackageMapper.insert(pkg);
     }
 
@@ -122,7 +122,7 @@ public class ActivityPackageServiceImpl implements ActivityPackageService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        if (pkg.getEnabled() != null && pkg.getEnabled() == 1) {
+        if (pkg.getEnabled() != null && Integer.valueOf(BusinessStatusConstants.ENABLED_INT).equals(pkg.getEnabled())) {
             if (pkg.getStartTime() != null && pkg.getEndTime() != null) {
                 if (now.isAfter(pkg.getStartTime()) && now.isBefore(pkg.getEndTime())) {
                     vo.setStatus("进行中");

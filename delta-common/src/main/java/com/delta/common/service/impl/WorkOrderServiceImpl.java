@@ -433,7 +433,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             if (!isAssigned && !isHandler && !isCustomerCs) {
                 throw new BusinessException("无权操作此工单");
             }
-            if (List.of("DELETE", "EXPORT").contains(action)) {
+            if (Set.of("DELETE", "EXPORT").contains(action)) {
                 throw new BusinessException("无权执行此操作");
             }
         }
