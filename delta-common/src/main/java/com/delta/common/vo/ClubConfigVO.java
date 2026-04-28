@@ -1,15 +1,19 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class ClubConfigVO {
+@EqualsAndHashCode(callSuper = true)
+public class ClubConfigVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String clubName;
     private String clubLogo;
@@ -28,13 +32,10 @@ public class ClubConfigVO {
 
     @Deprecated
     private BigDecimal priceLevelTwo;
-
     @Deprecated
     private BigDecimal priceLevelOne;
-
     @Deprecated
     private BigDecimal priceTop;
-
     @Deprecated
     private BigDecimal priceStar;
 }

@@ -1,5 +1,6 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,21 +8,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginVO {
+public class LoginVO extends BaseVO {
 
     private String token;
-
     private String refreshToken;
-
     private Long expiresIn;
-
+    @ObfuscatedId
     private Long userId;
-
     private String username;
-
     private String realName;
-
     private String role;
-
     private String roleDesc;
 }

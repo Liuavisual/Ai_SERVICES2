@@ -1,12 +1,17 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.time.LocalDateTime;
 
 @Data
-public class ReplyVO {
+@EqualsAndHashCode(callSuper = true)
+public class ReplyVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String triggerType;
     private String triggerKey;

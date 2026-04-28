@@ -1,16 +1,23 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class OrderVO {
+@EqualsAndHashCode(callSuper = true)
+public class OrderVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String orderNo;
+    @ObfuscatedId
     private Long userId;
+    @ObfuscatedId
     private Long companionId;
     private String companionName;
     private String companionAvatar;

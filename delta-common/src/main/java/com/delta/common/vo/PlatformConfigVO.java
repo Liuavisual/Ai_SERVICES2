@@ -1,16 +1,19 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.delta.common.util.DesensitizeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class PlatformConfigVO {
+@EqualsAndHashCode(callSuper = true)
+public class PlatformConfigVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String platform;
     private Boolean enabled;
@@ -23,19 +26,13 @@ public class PlatformConfigVO {
     private LocalDateTime updatedAt;
 
     public Map<String, Object> getConfig() {
-        if (config == null) {
-            return null;
+        if (config != null) {
+            config.forEach((key, value) -> {
+                if (value instanceof String && DesensitizeUtils.isSensitiveKey(key)) {
+                    config.put(key, DesensitizeUtils.maskSecret((String) value));
+                }
+            });
         }
-        Map<String, Object> maskedConfig = new HashMap<>();
-        for (Map.Entry<String, Object> entry : config.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
-            if (value instanceof String && DesensitizeUtils.isSensitiveKey(key)) {
-                maskedConfig.put(key, DesensitizeUtils.maskSecret((String) value));
-            } else {
-                maskedConfig.put(key, value);
-            }
-        }
-        return maskedConfig;
+        return config;
     }
 }

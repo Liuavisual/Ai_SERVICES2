@@ -1,13 +1,19 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.time.LocalDateTime;
 
 @Data
-public class MessageVO {
+@EqualsAndHashCode(callSuper = true)
+public class MessageVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
+    @ObfuscatedId
     private Long userId;
     private String direction;
     private String content;
@@ -18,76 +24,4 @@ public class MessageVO {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getDirection() {
-        return direction;
-    }
-
-    public void setDirection(String direction) {
-        this.direction = direction;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Boolean getAi() {
-        return ai;
-    }
-
-    public void setAi(Boolean ai) {
-        this.ai = ai;
-    }
-
-    public Boolean getKeywordTriggered() {
-        return keywordTriggered;
-    }
-
-    public void setKeywordTriggered(Boolean keywordTriggered) {
-        this.keywordTriggered = keywordTriggered;
-    }
-
-    public String getUserNickname() {
-        return userNickname;
-    }
-
-    public void setUserNickname(String userNickname) {
-        this.userNickname = userNickname;
-    }
-
-    public String getUserPlatform() {
-        return userPlatform;
-    }
-
-    public void setUserPlatform(String userPlatform) {
-        this.userPlatform = userPlatform;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 }

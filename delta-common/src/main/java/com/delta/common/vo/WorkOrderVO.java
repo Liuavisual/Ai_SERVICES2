@@ -1,14 +1,18 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class WorkOrderVO {
+@EqualsAndHashCode(callSuper = true)
+public class WorkOrderVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String orderNo;
     private String orderType;
@@ -19,6 +23,7 @@ public class WorkOrderVO {
     private String platformDesc;
     private String status;
     private String statusDesc;
+    @ObfuscatedId
     private Long userId;
     private String customerName;
     private String customerContact;
@@ -29,8 +34,10 @@ public class WorkOrderVO {
     private String problemCategory;
     private String triggerKeyword;
     private String contextSummary;
+    @ObfuscatedId
     private Long assignedCsUserId;
     private String assignedCsName;
+    @ObfuscatedId
     private Long handlerId;
     private String handlerName;
     private String handleResult;
@@ -38,7 +45,9 @@ public class WorkOrderVO {
     private LocalDateTime deadline;
     private Integer escalationLevel;
     private Integer reminderCount;
+    @ObfuscatedId
     private Long relatedOrderId;
+    @ObfuscatedId
     private Long relatedCompanionId;
     private String relatedCompanionName;
     private Integer satisfactionScore;

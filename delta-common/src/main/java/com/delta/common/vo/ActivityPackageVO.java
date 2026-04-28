@@ -1,16 +1,23 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class ActivityPackageVO {
+@EqualsAndHashCode(callSuper = true)
+public class ActivityPackageVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
+    @JsonIgnore
     private Long clubConfigId;
+    @ObfuscatedId
     private Long gameConfigId;
     private String gameName;
     private String title;

@@ -1,14 +1,18 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class CompanionLevelVO {
+@EqualsAndHashCode(callSuper = true)
+public class CompanionLevelVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String levelName;
     private String levelCode;

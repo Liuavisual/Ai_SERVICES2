@@ -1,20 +1,19 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.delta.common.util.DesensitizeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@SuppressWarnings("unused")
-public class AiConfigVO {
+@EqualsAndHashCode(callSuper = true)
+public class AiConfigVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
     private String configKey;
     private String configType;
@@ -28,14 +27,10 @@ public class AiConfigVO {
 
     @JsonIgnore
     private String configValueRaw;
-
     private String configValue;
 
     public String getConfigValue() {
-        if (configValueRaw == null) {
-            return null;
-        }
-        if (DesensitizeUtils.isSensitiveKey(configKey)) {
+        if (configValueRaw != null && DesensitizeUtils.isSensitiveKey(configKey)) {
             return DesensitizeUtils.maskSecret(configValueRaw);
         }
         return configValueRaw;

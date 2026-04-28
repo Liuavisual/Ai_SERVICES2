@@ -1,17 +1,24 @@
 package com.delta.common.vo;
 
+import com.delta.common.annotation.ObfuscatedId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-public class ServiceItemVO {
+@EqualsAndHashCode(callSuper = true)
+public class ServiceItemVO extends BaseVO {
 
+    @ObfuscatedId
     private Long id;
+    @JsonIgnore
     private Long clubConfigId;
+    @ObfuscatedId
     private Long gameConfigId;
     private String gameName;
     private String itemName;
