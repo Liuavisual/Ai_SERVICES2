@@ -166,6 +166,28 @@ public abstract class BaseMessageProcessService {
         return null;
     }
 
+    protected String checkPriceInquiry(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return null;
+        }
+        for (String keyword : AiCustomerServiceConstants.PRICE_INQUIRY_KEYWORDS) {
+            if (content.contains(keyword)) {
+                return keyword;
+            }
+        }
+        return null;
+    }
+
+    protected boolean isPurePriceInquiry(String content, String priceKeyword) {
+        if (content == null || priceKeyword == null) return false;
+        String trimmed = content.trim();
+        String orderIntent = checkOrderIntent(trimmed);
+        if (orderIntent != null) return false;
+        String humanExplicit = checkHumanExplicit(trimmed);
+        if (humanExplicit != null) return false;
+        return true;
+    }
+
     protected String checkHumanExplicit(String content) {
         if (content == null || content.trim().isEmpty()) {
             return null;

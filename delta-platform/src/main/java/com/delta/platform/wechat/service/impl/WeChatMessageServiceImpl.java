@@ -60,10 +60,12 @@ public class WeChatMessageServiceImpl extends BaseMessageProcessService implemen
             }
 
             String orderIntent = checkOrderIntent(content);
+            String priceInquiry = checkPriceInquiry(content);
             String humanExplicit = checkHumanExplicit(content);
             String negativeEmotion = checkNegativeEmotion(content);
             boolean aiConsecutiveFailure = checkAiConsecutiveFailure(user.getId());
             boolean needsHumanHandoff = false;
+            boolean isPriceInquiryOnly = false;
             String handoffReason = null;
 
             if (humanExplicit != null) {
@@ -74,6 +76,11 @@ public class WeChatMessageServiceImpl extends BaseMessageProcessService implemen
                 needsHumanHandoff = true;
                 if (matchedKeyword == null) matchedKeyword = negativeEmotion;
                 handoffReason = negativeEmotion;
+            } else if (priceInquiry != null && isPurePriceInquiry(content, priceInquiry)) {
+                log.info("【微信-检测到纯价格咨询】关键词: {}，走AI价格通道", priceInquiry);
+                isPriceInquiryOnly = true;
+                if (matchedKeyword == null) matchedKeyword = priceInquiry;
+                resetAiConsecutiveFailure(user.getId());
             } else if (orderIntent != null) {
                 needsHumanHandoff = true;
                 if (matchedKeyword == null) matchedKeyword = orderIntent;
@@ -91,6 +98,22 @@ public class WeChatMessageServiceImpl extends BaseMessageProcessService implemen
                 replyContent = getHandoffReply(handoffReason, negativeEmotion, aiConsecutiveFailure);
                 isAiReply = false;
                 resetAiConsecutiveFailure(user.getId());
+            } else if (isPriceInquiryOnly) {
+                String contextHint = "[客户咨询价格信息，请根据陪玩等级、服务项目价格表准确回答]";
+                String aiReply = tryDeepSeekAI(user.getId(), content, contextHint);
+                if (aiReply != null) {
+                    replyContent = aiReply;
+                    isAiReply = true;
+                } else {
+                    String directReply = tryDirectKeywordReply(priceInquiry, content);
+                    if (directReply != null) {
+                        replyContent = directReply;
+                        isAiReply = false;
+                    }
+                }
+                if (replyContent == null) {
+                    replyContent = AiCustomerServiceConstants.DEFAULT_FALLBACK_REPLY;
+                }
             } else if (matchedKeyword != null) {
                 String directReply = tryDirectKeywordReply(matchedKeyword, content);
                 if (directReply != null) {
@@ -106,6 +129,8 @@ public class WeChatMessageServiceImpl extends BaseMessageProcessService implemen
                 if (aiReply != null) {
                     replyContent = aiReply;
                     isAiReply = true;
+                    resetAiConsecutiveFailure(user.getId());
+                } else {
                     trackAiConsecutiveFailure(user.getId());
                 }
             }

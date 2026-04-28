@@ -75,10 +75,12 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
             }
 
             String orderIntent = checkOrderIntent(content);
+            String priceInquiry = checkPriceInquiry(content);
             String humanExplicit = checkHumanExplicit(content);
             String negativeEmotion = checkNegativeEmotion(content);
             boolean aiConsecutiveFailure = checkAiConsecutiveFailure(user.getId());
             boolean needsHumanHandoff = false;
+            boolean isPriceInquiryOnly = false;
             String handoffReason = null;
 
             if (humanExplicit != null) {
@@ -91,6 +93,11 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                 needsHumanHandoff = true;
                 if (matchedKeyword == null) matchedKeyword = negativeEmotion;
                 handoffReason = negativeEmotion;
+            } else if (priceInquiry != null && isPurePriceInquiry(content, priceInquiry)) {
+                log.info("【检测到纯价格咨询】关键词: {}，走AI价格通道", priceInquiry);
+                isPriceInquiryOnly = true;
+                if (matchedKeyword == null) matchedKeyword = priceInquiry;
+                resetAiConsecutiveFailure(user.getId());
             } else if (orderIntent != null) {
                 log.info("【检测到下单/预约意图】关键词: {}", orderIntent);
                 needsHumanHandoff = true;
@@ -112,6 +119,25 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                 isAiReply = false;
                 responseSource = ResponseSource.HANDOFF_REPLY;
                 resetAiConsecutiveFailure(user.getId());
+            } else if (isPriceInquiryOnly) {
+                String contextHint = "[客户咨询价格信息，请根据陪玩等级、服务项目价格表准确回答]";
+                String aiReply = tryDeepSeekAI(user.getId(), content, contextHint);
+                if (aiReply != null) {
+                    replyContent = aiReply;
+                    isAiReply = true;
+                    responseSource = ResponseSource.AI_REPLY;
+                } else {
+                    String directReply = tryDirectKeywordReply(priceInquiry, content);
+                    if (directReply != null) {
+                        replyContent = directReply;
+                        isAiReply = false;
+                        responseSource = ResponseSource.KEYWORD_DIRECT;
+                    }
+                }
+                if (replyContent == null) {
+                    replyContent = AiCustomerServiceConstants.DEFAULT_FALLBACK_REPLY;
+                    responseSource = ResponseSource.DEFAULT_FALLBACK;
+                }
             } else if (matchedKeyword != null) {
                 String directReply = tryDirectKeywordReply(matchedKeyword, content);
                 if (directReply != null) {
@@ -129,6 +155,8 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
                     replyContent = aiReply;
                     isAiReply = true;
                     responseSource = ResponseSource.AI_REPLY;
+                    resetAiConsecutiveFailure(user.getId());
+                } else {
                     trackAiConsecutiveFailure(user.getId());
                 }
             }

@@ -40,6 +40,13 @@ public final class AiCustomerServiceConstants {
             "就到这里", "差不多了", "可以了", "够了", "好了不用了"
     ));
 
+    public static final List<String> PRICE_INQUIRY_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
+            "价格", "多少钱", "收费", "费用", "怎么收费", "收费标准",
+            "报价", "价位", "多少钱一小时", "多少钱一单", "多少钱一个",
+            "贵不贵", "便宜吗", "价格表", "价目表", "价格怎么样",
+            "怎么算钱", "如何收费", "收费多少", "要多少钱", "花费多少"
+    ));
+
     public static final List<String> REVIEW_REQUEST_KEYWORDS = Collections.unmodifiableList(Arrays.asList(
             "给好评", "给个好评", "好评", "评价一下", "打个分",
             "评分", "五星好评", "写个评价", "要评价", "想评价"
