@@ -9,6 +9,7 @@ import com.delta.common.entity.CompanionLevel;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.service.CompanionLevelService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CompanionLevelVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,7 @@ public class CompanionLevelServiceImpl implements CompanionLevelService {
 
         Page<CompanionLevelVO> resultPage = new Page<>(levelPage.getCurrent(), levelPage.getSize(), levelPage.getTotal());
         resultPage.setRecords(BeanUtil.copyToList(levelPage.getRecords(), CompanionLevelVO.class));
+        VoUtils.setRowNumbers(resultPage);
 
         return resultPage;
     }

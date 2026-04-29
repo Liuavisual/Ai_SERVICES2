@@ -9,6 +9,7 @@ import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.KeywordMapper;
 import com.delta.common.service.KeywordService;
 import com.delta.common.service.matcher.KeywordMatcherService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.KeywordVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,7 @@ public class KeywordServiceImpl implements KeywordService {
 
         Page<KeywordVO> resultPage = new Page<>(keywordPage.getCurrent(), keywordPage.getSize(), keywordPage.getTotal());
         resultPage.setRecords(BeanUtil.copyToList(keywordPage.getRecords(), KeywordVO.class));
+        VoUtils.setRowNumbers(resultPage);
 
         return resultPage;
     }

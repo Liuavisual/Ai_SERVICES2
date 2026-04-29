@@ -38,25 +38,27 @@ public class CustomerController extends BaseController {
             @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
             @RequestParam(name = "platform", required = false) String platform,
             @RequestParam(name = "aiEnabled", required = false) Boolean aiEnabled,
-            @RequestParam(name = "csUserId", required = false) Long csUserId,
+            @RequestParam(name = "csUserId", required = false) String csUserId,
             @RequestParam(name = "keyword", required = false) String keyword,
             HttpServletRequest request) {
+        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
         String role = getCurrentUserRole(request);
         if (BusinessStatusConstants.ROLE_CS_STAFF.equals(role)) {
-            csUserId = getCurrentUserId(request);
+            decodedCsUserId = getCurrentUserId(request);
         }
-        Page<CustomerVO> page = customerService.getCustomerPage(pageNum, pageSize, platform, aiEnabled, csUserId, keyword);
+        Page<CustomerVO> page = customerService.getCustomerPage(pageNum, pageSize, platform, aiEnabled, decodedCsUserId, keyword);
         return Result.success(page);
     }
 
     @Operation(summary = "获取客户详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<CustomerVO> getCustomerById(@PathVariable("id") Long id,
+    public Result<CustomerVO> getCustomerById(@PathVariable("id") String id,
                                                HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        CustomerVO customerVO = customerService.getCustomerById(id, currentUserId, currentUserRole);
+        CustomerVO customerVO = customerService.getCustomerById(decodedId, currentUserId, currentUserRole);
         return Result.success(customerVO);
     }
 
@@ -64,9 +66,9 @@ public class CustomerController extends BaseController {
     @PutMapping("/{id}/ai-enabled")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Void> toggleAiEnabled(
-            @PathVariable("id") Long id,
+            @PathVariable("id") String id,
             @Valid @RequestBody ToggleAiEnabledDTO dto) {
-        customerService.toggleAiEnabled(id, dto.getAiEnabled());
+        customerService.toggleAiEnabled(decodeId(id), dto.getAiEnabled());
         return Result.success();
     }
 
@@ -74,9 +76,9 @@ public class CustomerController extends BaseController {
     @PutMapping("/{id}/assign")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Void> assignCustomer(
-            @PathVariable("id") Long id,
+            @PathVariable("id") String id,
             @Valid @RequestBody AssignCustomerDTO dto) {
-        customerService.assignCustomer(id, dto.getCsUserId(), dto.getAssignType(), dto.getRemark());
+        customerService.assignCustomer(decodeId(id), dto.getDecodedCsUserId(), dto.getAssignType(), dto.getRemark());
         return Result.success();
     }
 
@@ -89,11 +91,15 @@ public class CustomerController extends BaseController {
     @Data
     public static class AssignCustomerDTO {
         @NotNull(message = "客服ID不能为空")
-        private Long csUserId;
+        private String csUserId;
 
         private String assignType;
 
         private String remark;
+
+        public Long getDecodedCsUserId() {
+            return com.delta.common.util.IdObfuscateUtils.decodeRequired(csUserId);
+        }
     }
 
     @Operation(summary = "导出客户Excel")
@@ -102,14 +108,15 @@ public class CustomerController extends BaseController {
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "platform", required = false) String platform,
                             @RequestParam(name = "aiEnabled", required = false) Boolean aiEnabled,
-                            @RequestParam(name = "csUserId", required = false) Long csUserId,
+                            @RequestParam(name = "csUserId", required = false) String csUserId,
                             @RequestParam(name = "keyword", required = false) String keyword,
                             HttpServletRequest request) throws IOException {
+        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
         String role = getCurrentUserRole(request);
         if (BusinessStatusConstants.ROLE_CS_STAFF.equals(role)) {
-            csUserId = getCurrentUserId(request);
+            decodedCsUserId = getCurrentUserId(request);
         }
-        Page<CustomerVO> page = customerService.getCustomerPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, platform, aiEnabled, csUserId, keyword);
+        Page<CustomerVO> page = customerService.getCustomerPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, platform, aiEnabled, decodedCsUserId, keyword);
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("platform", "平台");

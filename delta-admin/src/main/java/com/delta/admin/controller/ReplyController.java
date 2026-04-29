@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.ReplyDTO;
 import com.delta.common.service.CacheService;
@@ -32,7 +33,7 @@ import java.util.Map;
 @Tag(name = "回复话术管理", description = "回复话术管理接口")
 @RestController
 @RequestMapping("/replies")
-public class ReplyController {
+public class ReplyController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(ReplyController.class);
 
@@ -56,8 +57,8 @@ public class ReplyController {
     @Operation(summary = "获取回复话术详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<ReplyVO> getReplyById(@PathVariable("id") Long id) {
-        ReplyVO replyVO = replyService.getReplyById(id);
+    public Result<ReplyVO> getReplyById(@PathVariable("id") String id) {
+        ReplyVO replyVO = replyService.getReplyById(decodeId(id));
         return Result.success(replyVO);
     }
 
@@ -84,8 +85,8 @@ public class ReplyController {
     @Operation(summary = "删除回复话术")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Void> deleteReply(@PathVariable("id") Long id) {
-        replyService.deleteReply(id);
+    public Result<Void> deleteReply(@PathVariable("id") String id) {
+        replyService.deleteReply(decodeId(id));
         log.info("删除回复话术，刷新回复话术缓存");
         cacheService.reloadReplies();
         return Result.success();
@@ -127,7 +128,7 @@ public class ReplyController {
                 dto.setTriggerKey(row.getOrDefault("触发关键词", row.getOrDefault("triggerKey", "")));
                 dto.setContent(row.getOrDefault("回复内容", row.getOrDefault("content", "")));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "true".equalsIgnoreCase(enabledStr));
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabled(enabledStr));
                 replyService.createReply(dto);
                 success++;
             } catch (Exception e) {

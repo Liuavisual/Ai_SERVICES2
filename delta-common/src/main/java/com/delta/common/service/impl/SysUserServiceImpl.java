@@ -10,6 +10,7 @@ import com.delta.common.enums.UserStatusEnum;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.SysUserMapper;
 import com.delta.common.service.SysUserService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.SysUserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,7 @@ public class SysUserServiceImpl implements SysUserService {
         
         Page<SysUserVO> voPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
         voPage.setRecords(userPage.getRecords().stream().map(this::convertToVO).toList());
+        VoUtils.setRowNumbers(voPage);
         
         return voPage;
     }

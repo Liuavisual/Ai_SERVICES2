@@ -26,7 +26,7 @@ import java.util.Map;
 @Tag(name = "活动套餐管理", description = "活动套餐管理接口")
 @RestController
 @RequestMapping("/activity-packages")
-public class ActivityPackageController {
+public class ActivityPackageController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(ActivityPackageController.class);
 
@@ -36,22 +36,22 @@ public class ActivityPackageController {
     @Operation(summary = "获取俱乐部的活动套餐")
     @GetMapping("/club/{clubConfigId}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<List<ActivityPackageVO>> getByClubId(@PathVariable("clubConfigId") Long clubConfigId) {
-        return Result.success(activityPackageService.getByClubId(clubConfigId));
+    public Result<List<ActivityPackageVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
+        return Result.success(activityPackageService.getByClubId(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取当前有效的活动套餐")
     @GetMapping("/club/{clubConfigId}/active")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<List<ActivityPackageVO>> getActivePackages(@PathVariable("clubConfigId") Long clubConfigId) {
-        return Result.success(activityPackageService.getActivePackages(clubConfigId));
+    public Result<List<ActivityPackageVO>> getActivePackages(@PathVariable("clubConfigId") String clubConfigId) {
+        return Result.success(activityPackageService.getActivePackages(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取活动套餐详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<ActivityPackageVO> getById(@PathVariable("id") Long id) {
-        return Result.success(activityPackageService.getById(id));
+    public Result<ActivityPackageVO> getById(@PathVariable("id") String id) {
+        return Result.success(activityPackageService.getById(decodeId(id)));
     }
 
     @Operation(summary = "新增活动套餐")
@@ -73,8 +73,8 @@ public class ActivityPackageController {
     @Operation(summary = "删除活动套餐")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<String> delete(@PathVariable("id") Long id) {
-        activityPackageService.delete(id);
+    public Result<String> delete(@PathVariable("id") String id) {
+        activityPackageService.delete(decodeId(id));
         return Result.success("删除成功");
     }
 
@@ -82,8 +82,9 @@ public class ActivityPackageController {
     @GetMapping("/export")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public void exportExcel(HttpServletResponse response,
-                            @RequestParam(name = "clubConfigId", defaultValue = "1") Long clubConfigId) throws IOException {
-        List<ActivityPackageVO> list = activityPackageService.getByClubId(clubConfigId);
+                            @RequestParam(name = "clubConfigId", required = false) String clubConfigId) throws IOException {
+        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
+        List<ActivityPackageVO> list = decodedClubConfigId != null ? activityPackageService.getByClubId(decodedClubConfigId) : List.of();
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("title", "活动标题");
@@ -119,13 +120,16 @@ public class ActivityPackageController {
     @PostMapping("/import")
     @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file,
-                                                    @RequestParam(name = "clubConfigId", defaultValue = "1") Long clubConfigId) throws IOException {
+                                                    @RequestParam(name = "clubConfigId", required = false) String clubConfigId) throws IOException {
+        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
         List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
         int success = 0, fail = 0;
         for (Map<String, String> row : rows) {
             try {
                 ActivityPackageDTO dto = new ActivityPackageDTO();
-                dto.setClubConfigId(clubConfigId);
+                if (decodedClubConfigId != null) {
+                    dto.setClubConfigId(decodedClubConfigId);
+                }
                 dto.setTitle(row.getOrDefault("活动标题", row.getOrDefault("title", "")));
                 dto.setActivityType(row.getOrDefault("活动类型", row.getOrDefault("activityType", "SEASON")));
                 String priceStr = row.getOrDefault("套餐价格", row.getOrDefault("packagePrice", "0"));
@@ -135,7 +139,7 @@ public class ActivityPackageController {
                 dto.setDescription(row.getOrDefault("活动描述", row.getOrDefault("description", "")));
                 dto.setTerms(row.getOrDefault("使用条款", row.getOrDefault("terms", "")));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "1".equals(enabledStr) ? 1 : 0);
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabledInt(enabledStr));
                 activityPackageService.create(dto);
                 success++;
             } catch (Exception e) {

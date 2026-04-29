@@ -53,6 +53,20 @@ public final class BusinessStatusConstants {
     public static final String GAME_TYPE_FPS = "FPS";
     public static final String USER_STATUS_ACTIVE = "ACTIVE";
 
+    public static final String EXCEL_ENABLED_TEXT = "启用";
+    public static final String EXCEL_DISABLED_TEXT = "禁用";
+
+    public static boolean parseExcelEnabled(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        return EXCEL_ENABLED_TEXT.equals(value) || "true".equalsIgnoreCase(value) || String.valueOf(ENABLED_INT).equals(value);
+    }
+
+    public static int parseExcelEnabledInt(String value) {
+        return parseExcelEnabled(value) ? ENABLED_INT : DISABLED_INT;
+    }
+
     private BusinessStatusConstants() {
     }
 }

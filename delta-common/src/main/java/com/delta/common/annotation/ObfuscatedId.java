@@ -2,8 +2,8 @@ package com.delta.common.annotation;
 
 import com.delta.common.serializer.ObfuscatedIdDeserializer;
 import com.delta.common.serializer.ObfuscatedIdSerializer;
-import com.fasterxml.jackson.annotation.JsonDeserialize;
-import com.fasterxml.jackson.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

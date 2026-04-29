@@ -13,6 +13,7 @@ import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.mapper.CompanionMapper;
 import com.delta.common.mapper.CompanionScheduleMapper;
 import com.delta.common.service.CompanionService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CompanionVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +90,7 @@ public class CompanionServiceImpl implements CompanionService {
         }).collect(Collectors.toList());
 
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 

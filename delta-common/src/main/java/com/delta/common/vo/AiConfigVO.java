@@ -27,7 +27,6 @@ public class AiConfigVO extends BaseVO {
 
     @JsonIgnore
     private String configValueRaw;
-    private String configValue;
 
     public String getConfigValue() {
         if (configValueRaw != null && DesensitizeUtils.isSensitiveKey(configKey)) {

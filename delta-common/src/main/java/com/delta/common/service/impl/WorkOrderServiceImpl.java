@@ -13,6 +13,7 @@ import com.delta.common.enums.WorkOrderTypeEnum;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.*;
 import com.delta.common.service.WorkOrderService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         Page<WorkOrder> page = workOrderMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
         Page<WorkOrderVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
         voPage.setRecords(buildVOList(page.getRecords()));
+        VoUtils.setRowNumbers(voPage);
         return voPage;
     }
 

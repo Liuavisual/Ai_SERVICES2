@@ -1,9 +1,11 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.CompanionDTO;
 import com.delta.common.service.CompanionService;
+import com.delta.common.util.DesensitizeUtils;
 import com.delta.common.util.ExcelUtils;
 import com.delta.common.vo.CompanionVO;
 import com.delta.common.vo.Result;
@@ -23,15 +25,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 陪玩师管理控制器，提供陪玩师CRUD接口
- *
- * @author delta
- */
 @Tag(name = "陪玩师管理", description = "陪玩师管理接口")
 @RestController
 @RequestMapping("/companions")
-public class CompanionController {
+public class CompanionController extends BaseController {
 
     @Autowired
     private CompanionService companionService;
@@ -42,10 +39,11 @@ public class CompanionController {
     public Result<Page<CompanionVO>> getPage(
             @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
             @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-            @RequestParam(name = "levelId", required = false) Long levelId,
+            @RequestParam(name = "levelId", required = false) String levelId,
             @RequestParam(name = "nickname", required = false) String nickname,
             @RequestParam(name = "enabled", required = false) Integer enabled) {
-        Page<CompanionVO> page = companionService.getPage(pageNum, pageSize, levelId, nickname, enabled);
+        Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
+        Page<CompanionVO> page = companionService.getPage(pageNum, pageSize, decodedLevelId, nickname, enabled);
         return Result.success(page);
     }
 
@@ -62,16 +60,17 @@ public class CompanionController {
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionVO>> getAvailable(
             @RequestParam(name = "date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-            @RequestParam(name = "levelId", required = false) Long levelId) {
-        List<CompanionVO> list = companionService.getAvailableByDateAndLevel(date, levelId);
+            @RequestParam(name = "levelId", required = false) String levelId) {
+        Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
+        List<CompanionVO> list = companionService.getAvailableByDateAndLevel(date, decodedLevelId);
         return Result.success(list);
     }
 
     @Operation(summary = "获取陪玩师详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<CompanionVO> getById(@PathVariable("id") Long id) {
-        CompanionVO vo = companionService.getById(id);
+    public Result<CompanionVO> getById(@PathVariable("id") String id) {
+        CompanionVO vo = companionService.getById(decodeId(id));
         return Result.success(vo);
     }
 
@@ -94,8 +93,8 @@ public class CompanionController {
     @Operation(summary = "删除陪玩师")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<Void> delete(@PathVariable("id") Long id) {
-        companionService.delete(id);
+    public Result<Void> delete(@PathVariable("id") String id) {
+        companionService.delete(decodeId(id));
         return Result.success();
     }
 
@@ -103,10 +102,11 @@ public class CompanionController {
     @GetMapping("/export")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public void exportExcel(HttpServletResponse response,
-                            @RequestParam(name = "levelId", required = false) Long levelId,
+                            @RequestParam(name = "levelId", required = false) String levelId,
                             @RequestParam(name = "nickname", required = false) String nickname,
                             @RequestParam(name = "enabled", required = false) Integer enabled) throws IOException {
-        Page<CompanionVO> page = companionService.getPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, levelId, nickname, enabled);
+        Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
+        Page<CompanionVO> page = companionService.getPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, decodedLevelId, nickname, enabled);
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("realName", "真实姓名");
@@ -122,8 +122,8 @@ public class CompanionController {
             map.put("id", item.getId());
             map.put("realName", item.getRealName());
             map.put("nickname", item.getNickname());
-            map.put("phone", desensitize(item.getPhone()));
-            map.put("wechat", desensitize(item.getWechat()));
+            map.put("phone", DesensitizeUtils.maskPhone(item.getPhone()));
+            map.put("wechat", DesensitizeUtils.maskSecret(item.getWechat()));
             map.put("levelName", item.getLevelName());
             map.put("gameType", item.getGameType());
             map.put("price", item.getPrice());
@@ -149,7 +149,7 @@ public class CompanionController {
                 String priceStr = row.getOrDefault("价格", row.getOrDefault("price", "0"));
                 dto.setPrice(new java.math.BigDecimal(priceStr.isEmpty() ? "0" : priceStr));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "true".equalsIgnoreCase(enabledStr));
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabled(enabledStr));
                 companionService.create(dto);
                 success++;
             } catch (Exception e) {
@@ -158,12 +158,5 @@ public class CompanionController {
         }
         Map<String, Object> result = Map.of("success", success, "fail", fail, "total", rows.size());
         return Result.success(result);
-    }
-
-    private String desensitize(String value) {
-        if (value == null || value.length() <= 3) {
-            return value;
-        }
-        return value.substring(0, 1) + "***" + value.substring(value.length() - 1);
     }
 }

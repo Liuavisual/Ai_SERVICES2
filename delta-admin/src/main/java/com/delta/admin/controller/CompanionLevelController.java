@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.CompanionLevelDTO;
 import com.delta.common.service.CompanionLevelService;
@@ -29,7 +30,7 @@ import java.util.Map;
 @Tag(name = "陪玩师等级管理", description = "陪玩师等级管理接口")
 @RestController
 @RequestMapping("/companion-levels")
-public class CompanionLevelController {
+public class CompanionLevelController extends BaseController {
 
     @Autowired
     private CompanionLevelService companionLevelService;
@@ -56,8 +57,8 @@ public class CompanionLevelController {
     @Operation(summary = "获取陪玩师等级详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<CompanionLevelVO> getById(@PathVariable("id") Long id) {
-        CompanionLevelVO vo = companionLevelService.getById(id);
+    public Result<CompanionLevelVO> getById(@PathVariable("id") String id) {
+        CompanionLevelVO vo = companionLevelService.getById(decodeId(id));
         return Result.success(vo);
     }
 
@@ -80,8 +81,8 @@ public class CompanionLevelController {
     @Operation(summary = "删除陪玩师等级")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Void> delete(@PathVariable("id") Long id) {
-        companionLevelService.delete(id);
+    public Result<Void> delete(@PathVariable("id") String id) {
+        companionLevelService.delete(decodeId(id));
         return Result.success();
     }
 
@@ -127,7 +128,7 @@ public class CompanionLevelController {
                 dto.setBasePrice(new java.math.BigDecimal(row.getOrDefault("基础价格", row.getOrDefault("basePrice", "0"))));
                 dto.setDescription(row.getOrDefault("描述", row.getOrDefault("description", "")));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "true".equalsIgnoreCase(enabledStr));
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabled(enabledStr));
                 companionLevelService.create(dto);
                 success++;
             } catch (Exception e) {

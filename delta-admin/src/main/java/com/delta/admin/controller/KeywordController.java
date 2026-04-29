@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.KeywordDTO;
 import com.delta.common.service.CacheService;
@@ -32,7 +33,7 @@ import java.util.Map;
 @Tag(name = "关键词管理", description = "关键词管理接口")
 @RestController
 @RequestMapping("/keywords")
-public class KeywordController {
+public class KeywordController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(KeywordController.class);
 
@@ -56,8 +57,8 @@ public class KeywordController {
     @Operation(summary = "获取关键词详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<KeywordVO> getKeywordById(@PathVariable("id") Long id) {
-        KeywordVO keywordVO = keywordService.getKeywordById(id);
+    public Result<KeywordVO> getKeywordById(@PathVariable("id") String id) {
+        KeywordVO keywordVO = keywordService.getKeywordById(decodeId(id));
         return Result.success(keywordVO);
     }
 
@@ -84,8 +85,8 @@ public class KeywordController {
     @Operation(summary = "删除关键词")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Void> deleteKeyword(@PathVariable("id") Long id) {
-        keywordService.deleteKeyword(id);
+    public Result<Void> deleteKeyword(@PathVariable("id") String id) {
+        keywordService.deleteKeyword(decodeId(id));
         log.info("删除关键词，刷新关键词缓存");
         cacheService.reloadKeywords();
         return Result.success();
@@ -138,7 +139,7 @@ public class KeywordController {
                 dto.setKeyword(row.getOrDefault("关键词", row.getOrDefault("keyword", "")));
                 dto.setPriority(Integer.parseInt(row.getOrDefault("优先级", row.getOrDefault("priority", "0"))));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "true".equalsIgnoreCase(enabledStr) || "1".equals(enabledStr));
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabled(enabledStr));
                 keywordService.createKeyword(dto);
                 success++;
             } catch (Exception e) {

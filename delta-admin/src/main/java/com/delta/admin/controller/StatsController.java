@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/stats")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-public class StatsController {
+public class StatsController extends BaseController {
 
     @Autowired
     private StatsService statsService;
@@ -31,10 +31,11 @@ public class StatsController {
      */
     @GetMapping("/personal")
     public Result<StatsVO> getPersonalStats(
-            @RequestParam(name = "csUserId", required = false) Long csUserId,
+            @RequestParam(name = "csUserId", required = false) String csUserId,
             @RequestParam(name = "period", defaultValue = "DAILY") String period,
             @RequestParam(name = "date", required = false) String date) {
-        StatsVO stats = statsService.getPersonalStats(csUserId, period, date);
+        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
+        StatsVO stats = statsService.getPersonalStats(decodedCsUserId, period, date);
         return Result.success(stats);
     }
 

@@ -11,6 +11,7 @@ import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionMapper;
 import com.delta.common.mapper.CompanionScheduleMapper;
 import com.delta.common.service.CompanionScheduleService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CompanionScheduleVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,7 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
         }).collect(Collectors.toList());
 
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 

@@ -26,18 +26,19 @@ public class MessageController extends BaseController {
     public Result<Page<MessageVO>> getMessagePage(
             @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
             @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize,
-            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "userId", required = false) String userId,
             @RequestParam(name = "platform", required = false) String platform,
             @RequestParam(name = "direction", required = false) String direction,
             @RequestParam(name = "isAi", required = false) Boolean isAi,
             @RequestParam(name = "keywordTriggered", required = false) Boolean keywordTriggered,
             @RequestParam(name = "keyword", required = false) String keyword,
             HttpServletRequest request) {
+        Long decodedUserId = userId != null ? decodeId(userId) : null;
         String role = getCurrentUserRole(request);
         if (BusinessStatusConstants.ROLE_CS_STAFF.equals(role)) {
-            userId = getCurrentUserId(request);
+            decodedUserId = getCurrentUserId(request);
         }
-        Page<MessageVO> page = messageService.getMessagePage(pageNum, pageSize, userId, platform, direction, isAi, keywordTriggered, keyword);
+        Page<MessageVO> page = messageService.getMessagePage(pageNum, pageSize, decodedUserId, platform, direction, isAi, keywordTriggered, keyword);
         return Result.success(page);
     }
 }

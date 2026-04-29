@@ -14,6 +14,7 @@ import com.delta.common.mapper.MessageMapper;
 import com.delta.common.mapper.SysUserMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.CustomerService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CustomerVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +109,7 @@ public class CustomerServiceImpl implements CustomerService {
         }).collect(Collectors.toList());
 
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 

@@ -36,10 +36,11 @@ public class WorkOrderController extends BaseController {
     }
 
     @GetMapping("/{id}")
-    public Result<WorkOrderVO> getWorkOrderDetail(@PathVariable Long id, HttpServletRequest request) {
+    public Result<WorkOrderVO> getWorkOrderDetail(@PathVariable String id, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        WorkOrderVO vo = workOrderService.getWorkOrderDetail(id, currentUserId, currentUserRole);
+        WorkOrderVO vo = workOrderService.getWorkOrderDetail(decodedId, currentUserId, currentUserRole);
         return Result.success(vo);
     }
 
@@ -50,89 +51,102 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}")
-    public Result<Void> updateWorkOrder(@PathVariable Long id, @Valid @RequestBody WorkOrderCreateDTO dto, HttpServletRequest request) {
+    public Result<Void> updateWorkOrder(@PathVariable String id, @Valid @RequestBody WorkOrderCreateDTO dto, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        workOrderService.updateWorkOrder(id, dto, currentUserId, currentUserRole);
+        workOrderService.updateWorkOrder(decodedId, dto, currentUserId, currentUserRole);
         return Result.success();
     }
 
     @PutMapping("/{id}/accept")
-    public Result<Void> acceptWorkOrder(@PathVariable Long id, HttpServletRequest request) {
+    public Result<Void> acceptWorkOrder(@PathVariable String id, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserName = getCurrentUserName(request);
-        workOrderService.acceptWorkOrder(id, currentUserId, currentUserName);
+        workOrderService.acceptWorkOrder(decodedId, currentUserId, currentUserName);
         return Result.success();
     }
 
     @PutMapping("/{id}/submit")
-    public Result<Void> submitWorkOrder(@PathVariable Long id, @Valid @RequestBody WorkOrderSubmitDTO dto, HttpServletRequest request) {
+    public Result<Void> submitWorkOrder(@PathVariable String id, @Valid @RequestBody WorkOrderSubmitDTO dto, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        workOrderService.submitWorkOrder(id, dto, currentUserId, currentUserRole);
+        workOrderService.submitWorkOrder(decodedId, dto, currentUserId, currentUserRole);
         return Result.success();
     }
 
     @PutMapping("/{id}/confirm")
-    public Result<Void> confirmWorkOrder(@PathVariable Long id, @Valid @RequestBody WorkOrderConfirmDTO dto) {
-        workOrderService.confirmWorkOrder(id, dto);
+    public Result<Void> confirmWorkOrder(@PathVariable String id, @Valid @RequestBody WorkOrderConfirmDTO dto) {
+        Long decodedId = decodeId(id);
+        workOrderService.confirmWorkOrder(decodedId, dto);
         return Result.success();
     }
 
     @PutMapping("/{id}/close")
-    public Result<Void> closeWorkOrder(@PathVariable Long id, @RequestParam(required = false) String closeReason, HttpServletRequest request) {
+    public Result<Void> closeWorkOrder(@PathVariable String id, @RequestParam(required = false) String closeReason, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        workOrderService.closeWorkOrder(id, closeReason, currentUserId, currentUserRole);
+        workOrderService.closeWorkOrder(decodedId, closeReason, currentUserId, currentUserRole);
         return Result.success();
     }
 
     @PutMapping("/{id}/cancel")
-    public Result<Void> cancelWorkOrder(@PathVariable Long id, @RequestParam String cancelReason, HttpServletRequest request) {
+    public Result<Void> cancelWorkOrder(@PathVariable String id, @RequestParam String cancelReason, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        workOrderService.cancelWorkOrder(id, cancelReason, currentUserId, currentUserRole);
+        workOrderService.cancelWorkOrder(decodedId, cancelReason, currentUserId, currentUserRole);
         return Result.success();
     }
 
     @PutMapping("/{id}/reopen")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Void> reopenWorkOrder(@PathVariable Long id, @RequestParam String reopenReason, HttpServletRequest request) {
+    public Result<Void> reopenWorkOrder(@PathVariable String id, @RequestParam String reopenReason, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
-        workOrderService.reopenWorkOrder(id, reopenReason, currentUserId);
+        workOrderService.reopenWorkOrder(decodedId, reopenReason, currentUserId);
         return Result.success();
     }
 
     @PostMapping("/{id}/records")
-    public Result<Void> addRecord(@PathVariable Long id, @Valid @RequestBody WorkOrderRecordDTO dto, HttpServletRequest request) {
+    public Result<Void> addRecord(@PathVariable String id, @Valid @RequestBody WorkOrderRecordDTO dto, HttpServletRequest request) {
+        Long decodedId = decodeId(id);
         Long operatorId = getCurrentUserId(request);
         String operatorName = getCurrentUserName(request);
         String operatorRole = getCurrentUserRole(request);
-        workOrderService.addRecord(id, dto, operatorId, operatorName, operatorRole);
+        workOrderService.addRecord(decodedId, dto, operatorId, operatorName, operatorRole);
         return Result.success();
     }
 
     @PutMapping("/{id}/service-track/book")
-    public Result<Void> bookServiceTrack(@PathVariable Long id, @Valid @RequestBody ServiceTrackBookDTO dto) {
-        workOrderService.bookServiceTrack(id, dto);
+    public Result<Void> bookServiceTrack(@PathVariable String id, @Valid @RequestBody ServiceTrackBookDTO dto) {
+        Long decodedId = decodeId(id);
+        workOrderService.bookServiceTrack(decodedId, dto);
         return Result.success();
     }
 
     @PutMapping("/{id}/service-track/start")
-    public Result<Void> startServiceTrack(@PathVariable Long id, @RequestParam Long companionId, @RequestParam String companionName) {
-        workOrderService.startServiceTrack(id, companionId, companionName);
+    public Result<Void> startServiceTrack(@PathVariable String id, @RequestParam String companionId, @RequestParam String companionName) {
+        Long decodedId = decodeId(id);
+        Long decodedCompanionId = decodeId(companionId);
+        workOrderService.startServiceTrack(decodedId, decodedCompanionId, companionName);
         return Result.success();
     }
 
     @PutMapping("/{id}/service-track/end")
-    public Result<Void> endServiceTrack(@PathVariable Long id, @Valid @RequestBody ServiceTrackEndDTO dto) {
-        workOrderService.endServiceTrack(id, dto);
+    public Result<Void> endServiceTrack(@PathVariable String id, @Valid @RequestBody ServiceTrackEndDTO dto) {
+        Long decodedId = decodeId(id);
+        workOrderService.endServiceTrack(decodedId, dto);
         return Result.success();
     }
 
     @PutMapping("/{id}/service-track/confirm")
-    public Result<Void> confirmServiceTrack(@PathVariable Long id, @RequestParam Integer customerRating, @RequestParam(required = false) String customerFeedback) {
-        workOrderService.confirmServiceTrack(id, customerRating, customerFeedback);
+    public Result<Void> confirmServiceTrack(@PathVariable String id, @RequestParam Integer customerRating, @RequestParam(required = false) String customerFeedback) {
+        Long decodedId = decodeId(id);
+        workOrderService.confirmServiceTrack(decodedId, customerRating, customerFeedback);
         return Result.success();
     }
 

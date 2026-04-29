@@ -18,7 +18,7 @@ import java.util.List;
 @Tag(name = "服务项目管理", description = "服务项目管理接口")
 @RestController
 @RequestMapping("/service-items")
-public class ServiceItemController {
+public class ServiceItemController extends BaseController {
 
     @Autowired
     private ServiceItemService serviceItemService;
@@ -26,22 +26,22 @@ public class ServiceItemController {
     @Operation(summary = "获取俱乐部的服务项目")
     @GetMapping("/club/{clubConfigId}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<List<ServiceItemVO>> getByClubId(@PathVariable("clubConfigId") Long clubConfigId) {
-        return Result.success(serviceItemService.getByClubId(clubConfigId));
+    public Result<List<ServiceItemVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
+        return Result.success(serviceItemService.getByClubId(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取游戏的服务项目")
     @GetMapping("/game/{gameConfigId}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<List<ServiceItemVO>> getByGameId(@PathVariable("gameConfigId") Long gameConfigId) {
-        return Result.success(serviceItemService.getByGameId(gameConfigId));
+    public Result<List<ServiceItemVO>> getByGameId(@PathVariable("gameConfigId") String gameConfigId) {
+        return Result.success(serviceItemService.getByGameId(decodeId(gameConfigId)));
     }
 
     @Operation(summary = "获取服务项目详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<ServiceItemVO> getById(@PathVariable("id") Long id) {
-        return Result.success(serviceItemService.getById(id));
+    public Result<ServiceItemVO> getById(@PathVariable("id") String id) {
+        return Result.success(serviceItemService.getById(decodeId(id)));
     }
 
     @Operation(summary = "新增服务项目")
@@ -63,16 +63,16 @@ public class ServiceItemController {
     @Operation(summary = "删除服务项目")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<String> delete(@PathVariable("id") Long id) {
-        serviceItemService.delete(id);
+    public Result<String> delete(@PathVariable("id") String id) {
+        serviceItemService.delete(decodeId(id));
         return Result.success("删除成功");
     }
 
     @Operation(summary = "获取定价规则")
     @GetMapping("/{serviceItemId}/price-rules")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<List<ServicePriceRuleVO>> getPriceRules(@PathVariable("serviceItemId") Long serviceItemId) {
-        return Result.success(serviceItemService.getPriceRules(serviceItemId));
+    public Result<List<ServicePriceRuleVO>> getPriceRules(@PathVariable("serviceItemId") String serviceItemId) {
+        return Result.success(serviceItemService.getPriceRules(decodeId(serviceItemId)));
     }
 
     @Operation(summary = "保存定价规则")
@@ -86,8 +86,8 @@ public class ServiceItemController {
     @Operation(summary = "删除定价规则")
     @DeleteMapping("/price-rules/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<String> deletePriceRule(@PathVariable("id") Long id) {
-        serviceItemService.deletePriceRule(id);
+    public Result<String> deletePriceRule(@PathVariable("id") String id) {
+        serviceItemService.deletePriceRule(decodeId(id));
         return Result.success("删除成功");
     }
 }

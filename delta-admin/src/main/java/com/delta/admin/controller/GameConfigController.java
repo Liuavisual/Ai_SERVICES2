@@ -23,7 +23,7 @@ import java.util.Map;
 @Tag(name = "游戏配置管理", description = "游戏配置管理接口")
 @RestController
 @RequestMapping("/game-configs")
-public class GameConfigController {
+public class GameConfigController extends BaseController {
 
     @Autowired
     private GameConfigService gameConfigService;
@@ -31,15 +31,15 @@ public class GameConfigController {
     @Operation(summary = "获取俱乐部的游戏配置")
     @GetMapping("/club/{clubConfigId}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<List<GameConfigVO>> getByClubId(@PathVariable("clubConfigId") Long clubConfigId) {
-        return Result.success(gameConfigService.getByClubId(clubConfigId));
+    public Result<List<GameConfigVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
+        return Result.success(gameConfigService.getByClubId(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取游戏配置详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<GameConfigVO> getById(@PathVariable("id") Long id) {
-        return Result.success(gameConfigService.getById(id));
+    public Result<GameConfigVO> getById(@PathVariable("id") String id) {
+        return Result.success(gameConfigService.getById(decodeId(id)));
     }
 
     @Operation(summary = "新增游戏配置")
@@ -61,8 +61,8 @@ public class GameConfigController {
     @Operation(summary = "删除游戏配置")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<String> delete(@PathVariable("id") Long id) {
-        gameConfigService.delete(id);
+    public Result<String> delete(@PathVariable("id") String id) {
+        gameConfigService.delete(decodeId(id));
         return Result.success("删除成功");
     }
 
@@ -70,8 +70,8 @@ public class GameConfigController {
     @GetMapping("/club/{clubConfigId}/export")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public void exportExcel(HttpServletResponse response,
-                            @PathVariable("clubConfigId") Long clubConfigId) throws IOException {
-        List<GameConfigVO> list = gameConfigService.getByClubId(clubConfigId);
+                            @PathVariable("clubConfigId") String clubConfigId) throws IOException {
+        List<GameConfigVO> list = gameConfigService.getByClubId(decodeId(clubConfigId));
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("gameName", "游戏名称");
@@ -98,19 +98,20 @@ public class GameConfigController {
     @Operation(summary = "导入游戏配置Excel")
     @PostMapping("/club/{clubConfigId}/import")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Map<String, Object>> importExcel(@PathVariable("clubConfigId") Long clubConfigId,
+    public Result<Map<String, Object>> importExcel(@PathVariable("clubConfigId") String clubConfigId,
                                                     @RequestParam("file") MultipartFile file) throws IOException {
+        Long decodedClubConfigId = decodeId(clubConfigId);
         List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
         int success = 0, fail = 0;
         for (Map<String, String> row : rows) {
             try {
                 GameConfigDTO dto = new GameConfigDTO();
-                dto.setClubConfigId(clubConfigId);
+                dto.setClubConfigId(decodedClubConfigId);
                 dto.setGameName(row.getOrDefault("游戏名称", row.getOrDefault("gameName", "")));
                 dto.setGameCode(row.getOrDefault("游戏编码", row.getOrDefault("gameCode", "")));
                 dto.setGameType(row.getOrDefault("游戏类型", row.getOrDefault("gameType", "")));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "1".equals(enabledStr) ? 1 : 0);
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabledInt(enabledStr));
                 dto.setSortOrder(Integer.parseInt(row.getOrDefault("排序", row.getOrDefault("sortOrder", "0"))));
                 dto.setDescription(row.getOrDefault("描述", row.getOrDefault("description", "")));
                 gameConfigService.create(dto);

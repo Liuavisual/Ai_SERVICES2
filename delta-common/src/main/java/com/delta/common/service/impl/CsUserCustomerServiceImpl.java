@@ -12,6 +12,7 @@ import com.delta.common.mapper.CsUserCustomerMapper;
 import com.delta.common.mapper.SysUserMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.CsUserCustomerService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CsUserCustomerVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +103,7 @@ public class CsUserCustomerServiceImpl implements CsUserCustomerService {
             
             return vo;
         }).toList());
+        VoUtils.setRowNumbers(voPage);
         
         return voPage;
     }

@@ -12,6 +12,7 @@ import com.delta.common.entity.*;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.*;
 import com.delta.common.service.CustomerProfileService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CustomerOrderRecordVO;
 import com.delta.common.vo.CustomerProfileVO;
 import org.slf4j.Logger;
@@ -146,6 +147,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
         }
 
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 
@@ -309,6 +311,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
         }).collect(Collectors.toList());
 
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 

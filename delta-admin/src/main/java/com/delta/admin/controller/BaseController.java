@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.util.IdObfuscateUtils;
 import jakarta.servlet.http.HttpServletRequest;
 
 public abstract class BaseController {
@@ -17,5 +18,9 @@ public abstract class BaseController {
     protected String getCurrentUserName(HttpServletRequest request) {
         Object username = request.getAttribute("username");
         return username != null ? username.toString() : "";
+    }
+
+    protected Long decodeId(String obfuscatedId) {
+        return IdObfuscateUtils.decodeRequired(obfuscatedId);
     }
 }

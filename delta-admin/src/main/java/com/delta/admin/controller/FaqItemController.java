@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.FaqItemDTO;
-import com.delta.common.entity.FaqItem;
 import com.delta.common.service.CacheService;
 import com.delta.common.service.FaqItemService;
 import com.delta.common.util.ExcelUtils;
+import com.delta.common.vo.FaqItemVO;
 import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,7 +26,7 @@ import java.util.Map;
 @Tag(name = "FAQ知识库管理", description = "FAQ知识库管理接口")
 @RestController
 @RequestMapping("/faq-items")
-public class FaqItemController {
+public class FaqItemController extends BaseController {
 
     @Autowired
     private FaqItemService faqItemService;
@@ -37,7 +37,7 @@ public class FaqItemController {
     @Operation(summary = "获取FAQ列表")
     @GetMapping
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<Page<FaqItem>> getFaqItems(
+    public Result<Page<FaqItemVO>> getFaqItems(
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "category", required = false) String category) {
@@ -65,8 +65,8 @@ public class FaqItemController {
     @Operation(summary = "删除FAQ")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<String> deleteFaqItem(@PathVariable("id") Long id) {
-        faqItemService.deleteFaqItem(id);
+    public Result<String> deleteFaqItem(@PathVariable("id") String id) {
+        faqItemService.deleteFaqItem(decodeId(id));
         cacheService.reloadFaqItems();
         return Result.success("删除成功");
     }
@@ -76,7 +76,7 @@ public class FaqItemController {
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "category", required = false) String category) throws IOException {
-        Page<FaqItem> page = faqItemService.getFaqItems(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, category);
+        Page<FaqItemVO> page = faqItemService.getFaqItems(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, category);
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("category", "分类");
@@ -110,7 +110,7 @@ public class FaqItemController {
                 dto.setAnswer(row.getOrDefault("答案", row.getOrDefault("answer", "")));
                 dto.setSortOrder(Integer.parseInt(row.getOrDefault("排序", row.getOrDefault("sortOrder", "0"))));
                 String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled("启用".equals(enabledStr) || "1".equals(enabledStr) ? 1 : 0);
+                dto.setEnabled(BusinessStatusConstants.parseExcelEnabledInt(enabledStr));
                 faqItemService.addFaqItem(dto);
                 success++;
             } catch (Exception e) {

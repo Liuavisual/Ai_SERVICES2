@@ -10,6 +10,7 @@ import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.ReplyMapper;
 import com.delta.common.service.ReplyService;
 import com.delta.common.service.RedisService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.ReplyVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +53,7 @@ public class ReplyServiceImpl implements ReplyService {
 
         Page<ReplyVO> resultPage = new Page<>(replyPage.getCurrent(), replyPage.getSize(), replyPage.getTotal());
         resultPage.setRecords(BeanUtil.copyToList(replyPage.getRecords(), ReplyVO.class));
+        VoUtils.setRowNumbers(resultPage);
 
         return resultPage;
     }

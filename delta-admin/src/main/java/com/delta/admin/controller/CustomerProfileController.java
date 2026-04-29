@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "客户画像管理", description = "客户画像和消费记录管理接口")
 @RestController
 @RequestMapping("/customer-profiles")
-public class CustomerProfileController {
+public class CustomerProfileController extends BaseController {
 
     @Autowired
     private CustomerProfileService customerProfileService;
@@ -45,8 +45,8 @@ public class CustomerProfileController {
     @Operation(summary = "根据客户ID获取画像")
     @GetMapping("/user/{userId}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<CustomerProfileVO> getProfileByUserId(@PathVariable("userId") Long userId) {
-        CustomerProfileVO vo = customerProfileService.getProfileByUserId(userId);
+    public Result<CustomerProfileVO> getProfileByUserId(@PathVariable("userId") String userId) {
+        CustomerProfileVO vo = customerProfileService.getProfileByUserId(decodeId(userId));
         return Result.success(vo);
     }
 
@@ -72,18 +72,19 @@ public class CustomerProfileController {
     public Result<Page<CustomerOrderRecordVO>> getOrderRecordPage(
             @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
             @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-            @RequestParam(name = "userId", required = false) Long userId,
+            @RequestParam(name = "userId", required = false) String userId,
             @RequestParam(name = "orderType", required = false) String orderType,
             @RequestParam(name = "status", required = false) String status) {
-        Page<CustomerOrderRecordVO> page = customerProfileService.getOrderRecordPage(pageNum, pageSize, userId, orderType, status);
+        Long decodedUserId = userId != null ? decodeId(userId) : null;
+        Page<CustomerOrderRecordVO> page = customerProfileService.getOrderRecordPage(pageNum, pageSize, decodedUserId, orderType, status);
         return Result.success(page);
     }
 
     @Operation(summary = "刷新客户画像数据")
     @PostMapping("/refresh/{userId}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<Void> refreshProfile(@PathVariable("userId") Long userId) {
-        customerProfileService.refreshProfile(userId);
+    public Result<Void> refreshProfile(@PathVariable("userId") String userId) {
+        customerProfileService.refreshProfile(decodeId(userId));
         return Result.success();
     }
 }

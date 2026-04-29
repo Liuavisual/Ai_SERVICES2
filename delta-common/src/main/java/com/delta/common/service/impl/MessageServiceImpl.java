@@ -8,6 +8,7 @@ import com.delta.common.entity.User;
 import com.delta.common.mapper.MessageMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.MessageService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.MessageVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,7 @@ public class MessageServiceImpl implements MessageService {
 
         Page<MessageVO> resultPage = new Page<>(messagePage.getCurrent(), messagePage.getSize(), messagePage.getTotal());
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
 
         return resultPage;
     }

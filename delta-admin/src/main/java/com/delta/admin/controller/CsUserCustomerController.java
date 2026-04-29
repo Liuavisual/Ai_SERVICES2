@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "客服-客户分配管理", description = "客服-客户分配管理接口")
 @RestController
 @RequestMapping("/cs-user-customer")
-public class CsUserCustomerController {
+public class CsUserCustomerController extends BaseController {
 
     @Autowired
     private CsUserCustomerService csUserCustomerService;
@@ -31,18 +31,20 @@ public class CsUserCustomerController {
     public Result<Page<CsUserCustomerVO>> getPage(
             @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
             @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
-            @RequestParam(name = "csUserId", required = false) Long csUserId,
-            @RequestParam(name = "customerUserId", required = false) Long customerUserId,
+            @RequestParam(name = "csUserId", required = false) String csUserId,
+            @RequestParam(name = "customerUserId", required = false) String customerUserId,
             @RequestParam(name = "status", required = false) String status) {
-        Page<CsUserCustomerVO> page = csUserCustomerService.getPage(pageNum, pageSize, csUserId, customerUserId, status);
+        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
+        Long decodedCustomerUserId = customerUserId != null ? decodeId(customerUserId) : null;
+        Page<CsUserCustomerVO> page = csUserCustomerService.getPage(pageNum, pageSize, decodedCsUserId, decodedCustomerUserId, status);
         return Result.success(page);
     }
 
     @Operation(summary = "获取客服-客户分配详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
-    public Result<CsUserCustomerVO> getById(@PathVariable("id") Long id) {
-        CsUserCustomerVO vo = csUserCustomerService.getById(id);
+    public Result<CsUserCustomerVO> getById(@PathVariable("id") String id) {
+        CsUserCustomerVO vo = csUserCustomerService.getById(decodeId(id));
         return Result.success(vo);
     }
 
@@ -65,8 +67,8 @@ public class CsUserCustomerController {
     @Operation(summary = "删除客服-客户分配关系")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<Void> delete(@PathVariable("id") Long id) {
-        csUserCustomerService.delete(id);
+    public Result<Void> delete(@PathVariable("id") String id) {
+        csUserCustomerService.delete(decodeId(id));
         return Result.success();
     }
 }

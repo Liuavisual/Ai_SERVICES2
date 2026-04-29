@@ -1,5 +1,7 @@
 package com.delta.common.util;
 
+import com.delta.common.exception.BusinessException;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -49,7 +51,7 @@ public final class IdObfuscateUtils {
     public static Long decodeRequired(String encoded) {
         Long decoded = decode(encoded);
         if (decoded == null) {
-            throw new com.delta.common.exception.BusinessException("无效的ID参数");
+            throw new BusinessException("无效的ID参数");
         }
         return decoded;
     }

@@ -25,6 +25,7 @@ import com.delta.common.mapper.SysUserMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.PendingMessageService;
 import com.delta.common.service.RedisService;
+import com.delta.common.util.VoUtils;
 import com.delta.common.vo.NotificationVO;
 import com.delta.common.vo.PendingMessageVO;
 import org.slf4j.Logger;
@@ -101,6 +102,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
 
         Page<PendingMessageVO> resultPage = new Page<>(pendingMessagePage.getCurrent(), pendingMessagePage.getSize(), pendingMessagePage.getTotal());
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 
@@ -461,6 +463,7 @@ public class PendingMessageServiceImpl implements PendingMessageService {
 
         Page<PendingMessageVO> resultPage = new Page<>(pendingMessagePage.getCurrent(), pendingMessagePage.getSize(), pendingMessagePage.getTotal());
         resultPage.setRecords(voList);
+        VoUtils.setRowNumbers(resultPage);
         return resultPage;
     }
 

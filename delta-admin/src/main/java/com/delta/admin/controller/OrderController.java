@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,15 +17,16 @@ import java.util.List;
 @Tag(name = "订单管理")
 @RestController
 @RequestMapping("/orders")
-public class OrderController {
+@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+public class OrderController extends BaseController {
 
     @Autowired
     private OrderService orderService;
 
     @Operation(summary = "获取订单详情")
     @GetMapping("/{id}")
-    public Result<OrderVO> getOrderById(@PathVariable Long id) {
-        return Result.success(orderService.getOrderById(id));
+    public Result<OrderVO> getOrderById(@PathVariable String id) {
+        return Result.success(orderService.getOrderById(decodeId(id)));
     }
 
     @Operation(summary = "创建订单")
@@ -38,42 +40,42 @@ public class OrderController {
 
     @Operation(summary = "确认订单")
     @PutMapping("/{id}/confirm")
-    public Result<Void> confirmOrder(@PathVariable Long id) {
-        orderService.confirmOrder(id);
+    public Result<Void> confirmOrder(@PathVariable String id) {
+        orderService.confirmOrder(decodeId(id));
         return Result.success();
     }
 
     @Operation(summary = "开始服务")
     @PutMapping("/{id}/start")
-    public Result<Void> startService(@PathVariable Long id) {
-        orderService.startService(id);
+    public Result<Void> startService(@PathVariable String id) {
+        orderService.startService(decodeId(id));
         return Result.success();
     }
 
     @Operation(summary = "完成服务(触发评价)")
     @PutMapping("/{id}/complete")
-    public Result<Void> completeOrder(@PathVariable Long id) {
-        orderService.completeOrder(id);
+    public Result<Void> completeOrder(@PathVariable String id) {
+        orderService.completeOrder(decodeId(id));
         return Result.success();
     }
 
     @Operation(summary = "取消订单")
     @PutMapping("/{id}/cancel")
-    public Result<Void> cancelOrder(@PathVariable Long id, @RequestParam(required = false) String reason) {
-        orderService.cancelOrder(id, reason);
+    public Result<Void> cancelOrder(@PathVariable String id, @RequestParam(required = false) String reason) {
+        orderService.cancelOrder(decodeId(id), reason);
         return Result.success();
     }
 
     @Operation(summary = "查询用户活跃订单")
     @GetMapping("/active/user/{userId}")
-    public Result<List<OrderVO>> getActiveOrdersByUserId(@PathVariable Long userId) {
-        return Result.success(orderService.getActiveOrdersByUserId(userId));
+    public Result<List<OrderVO>> getActiveOrdersByUserId(@PathVariable String userId) {
+        return Result.success(orderService.getActiveOrdersByUserId(decodeId(userId)));
     }
 
     @Operation(summary = "查询陪玩师所有订单")
     @GetMapping("/companion/{companionId}")
-    public Result<List<OrderVO>> getOrdersByCompanionId(@PathVariable Long companionId) {
-        return Result.success(orderService.getOrdersByCompanionId(companionId));
+    public Result<List<OrderVO>> getOrdersByCompanionId(@PathVariable String companionId) {
+        return Result.success(orderService.getOrdersByCompanionId(decodeId(companionId)));
     }
 
     @Operation(summary = "条件查询订单")

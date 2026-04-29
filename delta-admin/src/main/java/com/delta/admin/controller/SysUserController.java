@@ -36,7 +36,7 @@ import java.util.Map;
 @Tag(name = "系统用户管理", description = "系统用户管理接口")
 @RestController
 @RequestMapping("/sys-users")
-public class SysUserController {
+public class SysUserController extends BaseController {
 
     @Autowired
     private SysUserService sysUserService;
@@ -56,8 +56,8 @@ public class SysUserController {
     @Operation(summary = "获取系统用户详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<SysUserVO> getUserById(@PathVariable("id") Long id) {
-        SysUserVO vo = sysUserService.getUserById(id);
+    public Result<SysUserVO> getUserById(@PathVariable("id") String id) {
+        SysUserVO vo = sysUserService.getUserById(decodeId(id));
         return Result.success(vo);
     }
 
@@ -80,8 +80,8 @@ public class SysUserController {
     @Operation(summary = "删除系统用户")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Void> deleteUser(@PathVariable("id") Long id) {
-        sysUserService.deleteUser(id);
+    public Result<Void> deleteUser(@PathVariable("id") String id) {
+        sysUserService.deleteUser(decodeId(id));
         return Result.success();
     }
 
