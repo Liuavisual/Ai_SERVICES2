@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,21 +36,21 @@ import java.util.Map;
 @Tag(name = "系统用户管理", description = "系统用户管理接口")
 @RestController
 @RequestMapping("/sys-users")
+@RequiredArgsConstructor
 public class SysUserController extends BaseController {
 
-    @Autowired
-    private SysUserService sysUserService;
+    private final SysUserService sysUserService;
 
     @Operation(summary = "分页查询系统用户")
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Page<SysUserVO>> getUserPage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "role", required = false) String role,
             @RequestParam(name = "status", required = false) String status) {
-        Page<SysUserVO> page = sysUserService.getUserPage(pageNum, pageSize, role, status);
-        return Result.success(page);
+        Page<SysUserVO> pageResult = sysUserService.getUserPage(page, size, role, status);
+        return Result.success(pageResult);
     }
 
     @Operation(summary = "获取系统用户详情")

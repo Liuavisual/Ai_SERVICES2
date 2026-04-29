@@ -12,17 +12,17 @@ import com.delta.common.service.FaqItemService;
 import com.delta.common.util.VoUtils;
 import com.delta.common.vo.FaqItemVO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class FaqItemServiceImpl implements FaqItemService {
 
-    @Autowired
-    private FaqItemMapper faqItemMapper;
+    private final FaqItemMapper faqItemMapper;
 
     @Override
     public Page<FaqItemVO> getFaqItems(int page, int size, String category) {

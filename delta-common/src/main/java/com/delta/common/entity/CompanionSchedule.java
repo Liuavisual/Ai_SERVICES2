@@ -2,6 +2,8 @@ package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,6 +21,11 @@ import java.time.LocalTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("companion_schedules")
+@Table(name = "companion_schedules", indexes = {
+        @Index(name = "idx_companion_schedules_companion_id", columnList = "companion_id"),
+        @Index(name = "idx_companion_schedules_status", columnList = "status"),
+        @Index(name = "idx_companion_schedules_companion_start", columnList = "companion_id,start_time")
+})
 public class CompanionSchedule extends BaseEntity {
 
     /** 关联的陪玩师ID */

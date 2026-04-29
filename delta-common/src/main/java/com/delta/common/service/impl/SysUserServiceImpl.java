@@ -13,7 +13,7 @@ import com.delta.common.service.SysUserService;
 import com.delta.common.util.VoUtils;
 import com.delta.common.vo.SysUserVO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,17 +25,16 @@ import org.springframework.util.StringUtils;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class SysUserServiceImpl implements SysUserService {
     
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
     
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
     
     @Override
-    public Page<SysUserVO> getUserPage(Integer pageNum, Integer pageSize, String role, String status) {
-        Page<SysUser> page = new Page<>(pageNum, pageSize);
+    public Page<SysUserVO> getUserPage(Integer page, Integer size, String role, String status) {
+        Page<SysUser> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         
         if (StringUtils.hasText(role)) {
@@ -47,10 +46,10 @@ public class SysUserServiceImpl implements SysUserService {
         
         wrapper.orderByDesc(SysUser::getCreatedAt);
         
-        Page<SysUser> userPage = sysUserMapper.selectPage(page, wrapper);
+        Page<SysUser> userPageResult = sysUserMapper.selectPage(pageObj, wrapper);
         
-        Page<SysUserVO> voPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
-        voPage.setRecords(userPage.getRecords().stream().map(this::convertToVO).toList());
+        Page<SysUserVO> voPage = new Page<>(userPageResult.getCurrent(), userPageResult.getSize(), userPageResult.getTotal());
+        voPage.setRecords(userPageResult.getRecords().stream().map(this::convertToVO).toList());
         VoUtils.setRowNumbers(voPage);
         
         return voPage;

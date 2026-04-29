@@ -11,7 +11,7 @@ import com.delta.common.service.MessageService;
 import com.delta.common.util.VoUtils;
 import com.delta.common.vo.MessageVO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,17 +21,16 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
 
-    @Autowired
-    private MessageMapper messageMapper;
+    private final MessageMapper messageMapper;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     @Override
-    public Page<MessageVO> getMessagePage(Integer pageNum, Integer pageSize, Long userId, String platform, String direction, Boolean isAi, Boolean keywordTriggered, String keyword) {
-        Page<Message> page = new Page<>(pageNum, pageSize);
+    public Page<MessageVO> getMessagePage(Integer page, Integer size, Long userId, String platform, String direction, Boolean isAi, Boolean keywordTriggered, String keyword) {
+        Page<Message> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
 
         if (platform != null && !platform.isEmpty()) {
@@ -43,7 +42,7 @@ public class MessageServiceImpl implements MessageService {
             List<User> platformUsers = userMapper.selectList(userWrapper);
             Set<Long> platformUserIds = platformUsers.stream().map(User::getId).collect(Collectors.toSet());
             if (platformUserIds.isEmpty()) {
-                Page<MessageVO> emptyPage = new Page<>(pageNum, pageSize, 0);
+                Page<MessageVO> emptyPage = new Page<>(page, size, 0);
                 emptyPage.setRecords(List.of());
                 return emptyPage;
             }
@@ -70,18 +69,18 @@ public class MessageServiceImpl implements MessageService {
 
         wrapper.orderByDesc(Message::getCreatedAt);
 
-        Page<Message> messagePage = messageMapper.selectPage(page, wrapper);
+        Page<Message> messagePageResult = messageMapper.selectPage(pageObj, wrapper);
 
-        List<Long> userIds = messagePage.getRecords().stream()
+        List<Long> userIds = messagePageResult.getRecords().stream()
                 .map(Message::getUserId)
                 .distinct()
                 .collect(Collectors.toList());
 
         Map<Long, User> userMap = userIds.isEmpty() ? Map.of() :
-                userMapper.selectBatchIds(userIds).stream()
+                userMapper.selectByIds(userIds).stream()
                         .collect(Collectors.toMap(User::getId, u -> u));
 
-        List<MessageVO> voList = messagePage.getRecords().stream().map(msg -> {
+        List<MessageVO> voList = messagePageResult.getRecords().stream().map(msg -> {
             MessageVO vo = BeanUtil.copyProperties(msg, MessageVO.class);
             User user = userMap.get(msg.getUserId());
             if (user != null) {
@@ -91,7 +90,7 @@ public class MessageServiceImpl implements MessageService {
             return vo;
         }).collect(Collectors.toList());
 
-        Page<MessageVO> resultPage = new Page<>(messagePage.getCurrent(), messagePage.getSize(), messagePage.getTotal());
+        Page<MessageVO> resultPage = new Page<>(messagePageResult.getCurrent(), messagePageResult.getSize(), messagePageResult.getTotal());
         resultPage.setRecords(voList);
         VoUtils.setRowNumbers(resultPage);
 

@@ -1,6 +1,8 @@
 package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,6 +17,10 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("faq_items")
+@Table(name = "faq_items", indexes = {
+        @Index(name = "idx_faq_items_category", columnList = "category"),
+        @Index(name = "idx_faq_items_enabled", columnList = "enabled")
+})
 public class FaqItem extends BaseEntity {
 
     /** 问题分类，如"服务流程"、"价格说明" */

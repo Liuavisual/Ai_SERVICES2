@@ -10,5 +10,5 @@ import com.delta.common.vo.MessageVO;
  */
 public interface MessageService {
 
-    Page<MessageVO> getMessagePage(Integer pageNum, Integer pageSize, Long userId, String platform, String direction, Boolean isAi, Boolean keywordTriggered, String keyword);
+    Page<MessageVO> getMessagePage(Integer page, Integer size, Long userId, String platform, String direction, Boolean isAi, Boolean keywordTriggered, String keyword);
 }

@@ -14,7 +14,7 @@ import com.delta.common.service.ServiceTrackService;
 import com.delta.common.vo.ServiceTrackVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ServiceTrackServiceImpl implements ServiceTrackService {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceTrackServiceImpl.class);
 
-    @Autowired
-    private ServiceTrackMapper serviceTrackMapper;
+    private final ServiceTrackMapper serviceTrackMapper;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     @Override
     public ServiceTrackVO getById(Long id) {

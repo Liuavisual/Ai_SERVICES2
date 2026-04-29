@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface CompanionScheduleService {
 
-    Page<CompanionScheduleVO> getPage(Integer pageNum, Integer pageSize, Long companionId, LocalDate scheduleDate, String status);
+    Page<CompanionScheduleVO> getPage(Integer page, Integer size, Long companionId, LocalDate scheduleDate, String status);
 
     List<CompanionScheduleVO> getByCompanionAndDate(Long companionId, LocalDate scheduleDate);
 

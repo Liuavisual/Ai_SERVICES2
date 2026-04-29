@@ -25,7 +25,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
         <spring-boot.version>3.5.14</spring-boot.version>
-        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mybatis-plus.version>3.5.16</mybatis-plus.version>
         <mysql.version>8.0.33</mysql.version>
         <druid.version>1.2.20</druid.version>
         <hutool.version>5.8.26</hutool.version>
@@ -36,6 +36,7 @@
         <jjwt.version>0.12.3</jjwt.version>
         <redisson.version>3.25.2</redisson.version>
         <poi.version>5.2.5</poi.version>
+        <mockito.version>5.7.0</mockito.version>
     </properties>
 
     <dependencyManagement>

@@ -10,7 +10,7 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,24 +22,24 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "客户画像管理", description = "客户画像和消费记录管理接口")
 @RestController
 @RequestMapping("/customer-profiles")
+@RequiredArgsConstructor
 public class CustomerProfileController extends BaseController {
 
-    @Autowired
-    private CustomerProfileService customerProfileService;
+    private final CustomerProfileService customerProfileService;
 
     @Operation(summary = "分页查询客户画像")
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Page<CustomerProfileVO>> getProfilePage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "memberLevel", required = false) String memberLevel,
             @RequestParam(name = "riskLevel", required = false) String riskLevel,
             @RequestParam(name = "lifecycleStage", required = false) String lifecycleStage,
             @RequestParam(name = "rfmSegment", required = false) String rfmSegment,
             @RequestParam(name = "keyword", required = false) String keyword) {
-        Page<CustomerProfileVO> page = customerProfileService.getProfilePage(pageNum, pageSize, memberLevel, riskLevel, lifecycleStage, rfmSegment, keyword);
-        return Result.success(page);
+        Page<CustomerProfileVO> pageResult = customerProfileService.getProfilePage(page, size, memberLevel, riskLevel, lifecycleStage, rfmSegment, keyword);
+        return Result.success(pageResult);
     }
 
     @Operation(summary = "根据客户ID获取画像")
@@ -70,14 +70,14 @@ public class CustomerProfileController extends BaseController {
     @GetMapping("/orders/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CustomerOrderRecordVO>> getOrderRecordPage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "userId", required = false) String userId,
             @RequestParam(name = "orderType", required = false) String orderType,
             @RequestParam(name = "status", required = false) String status) {
         Long decodedUserId = userId != null ? decodeId(userId) : null;
-        Page<CustomerOrderRecordVO> page = customerProfileService.getOrderRecordPage(pageNum, pageSize, decodedUserId, orderType, status);
-        return Result.success(page);
+        Page<CustomerOrderRecordVO> pageResult = customerProfileService.getOrderRecordPage(page, size, decodedUserId, orderType, status);
+        return Result.success(pageResult);
     }
 
     @Operation(summary = "刷新客户画像数据")

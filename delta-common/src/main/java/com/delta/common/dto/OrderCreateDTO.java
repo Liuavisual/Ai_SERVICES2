@@ -1,28 +1,40 @@
 package com.delta.common.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
+@Schema(description = "订单创建数据传输对象")
 public class OrderCreateDTO {
 
+    @Schema(description = "用户ID", example = "d_xxxxx")
     @NotBlank(message = "用户ID不能为空")
     private String userId;
 
+    @Schema(description = "陪玩师ID", example = "d_xxxxx")
     @NotBlank(message = "陪玩师ID不能为空")
     private String companionId;
 
+    @Schema(description = "服务类型", example = "陪玩", allowableValues = {"陪玩", "语音", "视频"})
     @NotBlank(message = "服务类型不能为空")
     private String serviceType;
 
+    @Schema(description = "预约开始时间", example = "2026-01-01T10:00:00")
     @NotNull(message = "预约开始时间不能为空")
     private LocalDateTime scheduledStart;
 
+    @Schema(description = "预约结束时间", example = "2026-01-01T12:00:00")
     @NotNull(message = "预约结束时间不能为空")
     private LocalDateTime scheduledEnd;
 
+    @Schema(description = "游戏类型", example = "王者荣耀")
     private String gameType;
+
+    @Schema(description = "备注", example = "希望选择擅长打野的陪玩师")
     private String remark;
+
+    @Schema(description = "来源", example = "微信", allowableValues = {"微信", "企微", "APP", "网页"})
     private String source;
 
     public String getUserId() { return userId; }

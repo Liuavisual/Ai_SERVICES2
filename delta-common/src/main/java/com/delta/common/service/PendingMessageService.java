@@ -11,9 +11,9 @@ import com.delta.common.vo.PendingMessageVO;
  */
 public interface PendingMessageService {
 
-    Page<PendingMessageVO> getPendingMessagePage(Integer pageNum, Integer pageSize, String status, String platform, String keyword);
+    Page<PendingMessageVO> getPendingMessagePage(Integer page, Integer size, String status, String platform, String keyword);
 
-    Page<PendingMessageVO> getPendingMessagePage(Integer pageNum, Integer pageSize, String status, String platform, String keyword, Long currentUserId, String currentUserRole);
+    Page<PendingMessageVO> getPendingMessagePage(Integer page, Integer size, String status, String platform, String keyword, Long currentUserId, String currentUserRole);
 
     void handlePendingMessage(PendingMessageHandleDTO handleDTO);
 

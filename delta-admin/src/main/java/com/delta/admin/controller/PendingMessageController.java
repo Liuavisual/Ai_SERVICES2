@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,10 +38,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/pending-messages")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@RequiredArgsConstructor
 public class PendingMessageController extends BaseController {
 
-    @Autowired
-    private PendingMessageService pendingMessageService;
+    private final PendingMessageService pendingMessageService;
 
     /**
      * 分页查询待处理消息
@@ -63,8 +63,8 @@ public class PendingMessageController extends BaseController {
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<PendingMessageVO>> getPendingMessagePage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "20") Integer size,
             @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "platform", required = false) String platform,
             @RequestParam(name = "keyword", required = false) String keyword,
@@ -73,9 +73,9 @@ public class PendingMessageController extends BaseController {
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
 
-        Page<PendingMessageVO> page = pendingMessageService.getPendingMessagePage(
-                pageNum, pageSize, status, platform, keyword, currentUserId, currentUserRole);
-        return Result.success(page);
+        Page<PendingMessageVO> pageResult = pendingMessageService.getPendingMessagePage(
+                page, size, status, platform, keyword, currentUserId, currentUserRole);
+        return Result.success(pageResult);
     }
 
     /**

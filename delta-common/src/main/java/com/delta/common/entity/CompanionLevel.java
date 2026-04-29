@@ -1,6 +1,8 @@
 package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -17,6 +19,9 @@ import java.math.BigDecimal;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("companion_levels")
+@Table(name = "companion_levels", indexes = {
+        @Index(name = "idx_companion_levels_enabled", columnList = "enabled")
+})
 public class CompanionLevel extends BaseEntity {
 
     /** 等级名称，如"二品"、"一品"、"顶尖" */

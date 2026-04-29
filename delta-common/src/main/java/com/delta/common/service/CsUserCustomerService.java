@@ -11,7 +11,7 @@ import com.delta.common.vo.CsUserCustomerVO;
  */
 public interface CsUserCustomerService {
     
-    Page<CsUserCustomerVO> getPage(Integer pageNum, Integer pageSize, Long csUserId, Long customerUserId, String status);
+    Page<CsUserCustomerVO> getPage(Integer page, Integer size, Long csUserId, Long customerUserId, String status);
     
     CsUserCustomerVO getById(Long id);
     

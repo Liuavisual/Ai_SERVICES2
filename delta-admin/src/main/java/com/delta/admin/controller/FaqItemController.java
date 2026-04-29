@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,13 +26,12 @@ import java.util.Map;
 @Tag(name = "FAQ知识库管理", description = "FAQ知识库管理接口")
 @RestController
 @RequestMapping("/faq-items")
+@RequiredArgsConstructor
 public class FaqItemController extends BaseController {
 
-    @Autowired
-    private FaqItemService faqItemService;
+    private final FaqItemService faqItemService;
 
-    @Autowired
-    private CacheService cacheService;
+    private final CacheService cacheService;
 
     @Operation(summary = "获取FAQ列表")
     @GetMapping

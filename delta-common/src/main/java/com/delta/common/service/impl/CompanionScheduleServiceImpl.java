@@ -15,7 +15,7 @@ import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CompanionScheduleVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,21 +28,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CompanionScheduleServiceImpl implements CompanionScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(CompanionScheduleServiceImpl.class);
 
-    @Autowired
-    private CompanionScheduleMapper companionScheduleMapper;
+    private final CompanionScheduleMapper companionScheduleMapper;
 
-    @Autowired
-    private CompanionMapper companionMapper;
+    private final CompanionMapper companionMapper;
 
     private static final int MAX_BATCH_DAYS = 31;
 
     @Override
-    public Page<CompanionScheduleVO> getPage(Integer pageNum, Integer pageSize, Long companionId, LocalDate scheduleDate, String status) {
-        Page<CompanionSchedule> page = new Page<>(pageNum, pageSize);
+    public Page<CompanionScheduleVO> getPage(Integer page, Integer size, Long companionId, LocalDate scheduleDate, String status) {
+        Page<CompanionSchedule> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<CompanionSchedule> wrapper = new LambdaQueryWrapper<>();
 
         if (companionId != null) {
@@ -60,19 +59,19 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
         wrapper.orderByAsc(CompanionSchedule::getScheduleDate)
                .orderByAsc(CompanionSchedule::getStartTime);
 
-        Page<CompanionSchedule> schedulePage = companionScheduleMapper.selectPage(page, wrapper);
+        Page<CompanionSchedule> schedulePageResult = companionScheduleMapper.selectPage(pageObj, wrapper);
 
-        List<Long> companionIds = schedulePage.getRecords().stream()
+        List<Long> companionIds = schedulePageResult.getRecords().stream()
                 .map(CompanionSchedule::getCompanionId)
                 .distinct()
                 .collect(Collectors.toList());
 
         Map<Long, Companion> companionMap = companionIds.isEmpty() ? Map.of() :
-                companionMapper.selectBatchIds(companionIds).stream()
+                companionMapper.selectByIds(companionIds).stream()
                         .collect(Collectors.toMap(Companion::getId, c -> c));
 
-        Page<CompanionScheduleVO> resultPage = new Page<>(schedulePage.getCurrent(), schedulePage.getSize(), schedulePage.getTotal());
-        List<CompanionScheduleVO> voList = schedulePage.getRecords().stream().map(s -> {
+        Page<CompanionScheduleVO> resultPage = new Page<>(schedulePageResult.getCurrent(), schedulePageResult.getSize(), schedulePageResult.getTotal());
+        List<CompanionScheduleVO> voList = schedulePageResult.getRecords().stream().map(s -> {
             CompanionScheduleVO vo = BeanUtil.copyProperties(s, CompanionScheduleVO.class);
             Companion companion = companionMap.get(s.getCompanionId());
             if (companion != null) {
@@ -114,7 +113,7 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
                 .collect(Collectors.toList());
 
         Map<Long, Companion> companionMap = companionIds.isEmpty() ? Map.of() :
-                companionMapper.selectBatchIds(companionIds).stream()
+                companionMapper.selectByIds(companionIds).stream()
                         .collect(Collectors.toMap(Companion::getId, c -> c));
 
         return schedules.stream().map(s -> {

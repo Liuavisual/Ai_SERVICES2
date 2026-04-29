@@ -8,7 +8,7 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,24 +20,24 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "客服-客户分配管理", description = "客服-客户分配管理接口")
 @RestController
 @RequestMapping("/cs-user-customer")
+@RequiredArgsConstructor
 public class CsUserCustomerController extends BaseController {
 
-    @Autowired
-    private CsUserCustomerService csUserCustomerService;
+    private final CsUserCustomerService csUserCustomerService;
 
     @Operation(summary = "分页查询客服-客户分配关系")
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CsUserCustomerVO>> getPage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "csUserId", required = false) String csUserId,
             @RequestParam(name = "customerUserId", required = false) String customerUserId,
             @RequestParam(name = "status", required = false) String status) {
         Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
         Long decodedCustomerUserId = customerUserId != null ? decodeId(customerUserId) : null;
-        Page<CsUserCustomerVO> page = csUserCustomerService.getPage(pageNum, pageSize, decodedCsUserId, decodedCustomerUserId, status);
-        return Result.success(page);
+        Page<CsUserCustomerVO> pageResult = csUserCustomerService.getPage(page, size, decodedCsUserId, decodedCustomerUserId, status);
+        return Result.success(pageResult);
     }
 
     @Operation(summary = "获取客服-客户分配详情")

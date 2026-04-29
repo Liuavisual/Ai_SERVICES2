@@ -32,15 +32,31 @@
       </div>
 
       <div class="data-grid">
-        <div class="data-section" v-if="statsData?.trendData?.length > 0">
+        <div class="data-section trend-section" v-if="statsData?.trendData?.length > 0">
           <el-card>
             <template #header>
               <div class="card-header">
                 <span>消息趋势</span>
-                <el-tag type="info" size="small">{{ period === 'DAILY' ? '今日' : period === 'WEEKLY' ? '本周' : period === 'MONTHLY' ? '本月' : period === 'QUARTERLY' ? '本季' : '本年' }}</el-tag>
+                <el-tag type="info" size="small">{{ periodLabel }}</el-tag>
               </div>
             </template>
-            <el-table :data="statsData.trendData" stripe size="small">
+            <div class="trend-chart">
+              <div
+                v-for="(item, idx) in statsData.trendData"
+                :key="idx"
+                class="trend-bar-group"
+              >
+                <div class="trend-bar-wrapper">
+                  <div
+                    class="trend-bar"
+                    :style="{ height: getBarHeight(item.messageCount) + '%' }"
+                    :title="`${item.date}: ${item.messageCount}条`"
+                  ></div>
+                </div>
+                <span class="trend-label">{{ item.date }}</span>
+              </div>
+            </div>
+            <el-table :data="statsData.trendData" stripe size="small" style="margin-top:16px">
               <el-table-column prop="date" label="日期" width="140" />
               <el-table-column prop="messageCount" label="消息数" width="100" />
             </el-table>
@@ -70,6 +86,53 @@
             </el-table>
           </el-card>
         </div>
+
+        <div class="data-section" v-if="statsData?.overview">
+          <el-card>
+            <template #header>
+              <div class="card-header">
+                <span>运营指标</span>
+                <el-tag type="warning" size="small">核心KPI</el-tag>
+              </div>
+            </template>
+            <div class="kpi-list">
+              <div class="kpi-item">
+                <span class="kpi-label">解决率</span>
+                <el-progress
+                  :percentage="statsData.overview.resolutionRate || 0"
+                  :color="getProgressColor(statsData.overview.resolutionRate)"
+                  :stroke-width="12"
+                  style="flex:1"
+                />
+                <span class="kpi-value">{{ statsData.overview.resolutionRate || 0 }}%</span>
+              </div>
+              <div class="kpi-item">
+                <span class="kpi-label">满意度</span>
+                <el-progress
+                  :percentage="statsData.overview.customerSatisfaction || 0"
+                  :color="getProgressColor(statsData.overview.customerSatisfaction)"
+                  :stroke-width="12"
+                  style="flex:1"
+                />
+                <span class="kpi-value">{{ statsData.overview.customerSatisfaction || 0 }}%</span>
+              </div>
+              <div class="kpi-item">
+                <span class="kpi-label">AI占比</span>
+                <el-progress
+                  :percentage="aiRatio"
+                  color="#8B5CF6"
+                  :stroke-width="12"
+                  style="flex:1"
+                />
+                <span class="kpi-value">{{ aiRatio }}%</span>
+              </div>
+              <div class="kpi-item">
+                <span class="kpi-label">活跃客服</span>
+                <span class="kpi-value kpi-value--large">{{ statsData.overview.activeCsCount || 0 }}</span>
+              </div>
+            </div>
+          </el-card>
+        </div>
       </div>
     </div>
   </div>
@@ -79,12 +142,26 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { statsApi } from '@/api'
-import { ChatDotRound, User, Clock, Bell, ChatLineRound, Money } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
+import { ChatDotRound, User, Clock, Bell, ChatLineRound, Money, TrendCharts, DataAnalysis } from '@element-plus/icons-vue'
 
 const loading = ref(false)
 const period = ref('DAILY')
 const statsData = ref(null)
-const userInfo = ref(null)
+const authStore = useAuthStore()
+
+const periodLabel = computed(() => {
+  const map = { DAILY: '今日', WEEKLY: '本周', MONTHLY: '本月', QUARTERLY: '本季', YEARLY: '本年' }
+  return map[period.value] || ''
+})
+
+const aiRatio = computed(() => {
+  const o = statsData.value?.overview
+  if (!o) return 0
+  const total = (o.aiReplyCount || 0) + (o.manualReplyCount || 0)
+  if (total === 0) return 0
+  return Math.round((o.aiReplyCount || 0) / total * 100)
+})
 
 const overviewCards = computed(() => {
   if (!statsData.value?.overview) return []
@@ -100,31 +177,38 @@ const overviewCards = computed(() => {
   return cards
 })
 
+const getBarHeight = (count) => {
+  if (!statsData.value?.trendData?.length) return 0
+  const max = Math.max(...statsData.value.trendData.map(d => d.messageCount || 0), 1)
+  return Math.max((count / max) * 100, 2)
+}
+
+const getProgressColor = (val) => {
+  if (val >= 80) return '#10B981'
+  if (val >= 50) return '#F59E0B'
+  return '#EF4444'
+}
+
 const fetchData = async () => {
   loading.value = true
   try {
     let res
     const params = { period: period.value }
-    if (userInfo.value) {
-      if (userInfo.value.role === 'CS_STAFF') { params.csUserId = userInfo.value.id; res = await statsApi.getPersonal(params) }
-      else if (userInfo.value.role === 'CS_LEADER') res = await statsApi.getTeam(params)
-      else res = await statsApi.getGlobal(params)
-      if (res.code === 200) statsData.value = res.data
+    const role = authStore.role
+    if (role === 'CS_STAFF') {
+      params.csUserId = authStore.userId
+      res = await statsApi.getPersonal(params)
+    } else if (role === 'CS_LEADER') {
+      res = await statsApi.getTeam(params)
     } else {
       res = await statsApi.getGlobal(params)
-      if (res.code === 200) statsData.value = res.data
     }
+    if (res.code === 200) statsData.value = res.data
   } catch (e) { ElMessage.error('获取统计数据失败') }
   finally { loading.value = false }
 }
 
-onMounted(() => {
-  const info = localStorage.getItem('userInfo')
-  if (info) {
-    try { userInfo.value = JSON.parse(info) } catch { userInfo.value = null }
-  }
-  fetchData()
-})
+onMounted(() => { fetchData() })
 watch(() => period.value, () => fetchData())
 </script>
 
@@ -216,6 +300,90 @@ watch(() => period.value, () => fetchData())
 }
 
 .data-section { min-width: 0; }
+
+.trend-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 160px;
+  padding: 0 8px;
+  overflow-x: auto;
+}
+
+.trend-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 28px;
+  height: 100%;
+}
+
+.trend-bar-wrapper {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.trend-bar {
+  width: 70%;
+  max-width: 32px;
+  background: linear-gradient(180deg, #6366F1 0%, #818CF8 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+  cursor: pointer;
+  min-height: 2px;
+}
+
+.trend-bar:hover {
+  background: linear-gradient(180deg, #4F46E5 0%, #6366F1 100%);
+}
+
+.trend-label {
+  font-size: 10px;
+  color: var(--gu-text-muted);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.kpi-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0;
+}
+
+.kpi-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--gu-text-muted);
+  width: 60px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gu-text-primary);
+  width: 50px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.kpi-value--large {
+  font-size: 24px;
+  font-weight: 700;
+  color: #10B981;
+  width: auto;
+}
 
 @media (max-width: 768px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }

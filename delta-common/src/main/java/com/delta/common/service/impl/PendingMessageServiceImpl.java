@@ -30,7 +30,7 @@ import com.delta.common.vo.NotificationVO;
 import com.delta.common.vo.PendingMessageVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -48,39 +48,33 @@ import java.util.stream.Collectors;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class PendingMessageServiceImpl implements PendingMessageService {
 
     private static final Logger log = LoggerFactory.getLogger(PendingMessageServiceImpl.class);
 
     private static final int DEADLINE_SECONDS = 300;
 
-    @Autowired
-    private PendingMessageMapper pendingMessageMapper;
+    private final PendingMessageMapper pendingMessageMapper;
 
-    @Autowired
-    private CsUserCustomerMapper csUserCustomerMapper;
+    private final CsUserCustomerMapper csUserCustomerMapper;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
 
-    @Autowired
-    private MessageMapper messageMapper;
+    private final MessageMapper messageMapper;
 
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Autowired
-    private RedisService redisService;
+    private final RedisService redisService;
 
     private static final String PENDING_COUNT_KEY = "delta:pending:count";
     private static final long PENDING_COUNT_TTL = 5;
 
     @Override
-    public Page<PendingMessageVO> getPendingMessagePage(Integer pageNum, Integer pageSize, String status, String platform, String keyword) {
-        Page<PendingMessage> page = new Page<>(pageNum, pageSize);
+    public Page<PendingMessageVO> getPendingMessagePage(Integer page, Integer size, String status, String platform, String keyword) {
+        Page<PendingMessage> pendingPage = new Page<>(page, size);
         LambdaQueryWrapper<PendingMessage> wrapper = new LambdaQueryWrapper<>();
 
         if (status != null && !status.trim().isEmpty()) {
@@ -97,10 +91,10 @@ public class PendingMessageServiceImpl implements PendingMessageService {
 
         wrapper.orderByDesc(PendingMessage::getCreatedAt);
 
-        Page<PendingMessage> pendingMessagePage = pendingMessageMapper.selectPage(page, wrapper);
-        List<PendingMessageVO> voList = buildVOList(pendingMessagePage.getRecords());
+        Page<PendingMessage> pendingPageResult = pendingMessageMapper.selectPage(pendingPage, wrapper);
+        List<PendingMessageVO> voList = buildVOList(pendingPageResult.getRecords());
 
-        Page<PendingMessageVO> resultPage = new Page<>(pendingMessagePage.getCurrent(), pendingMessagePage.getSize(), pendingMessagePage.getTotal());
+        Page<PendingMessageVO> resultPage = new Page<>(pendingPageResult.getCurrent(), pendingPageResult.getSize(), pendingPageResult.getTotal());
         resultPage.setRecords(voList);
         VoUtils.setRowNumbers(resultPage);
         return resultPage;
@@ -424,24 +418,24 @@ public class PendingMessageServiceImpl implements PendingMessageService {
     }
 
     @Override
-    public Page<PendingMessageVO> getPendingMessagePage(Integer pageNum, Integer pageSize, String status, String platform, String keyword, Long currentUserId, String currentUserRole) {
+    public Page<PendingMessageVO> getPendingMessagePage(Integer page, Integer size, String status, String platform, String keyword, Long currentUserId, String currentUserRole) {
         if (currentUserId == null || currentUserRole == null) {
-            return getPendingMessagePage(pageNum, pageSize, status, platform, keyword);
+            return getPendingMessagePage(page, size, status, platform, keyword);
         }
 
         if (BusinessStatusConstants.ROLE_SYS_ADMIN.equals(currentUserRole) || BusinessStatusConstants.ROLE_CS_LEADER.equals(currentUserRole)) {
-            return getPendingMessagePage(pageNum, pageSize, status, platform, keyword);
+            return getPendingMessagePage(page, size, status, platform, keyword);
         }
 
         List<Long> customerIds = getCustomerIdsForCsStaff(currentUserId);
 
         if (customerIds.isEmpty()) {
-            Page<PendingMessageVO> emptyPage = new Page<>(pageNum, pageSize, 0);
+            Page<PendingMessageVO> emptyPage = new Page<>(page, size, 0);
             emptyPage.setRecords(List.of());
             return emptyPage;
         }
 
-        Page<PendingMessage> page = new Page<>(pageNum, pageSize);
+        Page<PendingMessage> pendingPage = new Page<>(page, size);
         LambdaQueryWrapper<PendingMessage> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(PendingMessage::getUserId, customerIds);
 
@@ -456,10 +450,10 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         }
         wrapper.orderByDesc(PendingMessage::getCreatedAt);
 
-        Page<PendingMessage> pendingMessagePage = pendingMessageMapper.selectPage(page, wrapper);
-        List<PendingMessageVO> voList = buildVOList(pendingMessagePage.getRecords());
+        Page<PendingMessage> pendingPageResult = pendingMessageMapper.selectPage(pendingPage, wrapper);
+        List<PendingMessageVO> voList = buildVOList(pendingPageResult.getRecords());
 
-        Page<PendingMessageVO> resultPage = new Page<>(pendingMessagePage.getCurrent(), pendingMessagePage.getSize(), pendingMessagePage.getTotal());
+        Page<PendingMessageVO> resultPage = new Page<>(pendingPageResult.getCurrent(), pendingPageResult.getSize(), pendingPageResult.getTotal());
         resultPage.setRecords(voList);
         VoUtils.setRowNumbers(resultPage);
         return resultPage;
@@ -497,16 +491,16 @@ public class PendingMessageServiceImpl implements PendingMessageService {
                 .map(PendingMessage::getHandledBy).filter(id -> id != null).distinct().collect(Collectors.toList());
 
         Map<Long, User> userMap = userIds.isEmpty() ? Map.of() :
-                userMapper.selectBatchIds(userIds).stream()
+                userMapper.selectByIds(userIds).stream()
                         .collect(Collectors.toMap(User::getId, u -> u));
         Map<Long, Message> messageMap = messageIds.isEmpty() ? Map.of() :
-                messageMapper.selectBatchIds(messageIds).stream()
+                messageMapper.selectByIds(messageIds).stream()
                         .collect(Collectors.toMap(Message::getId, m -> m));
         Map<Long, SysUser> csMap = assignedCsIds.isEmpty() ? Map.of() :
-                sysUserMapper.selectBatchIds(assignedCsIds).stream()
+                sysUserMapper.selectByIds(assignedCsIds).stream()
                         .collect(Collectors.toMap(SysUser::getId, u -> u));
         Map<Long, SysUser> handledByMap = handledByIds.isEmpty() ? Map.of() :
-                sysUserMapper.selectBatchIds(handledByIds).stream()
+                sysUserMapper.selectByIds(handledByIds).stream()
                         .collect(Collectors.toMap(SysUser::getId, u -> u));
 
         return records.stream().map(pm -> {

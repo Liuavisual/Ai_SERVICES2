@@ -45,19 +45,19 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final StringRedisTemplate redisTemplate;
 
     @Override
-    public Page<WorkOrderVO> getWorkOrderPage(Integer pageNum, Integer pageSize, String status, String orderType, String priority, String platform, String keyword) {
-        return getWorkOrderPage(pageNum, pageSize, status, orderType, priority, platform, keyword, null, null);
+    public Page<WorkOrderVO> getWorkOrderPage(Integer page, Integer size, String status, String orderType, String priority, String platform, String keyword) {
+        return getWorkOrderPage(page, size, status, orderType, priority, platform, keyword, null, null);
     }
 
     @Override
-    public Page<WorkOrderVO> getWorkOrderPage(Integer pageNum, Integer pageSize, String status, String orderType, String priority, String platform, String keyword, Long currentUserId, String currentUserRole) {
+    public Page<WorkOrderVO> getWorkOrderPage(Integer page, Integer size, String status, String orderType, String priority, String platform, String keyword, Long currentUserId, String currentUserRole) {
         LambdaQueryWrapper<WorkOrder> wrapper = buildQueryWrapper(status, orderType, priority, platform, keyword);
         applyDataScope(wrapper, currentUserId, currentUserRole);
         wrapper.orderByDesc(WorkOrder::getCreatedAt);
 
-        Page<WorkOrder> page = workOrderMapper.selectPage(new Page<>(pageNum, pageSize), wrapper);
-        Page<WorkOrderVO> voPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        voPage.setRecords(buildVOList(page.getRecords()));
+        Page<WorkOrder> pageResult = workOrderMapper.selectPage(new Page<>(page, size), wrapper);
+        Page<WorkOrderVO> voPage = new Page<>(pageResult.getCurrent(), pageResult.getSize(), pageResult.getTotal());
+        voPage.setRecords(buildVOList(pageResult.getRecords()));
         VoUtils.setRowNumbers(voPage);
         return voPage;
     }

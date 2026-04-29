@@ -16,7 +16,7 @@ import com.delta.common.vo.CustomerProfileVO;
  */
 public interface CustomerProfileService {
 
-    Page<CustomerProfileVO> getProfilePage(Integer pageNum, Integer pageSize, String memberLevel, String riskLevel, String lifecycleStage, String rfmSegment, String keyword);
+    Page<CustomerProfileVO> getProfilePage(Integer page, Integer size, String memberLevel, String riskLevel, String lifecycleStage, String rfmSegment, String keyword);
 
     CustomerProfileVO getProfileByUserId(Long userId);
 
@@ -24,7 +24,7 @@ public interface CustomerProfileService {
 
     void addOrderRecord(CustomerOrderRecordDTO dto);
 
-    Page<CustomerOrderRecordVO> getOrderRecordPage(Integer pageNum, Integer pageSize, Long userId, String orderType, String status);
+    Page<CustomerOrderRecordVO> getOrderRecordPage(Integer page, Integer size, Long userId, String orderType, String status);
 
     void refreshProfile(Long userId);
 

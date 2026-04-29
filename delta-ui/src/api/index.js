@@ -356,3 +356,47 @@ export const orderApi = {
   getByCompanion: (companionId) => request({ url: `/orders/companion/${companionId}`, method: 'get' }),
   queryOrders: (params) => request({ url: '/orders/query', method: 'get', params })
 }
+
+/** 工单管理API */
+export const workOrderApi = {
+  /** 分页查询工单 */
+  getPage: (params) => request({ url: '/work-orders/page', method: 'get', params }),
+  /** 根据ID查询工单 */
+  getById: (id) => request({ url: `/work-orders/${id}`, method: 'get' }),
+  /** 创建工单 */
+  create: (data) => request({ url: '/work-orders', method: 'post', data }),
+  /** 接手工单 */
+  accept: (id) => request({ url: `/work-orders/${id}/accept`, method: 'put' }),
+  /** 提交处理结果 */
+  submit: (id, data) => request({ url: `/work-orders/${id}/submit`, method: 'put', data }),
+  /** 确认完成工单 */
+  confirm: (id, data) => request({ url: `/work-orders/${id}/confirm`, method: 'put', data }),
+  /** 关闭工单 */
+  close: (id, closeReason) => request({ url: `/work-orders/${id}/close`, method: 'put', params: { closeReason } }),
+  /** 取消工单 */
+  cancel: (id, cancelReason) => request({ url: `/work-orders/${id}/cancel`, method: 'put', params: { cancelReason } }),
+  /** 重新打开工单（仅SYS_ADMIN） */
+  reopen: (id, reopenReason) => request({ url: `/work-orders/${id}/reopen`, method: 'put', params: { reopenReason } }),
+  /** 获取待处理工单数量 */
+  getCount: () => request({ url: '/work-orders/count', method: 'get' })
+}
+
+/** 服务追踪API */
+export const serviceTrackApi = {
+  /** 根据ID查询服务追踪 */
+  getById: (id) => request({ url: `/service-tracks/${id}`, method: 'get' }),
+  /** 创建咨询 */
+  create: (params) => request({ url: '/service-tracks', method: 'post', params }),
+  /** 预约服务 */
+  book: (id, userId, data) => request({ url: `/service-tracks/${id}/book`, method: 'put', params: { userId }, data }),
+  /** 开始服务 */
+  start: (id, companionId, companionName) => request({ url: `/service-tracks/${id}/start`, method: 'put', params: { companionId, companionName } }),
+  /** 结束服务 */
+  end: (id, data) => request({ url: `/service-tracks/${id}/end`, method: 'put', data }),
+  /** 提交评价 */
+  rating: (id, rating, feedback) => request({ url: `/service-tracks/${id}/rating`, method: 'put', params: { rating, feedback } }),
+  /** 按用户ID查询服务追踪 */
+  listByUser: (userId) => request({ url: `/service-tracks/user/${userId}`, method: 'get' }),
+  /** 按订单ID查询服务追踪 */
+  listByOrder: (orderId) => request({ url: `/service-tracks/order/${orderId}`, method: 'get' })
+}

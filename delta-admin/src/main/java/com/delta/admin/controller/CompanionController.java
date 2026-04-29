@@ -1,50 +1,45 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.delta.common.constant.BusinessStatusConstants;
-import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.CompanionDTO;
+import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.service.CompanionService;
-import com.delta.common.util.DesensitizeUtils;
-import com.delta.common.util.ExcelUtils;
 import com.delta.common.vo.CompanionVO;
 import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Tag(name = "陪玩师管理", description = "陪玩师管理接口")
 @RestController
 @RequestMapping("/companions")
+@RequiredArgsConstructor
 public class CompanionController extends BaseController {
 
-    @Autowired
-    private CompanionService companionService;
+    private final CompanionService companionService;
 
     @Operation(summary = "分页查询陪玩师")
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CompanionVO>> getPage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "levelId", required = false) String levelId,
             @RequestParam(name = "nickname", required = false) String nickname,
             @RequestParam(name = "enabled", required = false) Integer enabled) {
         Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
-        Page<CompanionVO> page = companionService.getPage(pageNum, pageSize, decodedLevelId, nickname, enabled);
-        return Result.success(page);
+        Page<CompanionVO> pageResult = companionService.getPage(page, size, decodedLevelId, nickname, enabled);
+        return Result.success(pageResult);
     }
 
     @Operation(summary = "获取所有启用的陪玩师")
@@ -104,59 +99,16 @@ public class CompanionController extends BaseController {
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "levelId", required = false) String levelId,
                             @RequestParam(name = "nickname", required = false) String nickname,
-                            @RequestParam(name = "enabled", required = false) Integer enabled) throws IOException {
+                            @RequestParam(name = "enabled", required = false) Integer enabled) {
         Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
-        Page<CompanionVO> page = companionService.getPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, decodedLevelId, nickname, enabled);
-        LinkedHashMap<String, String> headers = new LinkedHashMap<>();
-        headers.put("id", "ID");
-        headers.put("realName", "真实姓名");
-        headers.put("nickname", "昵称");
-        headers.put("phone", "手机号");
-        headers.put("wechat", "微信");
-        headers.put("levelName", "等级");
-        headers.put("gameType", "游戏类型");
-        headers.put("price", "价格");
-        headers.put("enabled", "是否启用");
-        ExcelUtils.export(response, "陪玩师列表", headers, page.getRecords(), item -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", item.getId());
-            map.put("realName", item.getRealName());
-            map.put("nickname", item.getNickname());
-            map.put("phone", DesensitizeUtils.maskPhone(item.getPhone()));
-            map.put("wechat", DesensitizeUtils.maskSecret(item.getWechat()));
-            map.put("levelName", item.getLevelName());
-            map.put("gameType", item.getGameType());
-            map.put("price", item.getPrice());
-            map.put("enabled", item.getEnabled() != null && item.getEnabled() ? "启用" : "禁用");
-            return map;
-        });
+        companionService.exportCompanions(response, decodedLevelId, nickname, enabled);
     }
 
     @Operation(summary = "导入陪玩师Excel")
     @PostMapping("/import")
     @PreAuthorize("hasRole('SYS_ADMIN')")
-    public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
-        List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
-        int success = 0, fail = 0;
-        for (Map<String, String> row : rows) {
-            try {
-                CompanionDTO dto = new CompanionDTO();
-                dto.setRealName(row.getOrDefault("真实姓名", row.getOrDefault("realName", "")));
-                dto.setNickname(row.getOrDefault("昵称", row.getOrDefault("nickname", "")));
-                dto.setPhone(row.getOrDefault("手机号", row.getOrDefault("phone", "")));
-                dto.setWechat(row.getOrDefault("微信", row.getOrDefault("wechat", "")));
-                dto.setGameType(row.getOrDefault("游戏类型", row.getOrDefault("gameType", "")));
-                String priceStr = row.getOrDefault("价格", row.getOrDefault("price", "0"));
-                dto.setPrice(new java.math.BigDecimal(priceStr.isEmpty() ? "0" : priceStr));
-                String enabledStr = row.getOrDefault("是否启用", row.getOrDefault("enabled", "启用"));
-                dto.setEnabled(BusinessStatusConstants.parseExcelEnabled(enabledStr));
-                companionService.create(dto);
-                success++;
-            } catch (Exception e) {
-                fail++;
-            }
-        }
-        Map<String, Object> result = Map.of("success", success, "fail", fail, "total", rows.size());
-        return Result.success(result);
+    public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
+        ImportResultDTO result = companionService.importCompanions(file);
+        return Result.success(result.toMap());
     }
 }

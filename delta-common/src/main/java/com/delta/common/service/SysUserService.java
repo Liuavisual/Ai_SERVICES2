@@ -12,7 +12,7 @@ import com.delta.common.vo.SysUserVO;
  */
 public interface SysUserService {
     
-    Page<SysUserVO> getUserPage(Integer pageNum, Integer pageSize, String role, String status);
+    Page<SysUserVO> getUserPage(Integer page, Integer size, String role, String status);
     
     SysUserVO getUserById(Long id);
     

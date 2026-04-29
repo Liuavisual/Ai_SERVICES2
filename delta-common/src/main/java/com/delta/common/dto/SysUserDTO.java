@@ -1,5 +1,6 @@
 package com.delta.common.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -12,28 +13,37 @@ import lombok.Data;
  * @author delta
  */
 @Data
+@Schema(description = "系统用户数据传输对象")
 public class SysUserDTO {
-    
+
+    @Schema(description = "用户ID", example = "1")
     private Long id;
-    
+
+    @Schema(description = "用户名", example = "admin")
     @NotBlank(message = "用户名不能为空")
     @Size(min = 3, max = 50, message = "用户名长度必须在3-50之间")
     /** 用户名 */    private String username;
-    
+
+    @Schema(description = "密码", example = "12345678")
     /** 密码 */    private String password;
-    
+
+    @Schema(description = "真实姓名", example = "张三")
     @NotBlank(message = "真实姓名不能为空")
     /** 真实姓名 */    private String realName;
-    
+
+    @Schema(description = "手机号", example = "13800138000")
     @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
     /** 手机号 */    private String phone;
-    
+
+    @Schema(description = "邮箱", example = "admin@example.com")
     @Email(message = "邮箱格式不正确")
     /** 邮箱 */    private String email;
-    
+
+    @Schema(description = "角色", example = "ADMIN", allowableValues = {"ADMIN", "CS", "VIEWER"})
     @NotBlank(message = "角色不能为空")
     /** 角色 */    private String role;
-    
+
+    @Schema(description = "状态", example = "ACTIVE", allowableValues = {"ACTIVE", "INACTIVE", "LOCKED"})
     /** 状态 */    private String status;
 
     public Long getId() {

@@ -1,6 +1,8 @@
 package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,6 +17,10 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("users")
+@Table(name = "users", indexes = {
+        @Index(name = "idx_users_platform", columnList = "platform"),
+        @Index(name = "idx_users_created_at", columnList = "created_at")
+})
 public class User extends BaseEntity {
 
     /** 来源平台：wechat、test等 */

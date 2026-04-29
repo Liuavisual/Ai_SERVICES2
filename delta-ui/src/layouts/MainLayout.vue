@@ -94,7 +94,7 @@
 import { computed, ref, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElNotification } from 'element-plus'
-import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton } from '@element-plus/icons-vue'
+import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position } from '@element-plus/icons-vue'
 import { pendingMessageApi } from '@/api'
 
 const route = useRoute()
@@ -125,8 +125,8 @@ provide('refreshPendingCount', refreshPendingCount)
 const allMenus = [
   { path: '/dashboard', title: '数据总览', icon: 'DataLine', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: 'd1', title: '', icon: '', roles: [], divider: true, label: '客户管理' },
-  { path: '/customers', title: '客户名录', icon: 'User', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/customer-profiles', title: '客户画像', icon: 'Avatar', roles: ['SYS_ADMIN','CS_LEADER'] },
+  { path: '/customers', title: '客户名录', icon: 'User', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
+  { path: '/customer-profiles', title: '客户画像', icon: 'Avatar', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/game-configs', title: '游戏配置', icon: 'Monitor', roles: ['SYS_ADMIN','CS_LEADER'] },
   { path: '/service-items', title: '服务项目', icon: 'List', roles: ['SYS_ADMIN','CS_LEADER'] },
   { path: '/activity-packages', title: '活动套餐', icon: 'Present', roles: ['SYS_ADMIN','CS_LEADER'] },
@@ -146,6 +146,8 @@ const allMenus = [
   { path: '/companions', title: '陪玩师', icon: 'Timer', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/companion-schedule', title: '排班管理', icon: 'Calendar', roles: ['SYS_ADMIN','CS_LEADER'] },
   { path: '/orders', title: '订单管理', icon: 'Shop', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
+  { path: '/work-orders', title: '工单管理', icon: 'Tickets', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
+  { path: '/service-tracks', title: '服务追踪', icon: 'Position', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: 'd5', title: '', icon: '', roles: [], divider: true, label: '系统设置' },
   { path: '/ai-config', title: 'AI配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
   { path: '/platform-configs', title: '平台配置', icon: 'Tools', roles: ['SYS_ADMIN'] }

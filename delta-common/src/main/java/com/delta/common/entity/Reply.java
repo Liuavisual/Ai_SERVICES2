@@ -1,6 +1,8 @@
 package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.lang.NonNull;
@@ -16,6 +18,9 @@ import org.springframework.lang.NonNull;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("replies")
+@Table(name = "replies", indexes = {
+        @Index(name = "idx_replies_enabled", columnList = "enabled")
+})
 public class Reply extends BaseEntity {
 
     /** 触发类型：KEYWORD-关键词触发，WELCOME-新用户关注触发 */

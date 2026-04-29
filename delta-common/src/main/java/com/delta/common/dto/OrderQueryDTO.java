@@ -1,13 +1,29 @@
 package com.delta.common.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "订单查询数据传输对象")
 public class OrderQueryDTO {
 
+    @Schema(description = "用户ID", example = "1001")
     private Long userId;
+
+    @Schema(description = "陪玩师ID", example = "2001")
     private Long companionId;
+
+    @Schema(description = "订单状态", example = "COMPLETED", allowableValues = {"PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"})
     private String orderStatus;
+
+    @Schema(description = "支付状态", example = "PAID", allowableValues = {"UNPAID", "PAID", "REFUNDED"})
     private String paymentStatus;
+
+    @Schema(description = "来源", example = "微信", allowableValues = {"微信", "企微", "APP", "网页"})
     private String source;
+
+    @Schema(description = "页码", example = "1")
     private Integer pageNum = 1;
+
+    @Schema(description = "每页数量", example = "20")
     private Integer pageSize = 20;
 
     public Long getUserId() { return userId; }

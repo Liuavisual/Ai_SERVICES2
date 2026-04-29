@@ -17,7 +17,7 @@ import com.delta.common.vo.CustomerOrderRecordVO;
 import com.delta.common.vo.CustomerProfileVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,28 +44,24 @@ import java.util.stream.Collectors;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class CustomerProfileServiceImpl implements CustomerProfileService {
 
     private static final Logger log = LoggerFactory.getLogger(CustomerProfileServiceImpl.class);
 
-    @Autowired
-    private CustomerProfileMapper customerProfileMapper;
+    private final CustomerProfileMapper customerProfileMapper;
 
-    @Autowired
-    private CustomerOrderRecordMapper customerOrderRecordMapper;
+    private final CustomerOrderRecordMapper customerOrderRecordMapper;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private CompanionMapper companionMapper;
+    private final CompanionMapper companionMapper;
 
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
 
     @Override
-    public Page<CustomerProfileVO> getProfilePage(Integer pageNum, Integer pageSize, String memberLevel, String riskLevel, String lifecycleStage, String rfmSegment, String keyword) {
-        Page<CustomerProfile> page = new Page<>(pageNum, pageSize);
+    public Page<CustomerProfileVO> getProfilePage(Integer page, Integer size, String memberLevel, String riskLevel, String lifecycleStage, String rfmSegment, String keyword) {
+        Page<CustomerProfile> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<CustomerProfile> wrapper = new LambdaQueryWrapper<>();
 
         if (memberLevel != null && !memberLevel.trim().isEmpty()) {
@@ -83,14 +79,14 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 
         wrapper.orderByDesc(CustomerProfile::getLastActiveAt);
 
-        Page<CustomerProfile> profilePage = customerProfileMapper.selectPage(page, wrapper);
+        Page<CustomerProfile> profilePage = customerProfileMapper.selectPage(pageObj, wrapper);
 
         List<Long> userIds = profilePage.getRecords().stream()
                 .map(CustomerProfile::getUserId)
                 .collect(Collectors.toList());
 
         Map<Long, User> userMap = userIds.isEmpty() ? Map.of() :
-                userMapper.selectBatchIds(userIds).stream()
+                userMapper.selectByIds(userIds).stream()
                         .collect(Collectors.toMap(User::getId, u -> u));
 
         List<Long> companionIds = profilePage.getRecords().stream()
@@ -100,7 +96,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
                 .collect(Collectors.toList());
 
         Map<Long, Companion> companionMap = companionIds.isEmpty() ? Map.of() :
-                companionMapper.selectBatchIds(companionIds).stream()
+                companionMapper.selectByIds(companionIds).stream()
                         .collect(Collectors.toMap(Companion::getId, c -> c));
 
         List<Long> csUserIds = userMap.values().stream()
@@ -110,7 +106,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
                 .collect(Collectors.toList());
 
         Map<Long, SysUser> csUserMap = csUserIds.isEmpty() ? Map.of() :
-                sysUserMapper.selectBatchIds(csUserIds).stream()
+                sysUserMapper.selectByIds(csUserIds).stream()
                         .collect(Collectors.toMap(SysUser::getId, u -> u));
 
         Page<CustomerProfileVO> resultPage = new Page<>(profilePage.getCurrent(), profilePage.getSize(), profilePage.getTotal());
@@ -257,8 +253,8 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
     }
 
     @Override
-    public Page<CustomerOrderRecordVO> getOrderRecordPage(Integer pageNum, Integer pageSize, Long userId, String orderType, String status) {
-        Page<CustomerOrderRecord> page = new Page<>(pageNum, pageSize);
+    public Page<CustomerOrderRecordVO> getOrderRecordPage(Integer page, Integer size, Long userId, String orderType, String status) {
+        Page<CustomerOrderRecord> recordPage = new Page<>(page, size);
         LambdaQueryWrapper<CustomerOrderRecord> wrapper = new LambdaQueryWrapper<>();
 
         if (userId != null) {
@@ -273,29 +269,29 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
 
         wrapper.orderByDesc(CustomerOrderRecord::getOrderTime);
 
-        Page<CustomerOrderRecord> recordPage = customerOrderRecordMapper.selectPage(page, wrapper);
+        Page<CustomerOrderRecord> recordPageResult = customerOrderRecordMapper.selectPage(recordPage, wrapper);
 
-        List<Long> companionIds = recordPage.getRecords().stream()
+        List<Long> companionIds = recordPageResult.getRecords().stream()
                 .map(CustomerOrderRecord::getCompanionId)
                 .filter(Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
 
         Map<Long, Companion> companionMap = companionIds.isEmpty() ? Map.of() :
-                companionMapper.selectBatchIds(companionIds).stream()
+                companionMapper.selectByIds(companionIds).stream()
                         .collect(Collectors.toMap(Companion::getId, c -> c));
 
-        List<Long> userIds = recordPage.getRecords().stream()
+        List<Long> userIds = recordPageResult.getRecords().stream()
                 .map(CustomerOrderRecord::getUserId)
                 .distinct()
                 .collect(Collectors.toList());
 
         Map<Long, User> userMap = userIds.isEmpty() ? Map.of() :
-                userMapper.selectBatchIds(userIds).stream()
+                userMapper.selectByIds(userIds).stream()
                         .collect(Collectors.toMap(User::getId, u -> u));
 
-        Page<CustomerOrderRecordVO> resultPage = new Page<>(recordPage.getCurrent(), recordPage.getSize(), recordPage.getTotal());
-        List<CustomerOrderRecordVO> voList = recordPage.getRecords().stream().map(record -> {
+        Page<CustomerOrderRecordVO> resultPage = new Page<>(recordPageResult.getCurrent(), recordPageResult.getSize(), recordPageResult.getTotal());
+        List<CustomerOrderRecordVO> voList = recordPageResult.getRecords().stream().map(record -> {
             CustomerOrderRecordVO vo = BeanUtil.copyProperties(record, CustomerOrderRecordVO.class);
             User user = userMap.get(record.getUserId());
             if (user != null) {

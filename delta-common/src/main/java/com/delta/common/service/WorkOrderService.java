@@ -6,9 +6,9 @@ import com.delta.common.vo.WorkOrderVO;
 
 public interface WorkOrderService {
 
-    Page<WorkOrderVO> getWorkOrderPage(Integer pageNum, Integer pageSize, String status, String orderType, String priority, String platform, String keyword);
+    Page<WorkOrderVO> getWorkOrderPage(Integer page, Integer size, String status, String orderType, String priority, String platform, String keyword);
 
-    Page<WorkOrderVO> getWorkOrderPage(Integer pageNum, Integer pageSize, String status, String orderType, String priority, String platform, String keyword, Long currentUserId, String currentUserRole);
+    Page<WorkOrderVO> getWorkOrderPage(Integer page, Integer size, String status, String orderType, String priority, String platform, String keyword, Long currentUserId, String currentUserRole);
 
     WorkOrderVO getWorkOrderDetail(Long id);
 

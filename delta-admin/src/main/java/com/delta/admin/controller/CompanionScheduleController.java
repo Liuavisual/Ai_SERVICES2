@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,25 +29,25 @@ import java.util.Map;
 @Tag(name = "陪玩师时间管理", description = "陪玩师时间管理接口")
 @RestController
 @RequestMapping("/companion-schedules")
+@RequiredArgsConstructor
 public class CompanionScheduleController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(CompanionScheduleController.class);
 
-    @Autowired
-    private CompanionScheduleService companionScheduleService;
+    private final CompanionScheduleService companionScheduleService;
 
     @Operation(summary = "分页查询陪玩师时间")
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CompanionScheduleVO>> getPage(
-            @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
-            @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize,
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "20") Integer size,
             @RequestParam(name = "companionId", required = false) String companionId,
             @RequestParam(name = "scheduleDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
             @RequestParam(name = "status", required = false) String status) {
         Long decodedCompanionId = companionId != null ? decodeId(companionId) : null;
-        Page<CompanionScheduleVO> page = companionScheduleService.getPage(pageNum, pageSize, decodedCompanionId, scheduleDate, status);
-        return Result.success(page);
+        Page<CompanionScheduleVO> pageResult = companionScheduleService.getPage(page, size, decodedCompanionId, scheduleDate, status);
+        return Result.success(pageResult);
     }
 
     @Operation(summary = "获取陪玩师指定日期的时间")

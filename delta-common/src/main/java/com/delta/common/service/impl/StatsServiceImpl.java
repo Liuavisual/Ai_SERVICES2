@@ -15,7 +15,7 @@ import com.delta.common.mapper.UserMapper;
 import com.delta.common.mapper.CsUserCustomerMapper;
 import com.delta.common.service.StatsService;
 import com.delta.common.vo.StatsVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,22 +33,18 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class StatsServiceImpl implements StatsService {
 
-    @Autowired
-    private MessageMapper messageMapper;
+    private final MessageMapper messageMapper;
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private PendingMessageMapper pendingMessageMapper;
+    private final PendingMessageMapper pendingMessageMapper;
 
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
 
-    @Autowired
-    private CsUserCustomerMapper csUserCustomerMapper;
+    private final CsUserCustomerMapper csUserCustomerMapper;
 
     @Override
     public StatsVO getPersonalStats(Long csUserId, String period, String date) {

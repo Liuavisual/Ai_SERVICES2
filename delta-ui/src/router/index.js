@@ -30,7 +30,7 @@ const routes = [
         path: 'customer-profiles',
         name: 'CustomerProfiles',
         component: () => import('@/views/CustomerProfiles.vue'),
-        meta: { title: '客户画像', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+        meta: { title: '客户画像', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
       },
       {
         path: 'game-configs',
@@ -129,6 +129,18 @@ const routes = [
         meta: { title: '订单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
       },
       {
+        path: 'work-orders',
+        name: 'WorkOrders',
+        component: () => import('@/views/WorkOrders.vue'),
+        meta: { title: '工单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+      },
+      {
+        path: 'service-tracks',
+        name: 'ServiceTracks',
+        component: () => import('@/views/ServiceTracks.vue'),
+        meta: { title: '服务追踪', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+      },
+      {
         path: 'ai-config',
         name: 'AIConfig',
         component: () => import('@/views/AIConfig.vue'),
@@ -154,9 +166,9 @@ const router = createRouter({
 })
 
 const ROLE_HOME_MAP = {
-  SYS_ADMIN: '/sys-users',
+  SYS_ADMIN: '/dashboard',
   CS_LEADER: '/pending-messages',
-  CS_STAFF: '/messages'
+  CS_STAFF: '/pending-messages'
 }
 
 function getRoleHomePage(role) {

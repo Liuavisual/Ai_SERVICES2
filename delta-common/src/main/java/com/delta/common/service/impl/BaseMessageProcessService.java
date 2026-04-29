@@ -552,7 +552,7 @@ public abstract class BaseMessageProcessService {
                     .collect(Collectors.toList());
             Map<Long, String> serviceItemNameMap = new HashMap<>();
             if (!serviceItemIds.isEmpty()) {
-                serviceItemMapper.selectBatchIds(serviceItemIds).forEach(
+                serviceItemMapper.selectByIds(serviceItemIds).forEach(
                         item -> serviceItemNameMap.put(item.getId(), item.getItemName()));
             }
 

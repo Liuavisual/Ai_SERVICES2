@@ -1,6 +1,8 @@
 package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,6 +17,9 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("keywords")
+@Table(name = "keywords", indexes = {
+        @Index(name = "idx_keywords_enabled", columnList = "enabled")
+})
 public class Keyword extends BaseEntity {
 
     /** 关键词内容 */

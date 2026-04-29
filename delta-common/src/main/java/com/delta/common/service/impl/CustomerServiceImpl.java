@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
+import com.delta.common.constant.ExportConstants;
 import com.delta.common.entity.CsUserCustomer;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.SysUser;
@@ -14,15 +15,19 @@ import com.delta.common.mapper.MessageMapper;
 import com.delta.common.mapper.SysUserMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.CustomerService;
+import com.delta.common.util.ExcelUtils;
 import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CustomerVO;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,25 +38,22 @@ import java.util.stream.Collectors;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
 
     private static final Logger log = LoggerFactory.getLogger(CustomerServiceImpl.class);
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
-    @Autowired
-    private MessageMapper messageMapper;
+    private final MessageMapper messageMapper;
 
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
 
-    @Autowired
-    private CsUserCustomerMapper csUserCustomerMapper;
+    private final CsUserCustomerMapper csUserCustomerMapper;
 
     @Override
-    public Page<CustomerVO> getCustomerPage(Integer pageNum, Integer pageSize, String platform, Boolean aiEnabled, Long csUserId, String keyword) {
-        Page<User> page = new Page<>(pageNum, pageSize);
+    public Page<CustomerVO> getCustomerPage(Integer page, Integer size, String platform, Boolean aiEnabled, Long csUserId, String keyword) {
+        Page<User> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
 
         if (platform != null && !platform.isEmpty()) {
@@ -72,13 +74,13 @@ public class CustomerServiceImpl implements CustomerService {
 
         wrapper.orderByDesc(User::getCreatedAt);
 
-        Page<User> userPage = userMapper.selectPage(page, wrapper);
+        Page<User> userPageResult = userMapper.selectPage(pageObj, wrapper);
 
-        List<Long> userIds = userPage.getRecords().stream()
+        List<Long> userIds = userPageResult.getRecords().stream()
                 .map(User::getId)
                 .collect(Collectors.toList());
 
-        List<Long> csUserIds = userPage.getRecords().stream()
+        List<Long> csUserIds = pageObj.getRecords().stream()
                 .map(User::getAssignedCsUserId)
                 .filter(id -> id != null)
                 .distinct()
@@ -91,11 +93,11 @@ public class CustomerServiceImpl implements CustomerService {
                         .collect(Collectors.groupingBy(Message::getUserId, Collectors.collectingAndThen(Collectors.counting(), Long::intValue)));
 
         Map<Long, SysUser> csUserMap = csUserIds.isEmpty() ? Map.of() :
-                sysUserMapper.selectBatchIds(csUserIds).stream()
+                sysUserMapper.selectByIds(csUserIds).stream()
                         .collect(Collectors.toMap(SysUser::getId, u -> u));
 
-        Page<CustomerVO> resultPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
-        List<CustomerVO> voList = userPage.getRecords().stream().map(user -> {
+        Page<CustomerVO> resultPage = new Page<>(userPageResult.getCurrent(), userPageResult.getSize(), userPageResult.getTotal());
+        List<CustomerVO> voList = userPageResult.getRecords().stream().map(user -> {
             CustomerVO vo = BeanUtil.copyProperties(user, CustomerVO.class);
             vo.setAssignedCsUserId(user.getAssignedCsUserId());
             vo.setMessageCount(messageCountMap.getOrDefault(user.getId(), 0));
@@ -238,6 +240,45 @@ public class CustomerServiceImpl implements CustomerService {
                 newAssignment.setAssignedAt(LocalDateTime.now());
                 csUserCustomerMapper.insert(newAssignment);
             }
+        }
+    }
+
+    /**
+     * 导出客户Excel
+     *
+     * @param response  HTTP响应
+     * @param platform  平台
+     * @param aiEnabled AI启用状态
+     * @param csUserId  客服用户ID
+     * @param keyword   关键词
+     */
+    @Override
+    public void exportCustomers(HttpServletResponse response, String platform, Boolean aiEnabled, Long csUserId, String keyword) {
+        try {
+            Page<CustomerVO> pageResult = getCustomerPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, platform, aiEnabled, csUserId, keyword);
+            LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+            headers.put("id", "ID");
+            headers.put("platform", "平台");
+            headers.put("nickname", "昵称");
+            headers.put("aiEnabled", "AI启用");
+            headers.put("assignedCsUserName", "分配客服");
+            headers.put("messageCount", "消息数");
+            headers.put("lastActiveAt", "最后活跃");
+            headers.put("createdAt", "创建时间");
+            ExcelUtils.export(response, "客户列表", headers, pageResult.getRecords(), item -> {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("id", item.getId());
+                map.put("platform", item.getPlatform());
+                map.put("nickname", item.getNickname());
+                map.put("aiEnabled", item.getAiEnabled() != null && item.getAiEnabled() ? "是" : "否");
+                map.put("assignedCsUserName", item.getAssignedCsUserName());
+                map.put("messageCount", item.getMessageCount());
+                map.put("lastActiveAt", item.getLastActiveAt() != null ? item.getLastActiveAt().toString() : "");
+                map.put("createdAt", item.getCreatedAt() != null ? item.getCreatedAt().toString() : "");
+                return map;
+            });
+        } catch (IOException e) {
+            throw new BusinessException("导出Excel失败: " + e.getMessage());
         }
     }
 }

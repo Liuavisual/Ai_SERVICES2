@@ -15,7 +15,7 @@ import com.delta.common.service.CsUserCustomerService;
 import com.delta.common.util.VoUtils;
 import com.delta.common.vo.CsUserCustomerVO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -30,20 +30,18 @@ import java.util.stream.Collectors;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class CsUserCustomerServiceImpl implements CsUserCustomerService {
     
-    @Autowired
-    private CsUserCustomerMapper csUserCustomerMapper;
+    private final CsUserCustomerMapper csUserCustomerMapper;
     
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
     
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
     
     @Override
-    public Page<CsUserCustomerVO> getPage(Integer pageNum, Integer pageSize, Long csUserId, Long customerUserId, String status) {
-        Page<CsUserCustomer> page = new Page<>(pageNum, pageSize);
+    public Page<CsUserCustomerVO> getPage(Integer page, Integer size, Long csUserId, Long customerUserId, String status) {
+        Page<CsUserCustomer> pageObj = new Page<>(page, size);
         LambdaQueryWrapper<CsUserCustomer> wrapper = new LambdaQueryWrapper<>();
         
         if (csUserId != null) {
@@ -58,23 +56,23 @@ public class CsUserCustomerServiceImpl implements CsUserCustomerService {
         
         wrapper.orderByDesc(CsUserCustomer::getCreatedAt);
         
-        Page<CsUserCustomer> resultPage = csUserCustomerMapper.selectPage(page, wrapper);
-        
+        Page<CsUserCustomer> resultPage = csUserCustomerMapper.selectPage(pageObj, wrapper);
+
         Page<CsUserCustomerVO> voPage = new Page<>(resultPage.getCurrent(), resultPage.getSize(), resultPage.getTotal());
-        
+
         if (resultPage.getRecords().isEmpty()) {
             return voPage;
         }
         
-        Map<Long, String> csUserNameMap = sysUserMapper.selectBatchIds(
+        Map<Long, String> csUserNameMap = sysUserMapper.selectByIds(
             resultPage.getRecords().stream().map(CsUserCustomer::getCsUserId).collect(Collectors.toList())
         ).stream().collect(Collectors.toMap(SysUser::getId, SysUser::getRealName));
         
-        Map<Long, String> customerUserNameMap = userMapper.selectBatchIds(
+        Map<Long, String> customerUserNameMap = userMapper.selectByIds(
             resultPage.getRecords().stream().map(CsUserCustomer::getCustomerUserId).collect(Collectors.toList())
         ).stream().collect(Collectors.toMap(User::getId, User::getNickname));
         
-        Map<Long, String> assignedByNameMap = sysUserMapper.selectBatchIds(
+        Map<Long, String> assignedByNameMap = sysUserMapper.selectByIds(
             resultPage.getRecords().stream().map(CsUserCustomer::getAssignedBy).filter(id -> id != null).collect(Collectors.toList())
         ).stream().collect(Collectors.toMap(SysUser::getId, SysUser::getRealName));
         

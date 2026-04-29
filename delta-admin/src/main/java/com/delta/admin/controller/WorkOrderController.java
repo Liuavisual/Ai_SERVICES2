@@ -21,8 +21,8 @@ public class WorkOrderController extends BaseController {
 
     @GetMapping("/page")
     public Result<Page<WorkOrderVO>> getWorkOrderPage(
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String orderType,
             @RequestParam(required = false) String priority,
@@ -31,8 +31,8 @@ public class WorkOrderController extends BaseController {
             HttpServletRequest request) {
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        Page<WorkOrderVO> page = workOrderService.getWorkOrderPage(pageNum, pageSize, status, orderType, priority, platform, keyword, currentUserId, currentUserRole);
-        return Result.success(page);
+        Page<WorkOrderVO> pageResult = workOrderService.getWorkOrderPage(page, size, status, orderType, priority, platform, keyword, currentUserId, currentUserRole);
+        return Result.success(pageResult);
     }
 
     @GetMapping("/{id}")
