@@ -163,7 +163,6 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         csWrapper.eq(CsUserCustomer::getCsUserId, csUserId);
         csWrapper.eq(CsUserCustomer::getCustomerUserId, pm.getUserId());
         csWrapper.eq(CsUserCustomer::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
-        csWrapper.eq(CsUserCustomer::getDeleted, BusinessStatusConstants.NOT_DELETED);
         if (csUserCustomerMapper.selectCount(csWrapper) > 0) {
             return true;
         }
@@ -358,7 +357,6 @@ public class PendingMessageServiceImpl implements PendingMessageService {
             LambdaQueryWrapper<SysUser> staffWrapper = new LambdaQueryWrapper<>();
             staffWrapper.eq(SysUser::getRole, BusinessStatusConstants.ROLE_CS_STAFF);
             staffWrapper.eq(SysUser::getStatus, BusinessStatusConstants.USER_STATUS_ACTIVE);
-            staffWrapper.eq(SysUser::getDeleted, BusinessStatusConstants.NOT_DELETED);
             List<SysUser> csStaffList = sysUserMapper.selectList(staffWrapper);
             if (csStaffList.isEmpty()) {
                 return null;
@@ -471,7 +469,6 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         LambdaQueryWrapper<CsUserCustomer> csWrapper = new LambdaQueryWrapper<>();
         csWrapper.eq(CsUserCustomer::getCsUserId, csUserId);
         csWrapper.eq(CsUserCustomer::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
-        csWrapper.eq(CsUserCustomer::getDeleted, BusinessStatusConstants.NOT_DELETED);
         List<CsUserCustomer> assignments = csUserCustomerMapper.selectList(csWrapper);
 
         java.util.Set<Long> customerIdSet = assignments.stream()

@@ -33,7 +33,7 @@ public class OrderController extends BaseController {
     @PostMapping
     public Result<OrderVO> createOrder(@Valid @RequestBody OrderCreateDTO dto) {
         return Result.success(orderService.createOrder(
-            dto.getUserId(), dto.getCompanionId(), dto.getServiceType(),
+            decodeId(dto.getUserId()), decodeId(dto.getCompanionId()), dto.getServiceType(),
             dto.getScheduledStart(), dto.getScheduledEnd(), dto.getRemark()
         ));
     }

@@ -69,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
         wrapper.eq(SysUser::getUsername, username);
         SysUser user = sysUserMapper.selectOne(wrapper);
 
-        if (user == null || user.getDeleted() == 1) {
+        if (user == null) {
             recordLoginFailure(username, clientIp);
             throw new BusinessException("用户名或密码错误");
         }
@@ -172,7 +172,7 @@ public class AuthServiceImpl implements AuthService {
         String username = jwtUtils.getUsernameFromToken(refreshToken);
 
         SysUser user = sysUserMapper.selectById(userId);
-        if (user == null || user.getDeleted() == 1) {
+        if (user == null) {
             throw new BusinessException("用户不存在");
         }
 

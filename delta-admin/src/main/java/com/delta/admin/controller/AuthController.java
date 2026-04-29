@@ -186,6 +186,26 @@ public class AuthController {
 
     @PostMapping(value = "/session-event", consumes = MediaType.APPLICATION_JSON_VALUE)
     public Result<Void> sessionEvent(@RequestBody Map<String, Object> event, HttpServletRequest request) {
+        Object userIdAttr = request.getAttribute("userId");
+        if (userIdAttr == null) {
+            String bearerToken = request.getHeader("Authorization");
+            if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+                try {
+                    String jwt = bearerToken.substring(ExportConstants.BEARER_PREFIX_LENGTH);
+                    if (!tokenBlacklistService.isBlacklisted(jwt)) {
+                        Claims claims = jwtUtils.parseToken(jwt);
+                        userIdAttr = claims.get("userId", Long.class);
+                    }
+                } catch (Exception e) {
+                    log.debug("session-event Token解析失败", e);
+                }
+            }
+        }
+
+        if (userIdAttr == null) {
+            return Result.error(401, "未认证");
+        }
+
         String eventType = (String) event.get("eventType");
         Object userIdObj = event.get("userId");
         if (userIdObj == null) {
@@ -197,6 +217,12 @@ public class AuthController {
             userId = Long.parseLong(userIdObj.toString());
         } catch (NumberFormatException e) {
             return Result.success();
+        }
+
+        Long authenticatedUserId = (Long) userIdAttr;
+        if (!userId.equals(authenticatedUserId)) {
+            log.warn("session-event用户ID不匹配: authenticated={}, event={}", authenticatedUserId, userId);
+            return Result.error(403, "无权操作");
         }
 
         if ("SESSION_END".equals(eventType)) {

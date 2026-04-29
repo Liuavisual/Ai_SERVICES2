@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
                                 LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
                                 String remark) {
         Companion companion = companionMapper.selectById(companionId);
-        if (companion == null || !companion.getDeleted().equals(BusinessStatusConstants.NOT_DELETED)) {
+        if (companion == null) {
             throw new BusinessException("陪玩师不存在");
         }
         if (!Integer.valueOf(BusinessStatusConstants.ENABLED_INT).equals(companion.getEnabled())) {

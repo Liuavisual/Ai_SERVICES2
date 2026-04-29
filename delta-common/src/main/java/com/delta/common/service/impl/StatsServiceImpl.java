@@ -218,7 +218,6 @@ public class StatsServiceImpl implements StatsService {
         LambdaQueryWrapper<CsUserCustomer> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CsUserCustomer::getCsUserId, csUserId);
         wrapper.eq(CsUserCustomer::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
-        wrapper.eq(CsUserCustomer::getDeleted, BusinessStatusConstants.NOT_DELETED);
         List<CsUserCustomer> assignments = csUserCustomerMapper.selectList(wrapper);
         return assignments.stream().map(CsUserCustomer::getCustomerUserId).collect(Collectors.toList());
     }
@@ -230,7 +229,6 @@ public class StatsServiceImpl implements StatsService {
         LambdaQueryWrapper<CsUserCustomer> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(CsUserCustomer::getCsUserId, csUserIds);
         wrapper.eq(CsUserCustomer::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
-        wrapper.eq(CsUserCustomer::getDeleted, BusinessStatusConstants.NOT_DELETED);
         List<CsUserCustomer> assignments = csUserCustomerMapper.selectList(wrapper);
         return assignments.stream().collect(Collectors.groupingBy(
                 CsUserCustomer::getCsUserId,
@@ -305,7 +303,6 @@ public class StatsServiceImpl implements StatsService {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(SysUser::getRole, BusinessStatusConstants.ROLE_CS_STAFF, BusinessStatusConstants.ROLE_CS_LEADER);
         wrapper.eq(SysUser::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
-        wrapper.eq(SysUser::getDeleted, BusinessStatusConstants.NOT_DELETED);
         return sysUserMapper.selectList(wrapper);
     }
 
@@ -326,26 +323,25 @@ public class StatsServiceImpl implements StatsService {
         }
 
         LocalDate startDate = today.minusDays(days - 1);
-        LocalDateTime rangeStart = startDate.atStartOfDay();
-        LocalDateTime rangeEnd = today.atTime(LocalTime.MAX);
 
         Map<String, Long> dailyCounts = new HashMap<>();
-        LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
-        if (customerIds != null && !customerIds.isEmpty()) {
-            wrapper.in(Message::getUserId, customerIds);
-        }
-        wrapper.ge(Message::getCreatedAt, rangeStart);
-        wrapper.le(Message::getCreatedAt, rangeEnd);
-        wrapper.select(Message::getCreatedAt);
-        List<Message> messages = messageMapper.selectList(wrapper);
         DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        for (Message msg : messages) {
-            if (msg.getCreatedAt() != null) {
-                String dayKey = msg.getCreatedAt().toLocalDate().format(dayFormatter);
-                dailyCounts.merge(dayKey, 1L, (oldVal, newVal) -> Long.sum(
-                        oldVal != null ? oldVal.longValue() : 0L,
-                        newVal != null ? newVal.longValue() : 0L));
+
+        for (int i = 0; i < days; i++) {
+            LocalDate d = startDate.plusDays(i);
+            LocalDateTime dayStart = d.atStartOfDay();
+            LocalDateTime dayEnd = d.atTime(LocalTime.MAX);
+
+            LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
+            if (customerIds != null && !customerIds.isEmpty()) {
+                wrapper.in(Message::getUserId, customerIds);
             }
+            wrapper.ge(Message::getCreatedAt, dayStart);
+            wrapper.le(Message::getCreatedAt, dayEnd);
+            long count = messageMapper.selectCount(wrapper);
+
+            String dayKey = d.format(dayFormatter);
+            dailyCounts.put(dayKey, count);
         }
 
         for (int i = days - 1; i >= 0; i--) {

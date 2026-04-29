@@ -6,11 +6,11 @@ import java.time.LocalDateTime;
 
 public class OrderCreateDTO {
 
-    @NotNull(message = "用户ID不能为空")
-    private Long userId;
+    @NotBlank(message = "用户ID不能为空")
+    private String userId;
 
-    @NotNull(message = "陪玩师ID不能为空")
-    private Long companionId;
+    @NotBlank(message = "陪玩师ID不能为空")
+    private String companionId;
 
     @NotBlank(message = "服务类型不能为空")
     private String serviceType;
@@ -25,11 +25,11 @@ public class OrderCreateDTO {
     private String remark;
     private String source;
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
-    public Long getCompanionId() { return companionId; }
-    public void setCompanionId(Long companionId) { this.companionId = companionId; }
+    public String getCompanionId() { return companionId; }
+    public void setCompanionId(String companionId) { this.companionId = companionId; }
 
     public String getServiceType() { return serviceType; }
     public void setServiceType(String serviceType) { this.serviceType = serviceType; }

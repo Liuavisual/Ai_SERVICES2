@@ -15,10 +15,17 @@ import java.util.Map;
 
 public class ExcelUtils {
 
+    public static final int MAX_EXPORT_ROWS = 10000;
+
     public static <T> void export(HttpServletResponse response, String fileName,
                                    LinkedHashMap<String, String> headers,
                                    List<T> dataList,
                                    RowMapper<T> rowMapper) throws IOException {
+        int exportSize = Math.min(dataList.size(), MAX_EXPORT_ROWS);
+        if (dataList.size() > MAX_EXPORT_ROWS) {
+            throw new IOException("导出数据量超过最大限制(" + MAX_EXPORT_ROWS + "行)，请缩小查询范围");
+        }
+
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet(fileName);
 
@@ -31,7 +38,7 @@ public class ExcelUtils {
             cell.setCellStyle(headerStyle);
         }
 
-        for (int i = 0; i < dataList.size(); i++) {
+        for (int i = 0; i < exportSize; i++) {
             Row row = sheet.createRow(i + 1);
             Map<String, Object> rowData = rowMapper.mapRow(dataList.get(i));
             colIdx = 0;

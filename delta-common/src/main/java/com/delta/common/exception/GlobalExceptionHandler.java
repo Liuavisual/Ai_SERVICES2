@@ -3,19 +3,16 @@ package com.delta.common.exception;
 import com.delta.common.vo.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
-/**
- * 全局异常处理器，统一处理业务异常和系统异常
- *
- * @author delta
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -28,6 +25,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleValidationException(Exception e) {
         String errorMessage;
         if (e instanceof MethodArgumentNotValidException) {
@@ -43,8 +41,8 @@ public class GlobalExceptionHandler {
         } else {
             errorMessage = "参数校验失败";
         }
-        log.error("参数校验异常: {}", errorMessage);
-        return Result.error(errorMessage);
+        log.warn("参数校验异常: {}", errorMessage);
+        return Result.error(400, errorMessage);
     }
 
     @ExceptionHandler(Exception.class)

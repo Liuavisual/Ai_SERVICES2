@@ -170,7 +170,6 @@ public class CustomerServiceImpl implements CustomerService {
         wrapper.eq(CsUserCustomer::getCsUserId, csUserId);
         wrapper.eq(CsUserCustomer::getCustomerUserId, customerId);
         wrapper.eq(CsUserCustomer::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
-        wrapper.eq(CsUserCustomer::getDeleted, BusinessStatusConstants.NOT_DELETED);
         return csUserCustomerMapper.selectCount(wrapper) > 0;
     }
 
