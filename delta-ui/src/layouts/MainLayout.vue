@@ -94,7 +94,7 @@
 import { computed, ref, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElNotification } from 'element-plus'
-import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position } from '@element-plus/icons-vue'
+import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position, TrendCharts } from '@element-plus/icons-vue'
 import { pendingMessageApi } from '@/api'
 
 const route = useRoute()
@@ -148,6 +148,7 @@ const allMenus = [
   { path: '/orders', title: '订单管理', icon: 'Shop', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/work-orders', title: '工单管理', icon: 'Tickets', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/service-tracks', title: '服务追踪', icon: 'Position', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
+  { path: '/customer-lifecycle', title: '客户生命周期', icon: 'TrendCharts', roles: ['SYS_ADMIN','CS_LEADER'] },
   { path: 'd5', title: '', icon: '', roles: [], divider: true, label: '系统设置' },
   { path: '/ai-config', title: 'AI配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
   { path: '/platform-configs', title: '平台配置', icon: 'Tools', roles: ['SYS_ADMIN'] }
@@ -183,14 +184,13 @@ const getWsUrl = () => {
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const host = window.location.hostname
   const port = import.meta.env.DEV ? '8080' : window.location.port
-  const token = localStorage.getItem('token')
-  return `${proto}//${host}:${port}/api/ws/notify?token=${encodeURIComponent(token || '')}`
+  return `${proto}//${host}:${port}/api/v1/ws/notify`
 }
 
 const connectWebSocket = () => {
   const token = localStorage.getItem('token')
   if (!token) return
-  ws = new WebSocket(getWsUrl())
+  ws = new WebSocket(getWsUrl(), [`Bearer-${token}`])
   ws.onopen = () => { wsConnected.value = true; ElNotification({ title: '连接成功', type: 'success', duration: 2000 }) }
   ws.onmessage = (event) => {
     try {

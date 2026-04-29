@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.AuditLog;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.AuditUserDTO;
 import com.delta.common.dto.SysUserDTO;
@@ -35,7 +36,7 @@ import java.util.Map;
  */
 @Tag(name = "系统用户管理", description = "系统用户管理接口")
 @RestController
-@RequestMapping("/sys-users")
+@RequestMapping("/v1/sys-users")
 @RequiredArgsConstructor
 public class SysUserController extends BaseController {
 
@@ -64,6 +65,7 @@ public class SysUserController extends BaseController {
     @Operation(summary = "创建系统用户")
     @PostMapping
     @PreAuthorize("hasRole('SYS_ADMIN')")
+    @AuditLog(module = "用户管理", action = "创建用户")
     public Result<Void> createUser(@Valid @RequestBody SysUserDTO userDTO) {
         sysUserService.createUser(userDTO);
         return Result.success();
@@ -72,6 +74,7 @@ public class SysUserController extends BaseController {
     @Operation(summary = "更新系统用户")
     @PutMapping
     @PreAuthorize("hasRole('SYS_ADMIN')")
+    @AuditLog(module = "用户管理", action = "更新用户")
     public Result<Void> updateUser(@Valid @RequestBody SysUserDTO userDTO) {
         sysUserService.updateUser(userDTO);
         return Result.success();
@@ -80,6 +83,7 @@ public class SysUserController extends BaseController {
     @Operation(summary = "删除系统用户")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('SYS_ADMIN')")
+    @AuditLog(module = "用户管理", action = "删除用户")
     public Result<Void> deleteUser(@PathVariable("id") String id) {
         sysUserService.deleteUser(decodeId(id));
         return Result.success();

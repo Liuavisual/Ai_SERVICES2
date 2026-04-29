@@ -3,7 +3,7 @@ import { ElMessage } from 'element-plus'
 import router, { redirectToLogin } from '@/router'
 
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: '/api/v1',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -52,7 +52,7 @@ async function proactiveRefresh() {
   if (!refreshToken) { releaseRefreshLock(); return }
 
   try {
-    const refreshRes = await axios.post('/api/auth/refresh', { refreshToken })
+    const refreshRes = await axios.post('/api/v1/auth/refresh', { refreshToken })
     const refreshData = refreshRes.data?.data || refreshRes.data
     if (refreshData && refreshData.token) {
       localStorage.setItem('token', refreshData.token)
@@ -151,7 +151,7 @@ request.interceptors.response.use(
         }
         lastRefreshAttemptTime = now
 
-        const refreshRes = await axios.post('/api/auth/refresh', { refreshToken })
+        const refreshRes = await axios.post('/api/v1/auth/refresh', { refreshToken })
         const refreshData = refreshRes.data?.data || refreshRes.data
 
         if (refreshData && refreshData.token) {

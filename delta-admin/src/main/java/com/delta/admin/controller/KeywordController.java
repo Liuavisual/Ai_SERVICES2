@@ -18,7 +18,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,7 +27,7 @@ import java.util.Map;
  */
 @Tag(name = "关键词管理", description = "关键词管理接口")
 @RestController
-@RequestMapping("/keywords")
+@RequestMapping("/v1/keywords")
 @RequiredArgsConstructor
 public class KeywordController extends BaseController {
 

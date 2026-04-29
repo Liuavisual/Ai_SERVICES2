@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.AuditLog;
 import com.delta.common.dto.CompanionDTO;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.service.CompanionService;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 @Tag(name = "陪玩师管理", description = "陪玩师管理接口")
 @RestController
-@RequestMapping("/companions")
+@RequestMapping("/v1/companions")
 @RequiredArgsConstructor
 public class CompanionController extends BaseController {
 
@@ -72,6 +73,7 @@ public class CompanionController extends BaseController {
     @Operation(summary = "创建陪玩师")
     @PostMapping
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @AuditLog(module = "陪玩师管理", action = "创建陪玩师")
     public Result<Void> create(@Valid @RequestBody CompanionDTO dto) {
         companionService.create(dto);
         return Result.success();
@@ -80,6 +82,7 @@ public class CompanionController extends BaseController {
     @Operation(summary = "更新陪玩师")
     @PutMapping
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @AuditLog(module = "陪玩师管理", action = "更新陪玩师")
     public Result<Void> update(@Valid @RequestBody CompanionDTO dto) {
         companionService.update(dto);
         return Result.success();
@@ -88,6 +91,7 @@ public class CompanionController extends BaseController {
     @Operation(summary = "删除陪玩师")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @AuditLog(module = "陪玩师管理", action = "删除陪玩师")
     public Result<Void> delete(@PathVariable("id") String id) {
         companionService.delete(decodeId(id));
         return Result.success();

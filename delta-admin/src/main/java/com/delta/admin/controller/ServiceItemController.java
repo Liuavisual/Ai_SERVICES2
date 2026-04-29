@@ -17,7 +17,7 @@ import java.util.List;
 
 @Tag(name = "服务项目管理", description = "服务项目管理接口")
 @RestController
-@RequestMapping("/service-items")
+@RequestMapping("/v1/service-items")
 public class ServiceItemController extends BaseController {
 
     @Autowired

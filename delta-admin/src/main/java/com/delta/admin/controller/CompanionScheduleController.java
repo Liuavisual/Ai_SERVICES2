@@ -28,7 +28,7 @@ import java.util.Map;
 
 @Tag(name = "陪玩师时间管理", description = "陪玩师时间管理接口")
 @RestController
-@RequestMapping("/companion-schedules")
+@RequestMapping("/v1/companion-schedules")
 @RequiredArgsConstructor
 public class CompanionScheduleController extends BaseController {
 

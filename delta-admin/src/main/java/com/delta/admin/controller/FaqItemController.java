@@ -25,7 +25,7 @@ import java.util.Map;
 
 @Tag(name = "FAQ知识库管理", description = "FAQ知识库管理接口")
 @RestController
-@RequestMapping("/faq-items")
+@RequestMapping("/v1/faq-items")
 @RequiredArgsConstructor
 public class FaqItemController extends BaseController {
 

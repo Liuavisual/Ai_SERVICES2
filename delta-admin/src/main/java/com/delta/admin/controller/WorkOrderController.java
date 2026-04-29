@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.AuditLog;
 import com.delta.common.dto.*;
 import com.delta.common.vo.Result;
 import com.delta.common.service.WorkOrderService;
@@ -12,7 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/work-orders")
+@RequestMapping("/v1/work-orders")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class WorkOrderController extends BaseController {
@@ -60,6 +61,7 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}/accept")
+    @AuditLog(module = "工单管理", action = "接手工单")
     public Result<Void> acceptWorkOrder(@PathVariable String id, HttpServletRequest request) {
         Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
@@ -69,6 +71,7 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}/submit")
+    @AuditLog(module = "工单管理", action = "提交处理")
     public Result<Void> submitWorkOrder(@PathVariable String id, @Valid @RequestBody WorkOrderSubmitDTO dto, HttpServletRequest request) {
         Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
@@ -78,6 +81,7 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}/confirm")
+    @AuditLog(module = "工单管理", action = "确认完成")
     public Result<Void> confirmWorkOrder(@PathVariable String id, @Valid @RequestBody WorkOrderConfirmDTO dto) {
         Long decodedId = decodeId(id);
         workOrderService.confirmWorkOrder(decodedId, dto);
@@ -85,6 +89,7 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}/close")
+    @AuditLog(module = "工单管理", action = "关闭工单")
     public Result<Void> closeWorkOrder(@PathVariable String id, @RequestParam(required = false) String closeReason, HttpServletRequest request) {
         Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
@@ -94,6 +99,7 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}/cancel")
+    @AuditLog(module = "工单管理", action = "取消工单")
     public Result<Void> cancelWorkOrder(@PathVariable String id, @RequestParam String cancelReason, HttpServletRequest request) {
         Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);

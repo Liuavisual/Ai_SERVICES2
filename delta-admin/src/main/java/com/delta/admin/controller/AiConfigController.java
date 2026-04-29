@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Tag(name = "AI配置管理", description = "AI配置管理接口")
 @RestController
-@RequestMapping("/ai-config")
+@RequestMapping("/v1/ai-config")
 public class AiConfigController {
 
     private static final Logger log = LoggerFactory.getLogger(AiConfigController.class);

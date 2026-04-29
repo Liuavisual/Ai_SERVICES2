@@ -36,7 +36,7 @@ import java.util.Map;
  */
 @Tag(name = "待处理消息管理", description = "待处理消息管理接口")
 @RestController
-@RequestMapping("/pending-messages")
+@RequestMapping("/v1/pending-messages")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 @RequiredArgsConstructor
 public class PendingMessageController extends BaseController {

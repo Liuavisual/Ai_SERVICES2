@@ -19,7 +19,7 @@ import java.util.Map;
  * @author delta
  */
 @RestController
-@RequestMapping("/cache-stats")
+@RequestMapping("/v1/cache-stats")
 @Tag(name = "缓存统计", description = "缓存统计相关接口")
 public class CacheStatsController {
 

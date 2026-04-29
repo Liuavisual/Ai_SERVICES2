@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Tag(name = "平台配置管理", description = "平台配置管理接口")
 @RestController
-@RequestMapping("/platform-configs")
+@RequestMapping("/v1/platform-configs")
 public class PlatformConfigController {
 
     @Autowired

@@ -125,6 +125,15 @@
         @size-change="handleQuery"
         @current-change="handleQuery"
       />
+      <!-- 数据量较大时的提示信息 -->
+      <el-alert
+        v-if="total > 100"
+        title="数据量较大，请使用筛选条件缩小范围"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="data-hint"
+      />
     </el-card>
   </div>
 </template>
@@ -225,5 +234,10 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
+}
+
+/* 数据量提示样式 */
+.data-hint {
+  margin-top: 12px;
 }
 </style>

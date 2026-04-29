@@ -27,7 +27,7 @@ import java.util.Map;
  */
 @Tag(name = "回复话术管理", description = "回复话术管理接口")
 @RestController
-@RequestMapping("/replies")
+@RequestMapping("/v1/replies")
 @RequiredArgsConstructor
 public class ReplyController extends BaseController {
 

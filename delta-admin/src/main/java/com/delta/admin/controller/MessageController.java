@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "消息管理", description = "消息管理接口")
 @RestController
-@RequestMapping("/messages")
+@RequestMapping("/v1/messages")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 @RequiredArgsConstructor
 public class MessageController extends BaseController {

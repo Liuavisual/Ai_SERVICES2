@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * @author delta
  */
 @RestController
-@RequestMapping("/stats")
+@RequestMapping("/v1/stats")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class StatsController extends BaseController {
 

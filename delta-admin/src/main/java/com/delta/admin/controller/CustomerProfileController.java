@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "客户画像管理", description = "客户画像和消费记录管理接口")
 @RestController
-@RequestMapping("/customer-profiles")
+@RequestMapping("/v1/customer-profiles")
 @RequiredArgsConstructor
 public class CustomerProfileController extends BaseController {
 

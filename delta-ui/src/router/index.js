@@ -141,6 +141,12 @@ const routes = [
         meta: { title: '服务追踪', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
       },
       {
+        path: 'customer-lifecycle',
+        name: 'CustomerLifecycle',
+        component: () => import('@/views/CustomerLifecycle.vue'),
+        meta: { title: '客户生命周期', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
         path: 'ai-config',
         name: 'AIConfig',
         component: () => import('@/views/AIConfig.vue'),

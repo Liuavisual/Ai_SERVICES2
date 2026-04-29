@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.AuditLog;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.LoginDTO;
 import com.delta.common.dto.RefreshTokenDTO;
@@ -28,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/v1/auth")
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
@@ -69,6 +70,7 @@ public class AuthController {
      * @return 登录结果
      */
     @PostMapping("/login")
+    @AuditLog(module = "认证", action = "用户登录")
     public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletRequest request) {
         // 设置客户端IP
         loginDTO.setClientIp(getClientIp(request));
@@ -118,6 +120,7 @@ public class AuthController {
      * @return 登出结果
      */
     @PostMapping("/logout")
+    @AuditLog(module = "认证", action = "用户登出")
     public Result<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {

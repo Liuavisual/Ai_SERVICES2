@@ -45,6 +45,9 @@ public class CustomerVO extends BaseVO {
     @Schema(description = "最后活跃时间", example = "2026-01-01 10:00:00")
     private LocalDateTime lastActiveAt;
 
+    @Schema(description = "生命周期阶段", example = "ACTIVE", allowableValues = {"NEW", "ACTIVE", "LOYAL", "AT_RISK", "CHURNED"})
+    private String lifecycleStage;
+
     @Schema(description = "创建时间", example = "2026-01-01 10:00:00")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;

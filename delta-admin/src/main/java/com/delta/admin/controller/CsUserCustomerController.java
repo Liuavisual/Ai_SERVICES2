@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "客服-客户分配管理", description = "客服-客户分配管理接口")
 @RestController
-@RequestMapping("/cs-user-customer")
+@RequestMapping("/v1/cs-user-customer")
 @RequiredArgsConstructor
 public class CsUserCustomerController extends BaseController {
 

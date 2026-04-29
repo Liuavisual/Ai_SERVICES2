@@ -25,7 +25,7 @@ import java.util.Map;
  */
 @Tag(name = "陪玩师等级管理", description = "陪玩师等级管理接口")
 @RestController
-@RequestMapping("/companion-levels")
+@RequestMapping("/v1/companion-levels")
 @RequiredArgsConstructor
 public class CompanionLevelController extends BaseController {
 

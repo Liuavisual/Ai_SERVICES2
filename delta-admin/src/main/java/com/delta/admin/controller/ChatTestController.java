@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "对话测试", description = "对话测试接口")
 @RestController
-@RequestMapping("/chat-test")
+@RequestMapping("/v1/chat-test")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class ChatTestController {
 

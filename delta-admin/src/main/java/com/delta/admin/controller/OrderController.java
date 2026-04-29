@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.AuditLog;
 import com.delta.common.dto.OrderCreateDTO;
 import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.service.OrderService;
@@ -16,7 +17,7 @@ import java.util.List;
 
 @Tag(name = "订单管理")
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/v1/orders")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class OrderController extends BaseController {
 
@@ -31,6 +32,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "创建订单")
     @PostMapping
+    @AuditLog(module = "订单管理", action = "创建订单")
     public Result<OrderVO> createOrder(@Valid @RequestBody OrderCreateDTO dto) {
         return Result.success(orderService.createOrder(
             decodeId(dto.getUserId()), decodeId(dto.getCompanionId()), dto.getServiceType(),
@@ -40,6 +42,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "确认订单")
     @PutMapping("/{id}/confirm")
+    @AuditLog(module = "订单管理", action = "更新订单状态")
     public Result<Void> confirmOrder(@PathVariable String id) {
         orderService.confirmOrder(decodeId(id));
         return Result.success();

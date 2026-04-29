@@ -25,7 +25,7 @@ import java.util.Map;
 
 @Tag(name = "活动套餐管理", description = "活动套餐管理接口")
 @RestController
-@RequestMapping("/activity-packages")
+@RequestMapping("/v1/activity-packages")
 public class ActivityPackageController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(ActivityPackageController.class);

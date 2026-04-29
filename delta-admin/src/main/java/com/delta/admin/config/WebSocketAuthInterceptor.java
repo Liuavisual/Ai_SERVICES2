@@ -37,7 +37,24 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
         String token = null;
         if (request instanceof ServletServerHttpRequest servletRequest) {
-            token = servletRequest.getServletRequest().getParameter("token");
+            // 优先从 Authorization Header 获取 Token
+            String authHeader = servletRequest.getServletRequest().getHeader("Authorization");
+            if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+
+            // 从 Sec-WebSocket-Protocol 子协议提取 Token
+            if (!StringUtils.hasText(token)) {
+                String protocol = servletRequest.getServletRequest().getHeader("Sec-WebSocket-Protocol");
+                if (StringUtils.hasText(protocol) && protocol.startsWith("Bearer-")) {
+                    token = protocol.substring(7);
+                }
+            }
+
+            // Fallback: 从 URL 参数获取（兼容旧客户端）
+            if (!StringUtils.hasText(token)) {
+                token = servletRequest.getServletRequest().getParameter("token");
+            }
         }
 
         if (!StringUtils.hasText(token)) {
@@ -77,5 +94,12 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response,
                                WebSocketHandler wsHandler, Exception exception) {
+        // 处理 Sec-WebSocket-Protocol 响应头，浏览器要求服务端回传相同的子协议
+        if (request instanceof ServletServerHttpRequest servletRequest) {
+            String protocol = servletRequest.getServletRequest().getHeader("Sec-WebSocket-Protocol");
+            if (StringUtils.hasText(protocol)) {
+                response.getHeaders().set("Sec-WebSocket-Protocol", protocol);
+            }
+        }
     }
 }

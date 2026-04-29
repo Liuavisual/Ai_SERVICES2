@@ -108,6 +108,15 @@
         @size-change="() => { queryParams.pageNum = 1; handleQuery() }"
         @current-change="handleQuery"
       />
+      <!-- 数据量较大时的提示信息 -->
+      <el-alert
+        v-if="total > 100"
+        title="数据量较大，请使用筛选条件缩小范围"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="data-hint"
+      />
     </el-card>
 
     <el-dialog v-model="processDialogVisible" :title="processDialogTitle" width="560px">
@@ -356,4 +365,6 @@ onUnmounted(() => {
 .escalate-warn { background: rgba(201,118,48,0.12); color: var(--gu-warning); border: 1px solid rgba(201,118,48,0.3); }
 .escalate-high { background: rgba(166,61,64,0.12); color: var(--gu-danger); border: 1px solid rgba(166,61,64,0.3); animation: pulse 1.5s ease-in-out infinite; }
 .context-summary { background: var(--gu-bg-secondary); border: 1px solid var(--gu-border); border-radius: var(--gu-radius-lg); padding: 10px 12px; font-size: 13px; line-height: 1.6; color: var(--gu-text-secondary); white-space: pre-line; max-height: 200px; overflow-y: auto; }
+/* 数据量提示样式 */
+.data-hint { margin-top: 12px; }
 </style>

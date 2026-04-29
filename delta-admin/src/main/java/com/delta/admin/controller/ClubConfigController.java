@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "俱乐部配置管理", description = "俱乐部配置管理接口")
 @RestController
-@RequestMapping("/club-config")
+@RequestMapping("/v1/club-config")
 public class ClubConfigController {
 
     private static final Logger log = LoggerFactory.getLogger(ClubConfigController.class);

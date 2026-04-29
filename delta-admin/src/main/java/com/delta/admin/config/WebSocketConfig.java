@@ -23,7 +23,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(notificationHandler, "/ws/notify")
+        registry.addHandler(notificationHandler, "/v1/ws/notify")
                 .addInterceptors(webSocketAuthInterceptor)
                 .setAllowedOrigins(allowedOrigins.split(","));
     }

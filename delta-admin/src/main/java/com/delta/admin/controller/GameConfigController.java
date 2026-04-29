@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Tag(name = "游戏配置管理", description = "游戏配置管理接口")
 @RestController
-@RequestMapping("/game-configs")
+@RequestMapping("/v1/game-configs")
 public class GameConfigController extends BaseController {
 
     @Autowired

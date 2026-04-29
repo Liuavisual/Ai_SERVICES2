@@ -26,7 +26,7 @@
 import request from '@/utils/request'
 import { ElMessage } from 'element-plus'
 
-const BASE_URL = '/api'
+const BASE_URL = '/api/v1'
 
 const activeDownloads = new Map()
 
@@ -399,4 +399,16 @@ export const serviceTrackApi = {
   listByUser: (userId) => request({ url: `/service-tracks/user/${userId}`, method: 'get' }),
   /** 按订单ID查询服务追踪 */
   listByOrder: (orderId) => request({ url: `/service-tracks/order/${orderId}`, method: 'get' })
+}
+
+/** 客户生命周期API */
+export const lifecycleApi = {
+  /** 获取流失风险客户列表 */
+  getAtRisk: () => request({ url: '/customer-lifecycle/at-risk', method: 'get' }),
+  /** 获取已流失客户列表 */
+  getChurned: () => request({ url: '/customer-lifecycle/churned', method: 'get' }),
+  /** 获取客户生命周期阶段 */
+  getStage: (userId) => request({ url: `/customer-lifecycle/stage/${userId}`, method: 'get' }),
+  /** 手动触发更新客户生命周期标签 */
+  updateTags: () => request({ url: '/customer-lifecycle/update-tags', method: 'post' })
 }
