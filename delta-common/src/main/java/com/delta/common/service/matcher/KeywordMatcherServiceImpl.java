@@ -3,9 +3,9 @@ package com.delta.common.service.matcher;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.delta.common.entity.Keyword;
 import com.delta.common.mapper.KeywordMapper;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class KeywordMatcherServiceImpl implements KeywordMatcherService {
 
     private static final Logger log = LoggerFactory.getLogger(KeywordMatcherServiceImpl.class);
 
-    @Autowired
-    private KeywordMapper keywordMapper;
+    private final KeywordMapper keywordMapper;
 
     private volatile Map<String, Keyword> keywordMap = new ConcurrentHashMap<>();
 

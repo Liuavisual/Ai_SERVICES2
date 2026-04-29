@@ -148,37 +148,62 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { csUserCustomerApi, sysUserApi, customerApi } from '@/api'
+import type { Result, PageResult, SysUserVO, CustomerVO } from '@/types'
 
-const isAdmin = computed(() => {
+interface CsUserCustomerRow {
+  id: number
+  csUserId: string
+  csUserName: string
+  customerUserId: string
+  customerUserName: string
+  assignType: string
+  assignTypeDesc: string
+  status: string
+  statusDesc: string
+  assignedAt: string
+  assignedByName: string
+  remark: string
+}
+
+const isAdmin = computed<boolean>(() => {
   try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
 })
 
-const loading = ref(false)
-const submitLoading = ref(false)
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const tableData = ref([])
-const pageNum = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
-const csUsers = ref([])
-const customers = ref([])
+const loading = ref<boolean>(false)
+const submitLoading = ref<boolean>(false)
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('')
+const tableData = ref<CsUserCustomerRow[]>([])
+const pageNum = ref<number>(1)
+const pageSize = ref<number>(10)
+const total = ref<number>(0)
+const csUsers = ref<SysUserVO[]>([])
+const customers = ref<CustomerVO[]>([])
 
-const searchForm = reactive({
+const searchForm = reactive<{ status: string }>({
   status: ''
 })
 
-const form = reactive({
+const form = reactive<{
+  id: number | null
+  csUserId: string | null
+  customerUserId: string | null
+  assignType: string
+  status: string
+  remark: string
+}>({
   id: null,
   csUserId: null,
   customerUserId: null,
   assignType: 'MANUAL',
-  status: 'ACTIVE'
+  status: 'ACTIVE',
+  remark: ''
 })
 
 const rules = {
@@ -187,12 +212,12 @@ const rules = {
   assignType: [{ required: true, message: '请选择分配方式', trigger: 'change' }]
 }
 
-const formRef = ref(null)
+const formRef = ref<FormInstance>()
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await csUserCustomerApi.getPage({
+    const res: Result<PageResult<CsUserCustomerRow>> = await csUserCustomerApi.getPage({
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       status: searchForm.status
@@ -209,11 +234,11 @@ const fetchData = async () => {
   }
 }
 
-const fetchCsUsers = async () => {
+const fetchCsUsers = async (): Promise<void> => {
   try {
-    const res = await sysUserApi.getPage({ pageNum: 1, pageSize: 1000 })
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ pageNum: 1, pageSize: 1000 })
     if (res.code === 200) {
-      csUsers.value = res.data.records.filter(u => u.role === 'CS_STAFF' || u.role === 'CS_LEADER')
+      csUsers.value = res.data.records.filter((u: SysUserVO) => u.role === 'CS_STAFF' || u.role === 'CS_LEADER')
     }
   } catch (error) {
     ElMessage.error('获取客服列表失败')
@@ -221,9 +246,9 @@ const fetchCsUsers = async () => {
   }
 }
 
-const fetchCustomers = async () => {
+const fetchCustomers = async (): Promise<void> => {
   try {
-    const res = await customerApi.getPage({ pageNum: 1, pageSize: 1000 })
+    const res: Result<PageResult<CustomerVO>> = await customerApi.getPage({ pageNum: 1, pageSize: 1000 })
     if (res.code === 200) {
       customers.value = res.data.records
     }
@@ -233,26 +258,26 @@ const fetchCustomers = async () => {
   }
 }
 
-const resetSearch = () => {
+const resetSearch = (): void => {
   searchForm.status = ''
   pageNum.value = 1
   fetchData()
 }
 
-const handleCreate = () => {
+const handleCreate = (): void => {
   dialogTitle.value = '新建分配'
   resetForm()
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: CsUserCustomerRow): void => {
   dialogTitle.value = '编辑分配'
   const { id, csUserId, customerUserId, assignType, status, remark } = row
   Object.assign(form, { id, csUserId, customerUserId, assignType, status, remark })
   dialogVisible.value = true
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: CsUserCustomerRow): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定要删除该分配关系吗？', '提示', {
       confirmButtonText: '确定',
@@ -260,7 +285,7 @@ const handleDelete = async (row) => {
       type: 'warning'
     })
     
-    const res = await csUserCustomerApi.delete(row.id)
+    const res: Result<null> = await csUserCustomerApi.delete(row.id)
     if (res.code === 200) {
       ElMessage.success('删除成功')
       fetchData()
@@ -273,12 +298,12 @@ const handleDelete = async (row) => {
   }
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (!formRef.value) return
   try {
     await formRef.value.validate()
     submitLoading.value = true
-    let res
+    let res: Result<null>
     if (form.id) {
       res = await csUserCustomerApi.update(form)
     } else {
@@ -296,12 +321,13 @@ const handleSubmit = async () => {
   }
 }
 
-const resetForm = () => {
+const resetForm = (): void => {
   form.id = null
   form.csUserId = null
   form.customerUserId = null
   form.assignType = 'MANUAL'
   form.status = 'ACTIVE'
+  form.remark = ''
   if (formRef.value) {
     formRef.value.clearValidate()
   }

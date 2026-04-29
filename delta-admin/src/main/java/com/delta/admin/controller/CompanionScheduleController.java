@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.CompanionScheduleDTO;
 import com.delta.common.service.CompanionScheduleService;
@@ -28,7 +29,7 @@ import java.util.Map;
 
 @Tag(name = "陪玩师时间管理", description = "陪玩师时间管理接口")
 @RestController
-@RequestMapping("/v1/companion-schedules")
+@RequestMapping(ApiVersionConstants.V1 + "/companion-schedules")
 @RequiredArgsConstructor
 public class CompanionScheduleController extends BaseController {
 

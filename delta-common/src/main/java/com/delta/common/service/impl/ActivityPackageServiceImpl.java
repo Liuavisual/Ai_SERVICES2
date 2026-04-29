@@ -13,7 +13,7 @@ import com.delta.common.mapper.GameConfigMapper;
 import com.delta.common.mapper.ServiceItemMapper;
 import com.delta.common.service.ActivityPackageService;
 import com.delta.common.vo.ActivityPackageVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,16 +23,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ActivityPackageServiceImpl implements ActivityPackageService {
 
-    @Autowired
-    private ActivityPackageMapper activityPackageMapper;
+    private final ActivityPackageMapper activityPackageMapper;
 
-    @Autowired
-    private GameConfigMapper gameConfigMapper;
+    private final GameConfigMapper gameConfigMapper;
 
-    @Autowired
-    private ServiceItemMapper serviceItemMapper;
+    private final ServiceItemMapper serviceItemMapper;
 
     @Override
     public List<ActivityPackageVO> getByClubId(Long clubConfigId) {

@@ -8,9 +8,9 @@ import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.PlatformConfigMapper;
 import com.delta.common.service.PlatformConfigService;
 import com.delta.common.vo.PlatformConfigVO;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +22,12 @@ import java.util.List;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class PlatformConfigServiceImpl implements PlatformConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(PlatformConfigServiceImpl.class);
 
-    @Autowired
-    private PlatformConfigMapper platformConfigMapper;
+    private final PlatformConfigMapper platformConfigMapper;
 
     @Override
     public List<PlatformConfigVO> getAllPlatformConfigs() {

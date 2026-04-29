@@ -97,14 +97,32 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
 import { clubConfigApi } from '@/api'
+import type { Result } from '@/types'
 
-const loading = ref(false)
-const configForm = ref({
+interface LevelPrice {
+  levelId: number
+  levelName: string
+  price: number
+}
+
+interface ClubConfigForm {
+  clubName: string
+  clubLogo: string
+  mainGames: string
+  serviceSlogan: string
+  welcomeMessage: string
+  contactInfo: string
+  clubFeatures: string
+  levelPrices: LevelPrice[]
+}
+
+const loading = ref<boolean>(false)
+const configForm = ref<ClubConfigForm>({
   clubName: '',
   clubLogo: '',
   mainGames: '',
@@ -115,9 +133,9 @@ const configForm = ref({
   levelPrices: []
 })
 
-const loadConfig = async () => {
+const loadConfig = async (): Promise<void> => {
   try {
-    const res = await clubConfigApi.get()
+    const res: Result<any> = await clubConfigApi.get()
     if (res.data) {
       configForm.value = {
         clubName: res.data.clubName || '',
@@ -136,7 +154,7 @@ const loadConfig = async () => {
   }
 }
 
-const handleSave = async () => {
+const handleSave = async (): Promise<void> => {
   loading.value = true
   try {
     await clubConfigApi.update(configForm.value)

@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.dto.ReplyDTO;
 import com.delta.common.service.CacheService;
@@ -27,7 +28,7 @@ import java.util.Map;
  */
 @Tag(name = "回复话术管理", description = "回复话术管理接口")
 @RestController
-@RequestMapping("/v1/replies")
+@RequestMapping(ApiVersionConstants.V1 + "/replies")
 @RequiredArgsConstructor
 public class ReplyController extends BaseController {
 

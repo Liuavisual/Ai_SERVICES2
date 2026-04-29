@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.OrderCreateDTO;
 import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.service.OrderService;
@@ -9,20 +10,20 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @Tag(name = "订单管理")
 @RestController
-@RequestMapping("/v1/orders")
+@RequestMapping(ApiVersionConstants.V1 + "/orders")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class OrderController extends BaseController {
 
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
 
     @Operation(summary = "获取订单详情")
     @GetMapping("/{id}")

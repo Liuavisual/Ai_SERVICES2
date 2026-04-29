@@ -15,8 +15,8 @@ import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.service.ClubConfigService;
 import com.delta.common.vo.ClubConfigVO;
 import com.delta.common.vo.ClubLevelPriceVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,16 +31,14 @@ import java.util.stream.Collectors;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class ClubConfigServiceImpl implements ClubConfigService {
 
-    @Autowired
-    private ClubConfigMapper clubConfigMapper;
+    private final ClubConfigMapper clubConfigMapper;
 
-    @Autowired
-    private ClubLevelPriceMapper clubLevelPriceMapper;
+    private final ClubLevelPriceMapper clubLevelPriceMapper;
 
-    @Autowired
-    private CompanionLevelMapper companionLevelMapper;
+    private final CompanionLevelMapper companionLevelMapper;
 
     @Override
     public ClubConfig getClubConfig() {

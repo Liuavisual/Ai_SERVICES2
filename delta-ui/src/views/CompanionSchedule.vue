@@ -191,67 +191,83 @@
   </div>
 </template>
 
-<script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, ArrowRight, Download } from '@element-plus/icons-vue'
 import { companionScheduleApi, companionApi, downloadExcel } from '@/api'
+import type { Result, PageResult, CompanionVO, CompanionScheduleVO } from '@/types'
 
-const props = defineProps({
-  companionId: {
-    type: Number,
-    default: null
-  }
-})
+interface ScheduleRow extends CompanionScheduleVO {
+  timeSlot: string
+  exists: boolean
+}
+
+const props = defineProps<{
+  companionId?: number | null
+}>()
 
 defineExpose({ refresh: fetchSchedules })
 
-const emit = defineEmits(['refresh'])
+const emit = defineEmits<{ refresh: [] }>()
 
-const companionList = ref([])
-const selectedCompanionId = ref(null)
-const currentDate = ref(new Date().toISOString().split('T')[0])
-const schedules = ref([])
-const rangeDialogVisible = ref(false)
-const batchRangeDialogVisible = ref(false)
-const editDialogVisible = ref(false)
-const rangeLoading = ref(false)
-const batchRangeLoading = ref(false)
+const companionList = ref<CompanionVO[]>([])
+const selectedCompanionId = ref<string | number | null>(null)
+const currentDate = ref<string>(new Date().toISOString().split('T')[0])
+const schedules = ref<ScheduleRow[]>([])
+const rangeDialogVisible = ref<boolean>(false)
+const batchRangeDialogVisible = ref<boolean>(false)
+const editDialogVisible = ref<boolean>(false)
+const rangeLoading = ref<boolean>(false)
+const batchRangeLoading = ref<boolean>(false)
 
-const rangeForm = reactive({
+const rangeForm = reactive<{
+  rangeStart: string
+  rangeEnd: string
+  remark: string
+}>({
   rangeStart: '',
   rangeEnd: '',
   remark: ''
 })
 
-const batchRangeForm = reactive({
+const batchRangeForm = reactive<{
+  startDate: string | null
+  endDate: string | null
+  dailyStart: string
+  dailyEnd: string
+}>({
   startDate: null,
   endDate: null,
   dailyStart: '',
   dailyEnd: ''
 })
 
-const editForm = reactive({
+const editForm = reactive<{
+  id: string | null
+  status: string
+  remark: string
+}>({
   id: null,
   status: 'AVAILABLE',
   remark: ''
 })
 
-const activeCompanionId = computed(() => props.companionId || selectedCompanionId.value)
+const activeCompanionId = computed<string | number | null>(() => props.companionId || selectedCompanionId.value)
 
-const getStatusType = (status) => {
-  const map = { 'AVAILABLE': 'success', 'BOOKED': 'warning', 'UNAVAILABLE': 'danger' }
+const getStatusType = (status: string): string => {
+  const map: Record<string, string> = { 'AVAILABLE': 'success', 'BOOKED': 'warning', 'UNAVAILABLE': 'danger' }
   return map[status] || 'info'
 }
 
-const getStatusText = (status) => {
-  const map = { 'AVAILABLE': '可预约', 'BOOKED': '已预约', 'UNAVAILABLE': '不可用' }
+const getStatusText = (status: string): string => {
+  const map: Record<string, string> = { 'AVAILABLE': '可预约', 'BOOKED': '已预约', 'UNAVAILABLE': '不可用' }
   return map[status] || status
 }
 
-const fetchCompanions = async () => {
+const fetchCompanions = async (): Promise<void> => {
   try {
-    const res = await companionApi.getPage({ pageNum: 1, pageSize: 200, enabled: 1 })
+    const res: Result<PageResult<CompanionVO>> = await companionApi.getPage({ pageNum: 1, pageSize: 200, enabled: 1 })
     if (res.code === 200) {
       companionList.value = res.data.records || []
     }
@@ -260,10 +276,10 @@ const fetchCompanions = async () => {
   }
 }
 
-const fetchSchedules = async () => {
+const fetchSchedules = async (): Promise<void> => {
   if (!activeCompanionId.value) return
   try {
-    const res = await companionScheduleApi.getByCompanionDate({
+    const res: Result<CompanionScheduleVO[]> = await companionScheduleApi.getByCompanionDate({
       companionId: activeCompanionId.value,
       scheduleDate: currentDate.value
     })
@@ -276,31 +292,31 @@ const fetchSchedules = async () => {
   }
 }
 
-const onCompanionChange = () => {
+const onCompanionChange = (): void => {
   schedules.value = []
   fetchSchedules()
 }
 
-const prevDay = () => {
+const prevDay = (): void => {
   const date = new Date(currentDate.value)
   date.setDate(date.getDate() - 1)
   currentDate.value = date.toISOString().split('T')[0]
 }
 
-const nextDay = () => {
+const nextDay = (): void => {
   const date = new Date(currentDate.value)
   date.setDate(date.getDate() + 1)
   currentDate.value = date.toISOString().split('T')[0]
 }
 
-const showTimeRangeDialog = () => {
+const showTimeRangeDialog = (): void => {
   rangeForm.rangeStart = ''
   rangeForm.rangeEnd = ''
   rangeForm.remark = ''
   rangeDialogVisible.value = true
 }
 
-const submitTimeRange = async () => {
+const submitTimeRange = async (): Promise<void> => {
   if (!rangeForm.rangeStart || !rangeForm.rangeEnd) {
     ElMessage.warning('请选择开始和结束时间')
     return
@@ -316,7 +332,7 @@ const submitTimeRange = async () => {
     ElMessage.success('添加成功')
     rangeDialogVisible.value = false
     fetchSchedules()
-  } catch (error) {
+  } catch (error: any) {
     console.error('添加失败', error)
     ElMessage.error(error?.response?.data?.message || '添加失败')
   } finally {
@@ -324,7 +340,7 @@ const submitTimeRange = async () => {
   }
 }
 
-const showBatchRangeDialog = () => {
+const showBatchRangeDialog = (): void => {
   batchRangeForm.startDate = currentDate.value
   const endDate = new Date(currentDate.value)
   endDate.setDate(endDate.getDate() + 6)
@@ -334,7 +350,7 @@ const showBatchRangeDialog = () => {
   batchRangeDialogVisible.value = true
 }
 
-const submitBatchRange = async () => {
+const submitBatchRange = async (): Promise<void> => {
   if (!batchRangeForm.startDate || !batchRangeForm.endDate) {
     ElMessage.warning('请选择日期范围')
     return
@@ -355,7 +371,7 @@ const submitBatchRange = async () => {
     ElMessage.success('批量创建成功')
     batchRangeDialogVisible.value = false
     fetchSchedules()
-  } catch (error) {
+  } catch (error: any) {
     console.error('批量创建失败', error)
     ElMessage.error(error?.response?.data?.message || '批量创建失败')
   } finally {
@@ -363,14 +379,14 @@ const submitBatchRange = async () => {
   }
 }
 
-const editSchedule = (row) => {
+const editSchedule = (row: ScheduleRow): void => {
   editForm.id = row.id
   editForm.status = row.status
   editForm.remark = row.remark || ''
   editDialogVisible.value = true
 }
 
-const submitEdit = async () => {
+const submitEdit = async (): Promise<void> => {
   try {
     await companionScheduleApi.update({
       id: editForm.id,
@@ -386,7 +402,7 @@ const submitEdit = async () => {
   }
 }
 
-const updateStatus = async (row, status) => {
+const updateStatus = async (row: ScheduleRow, status: string): Promise<void> => {
   try {
     await companionScheduleApi.updateStatus({
       id: row.id,
@@ -400,7 +416,7 @@ const updateStatus = async (row, status) => {
   }
 }
 
-const deleteSchedule = (row) => {
+const deleteSchedule = (row: ScheduleRow): void => {
   ElMessageBox.confirm('确定要删除该时间段吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -417,7 +433,7 @@ const deleteSchedule = (row) => {
   }).catch(() => {})
 }
 
-const clearCurrentDay = () => {
+const clearCurrentDay = (): void => {
   ElMessageBox.confirm('确定要清空当天所有时间吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -437,8 +453,8 @@ const clearCurrentDay = () => {
   }).catch(() => {})
 }
 
-const handleExport = () => {
-  const params = {}
+const handleExport = (): void => {
+  const params: Record<string, any> = {}
   if (activeCompanionId.value) params.companionId = activeCompanionId.value
   if (currentDate.value) params.scheduleDate = currentDate.value
   downloadExcel('/companion-schedules/export', params, '排班管理.xlsx')

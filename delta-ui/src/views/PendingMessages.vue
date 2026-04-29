@@ -216,131 +216,80 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, h, onMounted, onUnmounted, inject } from 'vue'
 import { ElMessage, ElTag, ElButton } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
 import { pendingMessageApi, customerApi, downloadExcel } from '@/api'
+import type { Result, PageResult, PendingMessageVO, PendingMessageStatus, CustomerVO } from '@/types'
 
-/** 加载状态 */
-const loading = ref(false)
-/** 提交加载状态 */
-const submitLoading = ref(false)
-/** 表格数据 */
-const tableData = ref([])
-/** 数据总数 */
-const total = ref(0)
-/** 刷新待办数量方法（从父组件注入） */
-const refreshPendingCount = inject('refreshPendingCount')
-/** 当前时间戳（用于倒计时计算） */
-const now = ref(Date.now())
-/** 倒计时定时器 */
-let countdownTimer = null
-/** 是否开启虚拟滚动模式 */
-const virtualMode = ref(false)
-/** 虚拟表格高度 */
-const virtualTableHeight = ref(500)
+const loading = ref<boolean>(false)
+const submitLoading = ref<boolean>(false)
+const tableData = ref<PendingMessageVO[]>([])
+const total = ref<number>(0)
+const refreshPendingCount: (() => void) | undefined = inject('refreshPendingCount')
+const now = ref<number>(Date.now())
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+const virtualMode = ref<boolean>(false)
+const virtualTableHeight = ref<number>(500)
 
-/** 用户信息（从localStorage读取） */
-let userInfo = {}
+let userInfo: Record<string, any> = {}
 try {
   userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
 } catch (e) {}
-/** 是否管理员或主管 */
-const isAdminOrLeader = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
+const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
 
-/** 查询参数 */
-const queryParams = reactive({ pageNum: 1, pageSize: 20, status: null, platform: null, keyword: '' })
-/** 处理对话框可见状态 */
-const processDialogVisible = ref(false)
-/** 处理表单数据 */
-const processForm = reactive({ id: null, status: '', currentStatus: '', remark: '', contextSummary: '', userNickname: '' })
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  status: PendingMessageStatus | null
+  platform: string | null
+  keyword: string
+}>({ pageNum: 1, pageSize: 20, status: null, platform: null, keyword: '' })
+const processDialogVisible = ref<boolean>(false)
+const processForm = reactive<{
+  id: string | null
+  status: PendingMessageStatus | ''
+  currentStatus: PendingMessageStatus | ''
+  remark: string
+  contextSummary: string
+  userNickname: string
+}>({ id: null, status: '', currentStatus: '', remark: '', contextSummary: '', userNickname: '' })
 
-/** 客户信息对话框可见状态 */
-const customerDialogVisible = ref(false)
-/** 客户信息加载状态 */
-const customerLoading = ref(false)
-/** 客户信息数据 */
-const customerInfo = ref(null)
+const customerDialogVisible = ref<boolean>(false)
+const customerLoading = ref<boolean>(false)
+const customerInfo = ref<CustomerVO | null>(null)
 
-/** 处理对话框标题 */
-const processDialogTitle = computed(() => {
+const processDialogTitle = computed<string>(() => {
   if (processForm.status === 'processing') return '接手处理'
   if (processForm.status === 'resolved') return '完成处理'
   return '处理待办'
 })
 
-/**
- * 计算剩余秒数
- * @param {Object} row - 待办消息行数据
- * @returns {number} 剩余秒数
- */
-const getRemaining = (row) => {
+const getRemaining = (row: PendingMessageVO): number => {
   if (!row.deadline) return 0
   const target = new Date(row.deadline).getTime()
   return Math.max(0, Math.floor((target - now.value) / 1000))
 }
 
-/** 超时数量 */
-const overdueCount = computed(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) <= 0).length)
-/** 紧急数量 */
-const urgentCount = computed(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) > 0 && getRemaining(r) < 120).length)
+const overdueCount = computed<number>(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) <= 0).length)
+const urgentCount = computed<number>(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) > 0 && getRemaining(r) < 120).length)
 
-/**
- * 获取状态标签类型
- * @param {string} s - 状态值
- * @returns {string} Tag类型
- */
-const getStatusType = (s) => ({ pending: 'warning', processing: 'primary', resolved: 'success' }[s] || 'info')
+const getStatusType = (s: PendingMessageStatus): string => ({ pending: 'warning', processing: 'primary', resolved: 'success' }[s] || 'info')
 
-/**
- * 获取状态显示文本
- * @param {string} s - 状态值
- * @returns {string} 状态文本
- */
-const getStatusText = (s) => ({ pending: '待处理', processing: '处理中', resolved: '已解决' }[s] || s)
+const getStatusText = (s: PendingMessageStatus): string => ({ pending: '待处理', processing: '处理中', resolved: '已解决' }[s] || s)
 
-/**
- * 获取平台显示文本
- * @param {string} p - 平台标识
- * @returns {string} 平台文本
- */
-const getPlatformText = (p) => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
+const getPlatformText = (p: string): string => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
 
-/**
- * 获取平台标签类型（筛选栏用）
- * @param {string} p - 平台标识
- * @returns {string} Tag类型
- */
-const getPlatformType = (p) => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info')
+const getPlatformType = (p: string): string => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info')
 
-/**
- * 获取介入类型标签类型
- * @param {string} t - 介入类型
- * @returns {string} Tag类型
- */
-const getInterventionTypeTag = (t) => ({ ORDER: 'danger', SCHEDULE: 'warning', SPECIFIC_COMPANION: 'primary', COMPLAINT: 'danger', HUMAN_REQUEST: '' }[t] || 'info')
+const getInterventionTypeTag = (t: string): string => ({ ORDER: 'danger', SCHEDULE: 'warning', SPECIFIC_COMPANION: 'primary', COMPLAINT: 'danger', HUMAN_REQUEST: '' }[t] || 'info')
 
-/**
- * 获取平台显示文本（客户信息对话框用）
- * @param {string} p - 平台标识
- * @returns {string} 平台文本
- */
-const getPlatformLabel = (p) => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
+const getPlatformLabel = (p: string): string => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
 
-/**
- * 获取平台标签类型（客户信息对话框用）
- * @param {string} p - 平台标识
- * @returns {string} Tag类型
- */
-const getPlatformTagType = (p) => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info')
+const getPlatformTagType = (p: string): string => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info')
 
-/**
- * 格式化倒计时
- * @param {Object} row - 待办消息行数据
- * @returns {string} 倒计时文本
- */
-const formatCountdown = (row) => {
+const formatCountdown = (row: PendingMessageVO): string => {
   const s = getRemaining(row)
   if (s <= 0) return '已超时'
   const m = Math.floor(s / 60)
@@ -348,22 +297,13 @@ const formatCountdown = (row) => {
   return m > 0 ? m + '分' + sec + '秒' : sec + '秒'
 }
 
-/**
- * 获取倒计时CSS类名
- * @param {Object} row - 待办消息行数据
- * @returns {string} CSS类名
- */
-const getCountdownClass = (row) => {
+const getCountdownClass = (row: PendingMessageVO): string => {
   const s = getRemaining(row)
   if (s <= 0) return 'countdown overdue'
   if (s < 120) return 'countdown urgent'
   return 'countdown'
 }
 
-/**
- * el-table-v2 列定义（虚拟滚动模式使用）
- * 使用 cellRenderer 渲染自定义内容
- */
 const v2Columns = computed(() => [
   { key: 'id', dataKey: 'id', title: '编号', width: 70 },
   {
@@ -371,8 +311,7 @@ const v2Columns = computed(() => [
     dataKey: 'userNickname',
     title: '客户',
     width: 140,
-    /** 客户列渲染：昵称+平台Tag */
-    cellRenderer: ({ row }) => h('div', { style: 'display:flex;align-items:center;gap:4px' }, [
+    cellRenderer: ({ row }: { row: PendingMessageVO }) => h('div', { style: 'display:flex;align-items:center;gap:4px' }, [
       h('span', { class: 'customer-name' }, row.userNickname),
       h(ElTag, { size: 'small', type: getPlatformType(row.platform), class: 'platform-tag' }, () => getPlatformText(row.platform))
     ])
@@ -382,8 +321,7 @@ const v2Columns = computed(() => [
     dataKey: 'interventionType',
     title: '介入类型',
     width: 120,
-    /** 介入类型列渲染 */
-    cellRenderer: ({ row }) => h(ElTag, { size: 'small', type: getInterventionTypeTag(row.interventionType) }, () => row.interventionTypeDesc || row.interventionType)
+    cellRenderer: ({ row }: { row: PendingMessageVO }) => h(ElTag, { size: 'small', type: getInterventionTypeTag(row.interventionType) }, () => row.interventionTypeDesc || row.interventionType)
   },
   { key: 'messageContent', dataKey: 'messageContent', title: '原始消息', width: 180 },
   {
@@ -391,16 +329,14 @@ const v2Columns = computed(() => [
     dataKey: 'status',
     title: '状态',
     width: 110,
-    /** 状态列渲染 */
-    cellRenderer: ({ cellData }) => h(ElTag, { size: 'small', type: getStatusType(cellData), effect: 'light' }, () => getStatusText(cellData))
+    cellRenderer: ({ cellData }: { cellData: PendingMessageStatus }) => h(ElTag, { size: 'small', type: getStatusType(cellData), effect: 'light' }, () => getStatusText(cellData))
   },
   {
     key: 'deadline',
     dataKey: 'deadline',
     title: '剩余时间',
     width: 140,
-    /** 剩余时间列渲染 */
-    cellRenderer: ({ row }) => {
+    cellRenderer: ({ row }: { row: PendingMessageVO }) => {
       if (row.status === 'pending' || row.status === 'processing') {
         return h('span', { class: getCountdownClass(row) }, formatCountdown(row))
       }
@@ -412,8 +348,7 @@ const v2Columns = computed(() => [
     dataKey: 'escalationLevel',
     title: '升级',
     width: 80,
-    /** 升级列渲染 */
-    cellRenderer: ({ cellData }) => {
+    cellRenderer: ({ cellData }: { cellData: number }) => {
       if (cellData >= 2) return h('span', { class: 'escalate-badge escalate-high' }, '上报')
       if (cellData >= 1) return h('span', { class: 'escalate-badge escalate-warn' }, '警告')
       return h('span', { class: 'muted-text' }, '—')
@@ -424,8 +359,7 @@ const v2Columns = computed(() => [
     dataKey: 'assignedCsUserName',
     title: '指派客服',
     width: 100,
-    /** 指派客服列渲染 */
-    cellRenderer: ({ cellData }) => cellData || '—'
+    cellRenderer: ({ cellData }: { cellData: string }) => cellData || '—'
   },
   { key: 'createdAt', dataKey: 'createdAt', title: '创建时间', width: 160 },
   {
@@ -434,8 +368,7 @@ const v2Columns = computed(() => [
     title: '操作',
     width: 200,
     fixed: 'right',
-    /** 操作列渲染：接手/完成/查看按钮 */
-    cellRenderer: ({ row }) => {
+    cellRenderer: ({ row }: { row: PendingMessageVO }) => {
       const buttons = []
       if (row.status === 'pending') {
         buttons.push(h(ElButton, { link: true, type: 'primary', size: 'small', onClick: () => handleProcess(row, 'processing') }, () => '接手'))
@@ -449,17 +382,13 @@ const v2Columns = computed(() => [
   }
 ])
 
-/**
- * 查询待办消息列表
- */
-const handleQuery = async () => {
+const handleQuery = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await pendingMessageApi.getPage(queryParams)
+    const res: Result<PageResult<PendingMessageVO>> = await pendingMessageApi.getPage(queryParams)
     if (res.code === 200) {
       tableData.value = res.data.records || []
       total.value = res.data.total || 0
-      /** 数据量超过100条时自动提示可切换虚拟滚动 */
       if (total.value > 100 && !virtualMode.value) {
         ElMessage.info('数据量较大，可开启虚拟滚动模式提升性能')
       }
@@ -472,10 +401,7 @@ const handleQuery = async () => {
   }
 }
 
-/**
- * 重置筛选条件
- */
-const handleReset = () => {
+const handleReset = (): void => {
   queryParams.pageNum = 1
   queryParams.status = null
   queryParams.platform = null
@@ -483,12 +409,7 @@ const handleReset = () => {
   handleQuery()
 }
 
-/**
- * 打开处理对话框
- * @param {Object} row - 待办消息行数据
- * @param {string} status - 目标状态
- */
-const handleProcess = (row, status) => {
+const handleProcess = (row: PendingMessageVO, status: PendingMessageStatus): void => {
   processForm.id = row.id
   processForm.status = status
   processForm.currentStatus = row.status
@@ -498,17 +419,14 @@ const handleProcess = (row, status) => {
   processDialogVisible.value = true
 }
 
-/**
- * 提交处理结果
- */
-const submitProcess = async () => {
+const submitProcess = async (): Promise<void> => {
   if (processForm.status === 'resolved' && !processForm.remark.trim()) {
     ElMessage.warning('完成处理时请填写处理结果')
     return
   }
   submitLoading.value = true
   try {
-    const res = await pendingMessageApi.handle({
+    const res: Result<null> = await pendingMessageApi.handle({
       id: processForm.id,
       status: processForm.status,
       remark: processForm.remark
@@ -526,20 +444,16 @@ const submitProcess = async () => {
   }
 }
 
-/**
- * 查看客户信息
- * @param {Object} row - 待办消息行数据
- */
-const handleViewCustomer = async (row) => {
+const handleViewCustomer = async (row: PendingMessageVO): Promise<void> => {
   customerDialogVisible.value = true
   customerLoading.value = true
   customerInfo.value = null
   try {
-    const res = await customerApi.getById(row.userId)
+    const res: Result<CustomerVO> = await customerApi.getById(row.userId)
     if (res.code === 200) {
       customerInfo.value = res.data
     }
-  } catch (e) {
+  } catch (e: any) {
     if (e.message && e.message.includes('无权')) {
       ElMessage.error('您无权查看此客户信息')
     } else {
@@ -551,14 +465,10 @@ const handleViewCustomer = async (row) => {
   }
 }
 
-/** 更新当前时间戳 */
-const tickNow = () => { now.value = Date.now() }
+const tickNow = (): void => { now.value = Date.now() }
 
-/**
- * 导出待办事项Excel
- */
-const handleExport = () => {
-  const params = {}
+const handleExport = (): void => {
+  const params: Record<string, string> = {}
   if (queryParams.status) params.status = queryParams.status
   if (queryParams.platform) params.platform = queryParams.platform
   if (queryParams.keyword) params.keyword = queryParams.keyword

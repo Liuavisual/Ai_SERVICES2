@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.LoginDTO;
 import com.delta.common.dto.RefreshTokenDTO;
@@ -17,7 +18,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -29,36 +30,26 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/auth")
+@RequestMapping(ApiVersionConstants.V1 + "/auth")
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    /**
-     * 注册接口最大请求次数
-     */
     private static final int REGISTER_MAX_REQUESTS = 5;
 
-    /**
-     * 注册接口限流时间窗口（秒）
-     */
     private static final int REGISTER_WINDOW_SECONDS = 3600;
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
-    @Autowired
-    private RateLimiter rateLimiter;
+    private final RateLimiter rateLimiter;
 
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
-    @Autowired
-    private TokenBlacklistService tokenBlacklistService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    @Autowired
-    private RedisService redisService;
+    private final RedisService redisService;
 
     private static final String HEARTBEAT_KEY_PREFIX = "session:heartbeat:";
     private static final long HEARTBEAT_TTL_MINUTES = 5;
@@ -291,7 +282,7 @@ public class AuthController {
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(true);
-        refreshCookie.setPath("/api/v1/auth/refresh");
+        refreshCookie.setPath("/api" + ApiVersionConstants.V1 + "/auth/refresh");
         refreshCookie.setMaxAge(maxAge * 2);
         response.addCookie(refreshCookie);
     }
@@ -314,7 +305,7 @@ public class AuthController {
         Cookie refreshCookie = new Cookie("refresh_token", "");
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(true);
-        refreshCookie.setPath("/api/v1/auth/refresh");
+        refreshCookie.setPath("/api" + ApiVersionConstants.V1 + "/auth/refresh");
         refreshCookie.setMaxAge(0);
         response.addCookie(refreshCookie);
     }

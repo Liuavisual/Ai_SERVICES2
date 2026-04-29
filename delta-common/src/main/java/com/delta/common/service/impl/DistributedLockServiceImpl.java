@@ -6,7 +6,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
@@ -18,14 +18,14 @@ import java.util.function.Supplier;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class DistributedLockServiceImpl implements DistributedLockService {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedLockServiceImpl.class);
     
     private static final String LOCK_PREFIX = "delta:lock:";
 
-    @Autowired
-    private RedissonClient redissonClient;
+    private final RedissonClient redissonClient;
 
     @Override
     public boolean tryLock(String lockKey, long waitTime, long leaseTime, TimeUnit unit) {

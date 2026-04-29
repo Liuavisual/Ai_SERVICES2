@@ -1,22 +1,22 @@
 package com.delta.common.service.impl;
 
 import com.delta.common.service.RedisService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
 public class TokenBlacklistService {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBlacklistService.class);
 
     private static final String BLACKLIST_PREFIX = "token:blacklist:";
 
-    @Autowired
-    private RedisService redisService;
+    private final RedisService redisService;
 
     public void blacklistToken(String token, long remainingMillis) {
         if (token == null || token.isEmpty()) {

@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.*;
 import com.delta.common.vo.Result;
 import com.delta.common.service.WorkOrderService;
@@ -13,7 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/work-orders")
+@RequestMapping(ApiVersionConstants.V1 + "/work-orders")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class WorkOrderController extends BaseController {

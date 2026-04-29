@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CustomerSatisfactionDTO;
 import com.delta.common.service.CustomerSatisfactionService;
 import com.delta.common.vo.CustomerSatisfactionVO;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
  * @author 刘建国
  */
 @RestController
-@RequestMapping("/v1/satisfaction")
+@RequestMapping(ApiVersionConstants.V1 + "/satisfaction")
 @RequiredArgsConstructor
 @Tag(name = "客户满意度评价")
 public class CustomerSatisfactionController extends BaseController {

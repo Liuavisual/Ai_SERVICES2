@@ -79,24 +79,38 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { platformConfigApi } from '@/api'
+import type { Result } from '@/types'
 
-const loading = ref(false)
-const submitLoading = ref(false)
-const tableData = ref([])
-const dialogVisible = ref(false)
-const jsonError = ref('')
+interface PlatformConfigRow {
+  id: number
+  platform: string
+  enabled: boolean
+  config: Record<string, any>
+  updatedAt: string
+}
 
-const platformHints = {
+const loading = ref<boolean>(false)
+const submitLoading = ref<boolean>(false)
+const tableData = ref<PlatformConfigRow[]>([])
+const dialogVisible = ref<boolean>(false)
+const jsonError = ref<string>('')
+
+const platformHints: Record<string, string> = {
   wechat: `{"appId": "微信AppID", "appSecret": "微信AppSecret", "token": "Token", "aesKey": "AES密钥"}`,
   kook: `{"botToken": "KOOK机器人Token"}`,
   yy: `{"username": "YY账号", "password": "YY密码"}`
 }
 
-const formData = ref({
+const formData = ref<{
+  id: number | null
+  platform: string
+  enabled: boolean
+  config: Record<string, any>
+}>({
   id: null,
   platform: '',
   enabled: true,
@@ -104,14 +118,14 @@ const formData = ref({
 })
 
 const configJson = computed({
-  get: () => {
+  get: (): string => {
     try {
       return JSON.stringify(formData.value.config, null, 2)
     } catch (e) {
       return ''
     }
   },
-  set: (val) => {
+  set: (val: string): void => {
     jsonError.value = ''
     if (!val || val.trim() === '') {
       formData.value.config = {}
@@ -125,8 +139,8 @@ const configJson = computed({
   }
 })
 
-const getPlatformText = (platform) => {
-  const map = {
+const getPlatformText = (platform: string): string => {
+  const map: Record<string, string> = {
     'wechat': '微信',
     'kook': 'KOOK',
     'yy': 'YY'
@@ -134,8 +148,8 @@ const getPlatformText = (platform) => {
   return map[platform] || platform
 }
 
-const getPlatformTagType = (platform) => {
-  const map = {
+const getPlatformTagType = (platform: string): string => {
+  const map: Record<string, string> = {
     'wechat': 'primary',
     'kook': 'success',
     'yy': 'warning'
@@ -143,7 +157,7 @@ const getPlatformTagType = (platform) => {
   return map[platform] || 'info'
 }
 
-const formatConfig = (config) => {
+const formatConfig = (config: Record<string, any>): string => {
   if (!config) return ''
   try {
     return JSON.stringify(config, null, 2)
@@ -152,10 +166,10 @@ const formatConfig = (config) => {
   }
 }
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await platformConfigApi.getAll()
+    const res: Result<PlatformConfigRow[]> = await platformConfigApi.getAll()
     if (res.code === 200) {
       tableData.value = res.data
     }
@@ -167,20 +181,20 @@ const fetchData = async () => {
   }
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: PlatformConfigRow): void => {
   formData.value = { ...row }
   jsonError.value = ''
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (jsonError.value) {
     ElMessage.error('请先修复JSON格式错误')
     return
   }
   submitLoading.value = true
   try {
-    const res = await platformConfigApi.update(formData.value)
+    const res: Result<null> = await platformConfigApi.update(formData.value)
     if (res.code === 200) {
       ElMessage.success('更新成功')
       dialogVisible.value = false

@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.PendingMessageHandleDTO;
 import com.delta.common.service.PendingMessageService;
@@ -36,7 +37,7 @@ import java.util.Map;
  */
 @Tag(name = "待处理消息管理", description = "待处理消息管理接口")
 @RestController
-@RequestMapping("/v1/pending-messages")
+@RequestMapping(ApiVersionConstants.V1 + "/pending-messages")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 @RequiredArgsConstructor
 public class PendingMessageController extends BaseController {

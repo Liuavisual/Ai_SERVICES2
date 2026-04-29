@@ -70,55 +70,56 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { gameConfigApi, clubConfigApi } from '@/api/index.js'
+import type { Result, GameConfigVO } from '@/types'
 
-const loading = ref(false)
-const gameList = ref([])
-const dialogVisible = ref(false)
-const dialogTitle = ref('新增游戏')
-const clubConfigId = ref(1)
-const form = ref({ id: null, clubConfigId: 1, gameName: '', gameCode: '', gameType: 'FPS', description: '', sortOrder: 0, enabled: 1 })
+const loading = ref<boolean>(false)
+const gameList = ref<GameConfigVO[]>([])
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('新增游戏')
+const clubConfigId = ref<number>(1)
+const form = ref<Record<string, any>>({ id: null, clubConfigId: 1, gameName: '', gameCode: '', gameType: 'FPS', description: '', sortOrder: 0, enabled: 1 })
 
-const isAdmin = computed(() => {
+const isAdmin = computed<boolean>(() => {
   try {
     const info = JSON.parse(localStorage.getItem('userInfo') || '{}')
     return info.role === 'SYS_ADMIN'
   } catch { return false }
 })
 
-const gameTypeLabel = (t) => ({ FPS: 'FPS射击', MOBA: 'MOBA竞技', BR: '大逃杀', RPG: 'RPG角色' }[t] || t)
-const gameTypeTag = (t) => ({ FPS: 'danger', MOBA: 'warning', BR: 'success', RPG: 'info' }[t] || '')
+const gameTypeLabel = (t: string): string => ({ FPS: 'FPS射击', MOBA: 'MOBA竞技', BR: '大逃杀', RPG: 'RPG角色' }[t] || t)
+const gameTypeTag = (t: string): string => ({ FPS: 'danger', MOBA: 'warning', BR: 'success', RPG: 'info' }[t] || '')
 
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await clubConfigApi.get()
+    const res: Result<any> = await clubConfigApi.get()
     if (res.code === 200 && res.data) clubConfigId.value = res.data.id || 1
     form.value.clubConfigId = clubConfigId.value
-    const result = await gameConfigApi.getByClubId(clubConfigId.value)
+    const result: Result<GameConfigVO[]> = await gameConfigApi.getByClubId(clubConfigId.value)
     gameList.value = result.data || []
   } catch (e) { ElMessage.error('加载失败') }
   loading.value = false
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   dialogTitle.value = '新增游戏'
   form.value = { id: null, clubConfigId: clubConfigId.value, gameName: '', gameCode: '', gameType: 'FPS', description: '', sortOrder: 0, enabled: 1 }
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: GameConfigVO): void => {
   dialogTitle.value = '编辑游戏'
   const { id, clubConfigId, gameName, gameCode, gameType, description, sortOrder, enabled } = row
   Object.assign(form.value, { id, clubConfigId, gameName, gameCode, gameType, description, sortOrder, enabled })
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
     if (form.value.id) await gameConfigApi.update(form.value)
     else await gameConfigApi.create(form.value)
@@ -128,13 +129,13 @@ const handleSubmit = async () => {
   } catch (e) { ElMessage.error('保存失败') }
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: GameConfigVO): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定删除此游戏配置？', '提示', { type: 'warning' })
     await gameConfigApi.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
-  } catch (e) {
+  } catch (e: any) {
     if (e !== 'cancel' && e?.message !== 'cancel') ElMessage.error('删除失败')
   }
 }

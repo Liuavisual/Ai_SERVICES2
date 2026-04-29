@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CsUserCustomerDTO;
 import com.delta.common.service.CsUserCustomerService;
 import com.delta.common.vo.CsUserCustomerVO;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "客服-客户分配管理", description = "客服-客户分配管理接口")
 @RestController
-@RequestMapping("/v1/cs-user-customer")
+@RequestMapping(ApiVersionConstants.V1 + "/cs-user-customer")
 @RequiredArgsConstructor
 public class CsUserCustomerController extends BaseController {
 

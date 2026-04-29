@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.CustomerService;
 import com.delta.common.vo.CustomerVO;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "客户管理", description = "客户管理接口")
 @RestController
-@RequestMapping("/v1/customers")
+@RequestMapping(ApiVersionConstants.V1 + "/customers")
 @RequiredArgsConstructor
 public class CustomerController extends BaseController {
 

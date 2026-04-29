@@ -15,7 +15,7 @@ import com.delta.common.vo.LoginVO;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
@@ -41,20 +42,15 @@ public class AuthServiceImpl implements AuthService {
             "^[a-zA-Z0-9_\\u4e00-\\u9fa5]{3,50}$"
     );
 
-    @Autowired
-    private SysUserMapper sysUserMapper;
+    private final SysUserMapper sysUserMapper;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
-    @Autowired
-    private RedisService redisService;
+    private final RedisService redisService;
 
-    @Autowired
-    private TokenBlacklistService tokenBlacklistService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     private static final String REFRESH_TOKEN_FAMILY_PREFIX = "token:refresh_family:";
 

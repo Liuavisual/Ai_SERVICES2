@@ -1,14 +1,14 @@
 package com.delta.platform.wechat.handler;
 
 import com.delta.platform.wechat.service.WeChatMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class WeChatMessageHandler {
 
-    @Autowired
-    private WeChatMessageService weChatMessageService;
+    private final WeChatMessageService weChatMessageService;
 
     public String handleTextMessage(String fromUser, String content) {
         return weChatMessageService.processTextMessage(fromUser, content);

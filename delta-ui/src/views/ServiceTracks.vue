@@ -284,98 +284,106 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { serviceTrackApi } from '@/api'
+import type { Result, ServiceTrackVO, ServiceTrackStatus } from '@/types'
 
-/** 加载状态 */
-const loading = ref(false)
-/** 操作加载状态 */
-const actionLoading = ref(false)
-/** 表格数据 */
-const tableData = ref([])
-/** 数据总数 */
-const total = ref(0)
+const loading = ref<boolean>(false)
+const actionLoading = ref<boolean>(false)
+const tableData = ref<ServiceTrackVO[]>([])
+const total = ref<number>(0)
 
-/** 查询参数 */
-const queryParams = reactive({
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  queryType: 'user' | 'order'
+  queryId: string
+}>({
   pageNum: 1,
   pageSize: 10,
   queryType: 'user',
   queryId: ''
 })
 
-/** 详情弹窗 */
-const detailVisible = ref(false)
-/** 当前查看的服务追踪 */
-const currentTrack = ref(null)
+const detailVisible = ref<boolean>(false)
+const currentTrack = ref<ServiceTrackVO | null>(null)
 
-/** 新建咨询弹窗 */
-const createDialogVisible = ref(false)
-const createFormRef = ref(null)
-const createForm = reactive({
+const createDialogVisible = ref<boolean>(false)
+const createFormRef = ref<FormInstance>()
+const createForm = reactive<{
+  userId: string
+  workOrderId: string
+  consultContent: string
+}>({
   userId: '',
   workOrderId: '',
   consultContent: ''
 })
-/** 新建表单校验规则 */
 const createRules = {
   userId: [{ required: true, message: '请输入用户ID', trigger: 'blur' }],
   consultContent: [{ required: true, message: '请输入咨询内容', trigger: 'blur' }]
 }
 
-/** 预约弹窗 */
-const bookDialogVisible = ref(false)
-const bookFormRef = ref(null)
-const bookForm = reactive({
+const bookDialogVisible = ref<boolean>(false)
+const bookFormRef = ref<FormInstance>()
+const bookForm = reactive<{
+  id: string | null
+  userId: string
+  bookedStartTime: string
+  bookedEndTime: string
+  serviceType: string
+}>({
   id: null,
   userId: '',
   bookedStartTime: '',
   bookedEndTime: '',
   serviceType: ''
 })
-/** 预约表单校验规则 */
 const bookRules = {
   userId: [{ required: true, message: '请输入用户ID', trigger: 'blur' }],
   bookedStartTime: [{ required: true, message: '请选择预约开始时间', trigger: 'change' }],
   bookedEndTime: [{ required: true, message: '请选择预约结束时间', trigger: 'change' }]
 }
 
-/** 开始服务弹窗 */
-const startDialogVisible = ref(false)
-const startFormRef = ref(null)
-const startForm = reactive({
+const startDialogVisible = ref<boolean>(false)
+const startFormRef = ref<FormInstance>()
+const startForm = reactive<{
+  id: string | null
+  companionId: string
+  companionName: string
+}>({
   id: null,
   companionId: '',
   companionName: ''
 })
-/** 开始服务表单校验规则 */
 const startRules = {
   companionId: [{ required: true, message: '请输入陪玩师ID', trigger: 'blur' }],
   companionName: [{ required: true, message: '请输入陪玩师名称', trigger: 'blur' }]
 }
 
-/** 结束服务弹窗 */
-const endDialogVisible = ref(false)
-const endForm = reactive({ id: null, remark: '' })
+const endDialogVisible = ref<boolean>(false)
+const endForm = reactive<{ id: string | null; remark: string }>({ id: null, remark: '' })
 
-/** 评价弹窗 */
-const ratingDialogVisible = ref(false)
-const ratingFormRef = ref(null)
-const ratingForm = reactive({
+const ratingDialogVisible = ref<boolean>(false)
+const ratingFormRef = ref<FormInstance>()
+const ratingForm = reactive<{
+  id: string | null
+  rating: number
+  feedback: string
+}>({
   id: null,
   rating: 0,
   feedback: ''
 })
-/** 评价表单校验规则 */
 const ratingRules = {
   rating: [{ required: true, message: '请选择评分', trigger: 'change', type: 'number', min: 1 }]
 }
 
-/** 状态标签类型映射 */
-const statusTagMap = {
+const statusTagMap: Record<ServiceTrackStatus, string> = {
   CONSULT: 'warning',
   BOOKED: '',
   IN_PROGRESS: 'primary',
@@ -383,22 +391,14 @@ const statusTagMap = {
   CANCELLED: 'danger'
 }
 
-/**
- * 格式化日期时间
- * @param {string} val - 日期时间字符串
- * @returns {string} 格式化后的日期时间
- */
-function formatDateTime(val) {
+function formatDateTime(val: string): string {
   if (!val) return '—'
   const d = new Date(val)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/**
- * 获取服务追踪列表数据
- */
-async function fetchData() {
+async function fetchData(): Promise<void> {
   if (!queryParams.queryId.trim()) {
     tableData.value = []
     total.value = 0
@@ -406,7 +406,7 @@ async function fetchData() {
   }
   loading.value = true
   try {
-    let res
+    let res: Result<ServiceTrackVO[]>
     if (queryParams.queryType === 'user') {
       res = await serviceTrackApi.listByUser(queryParams.queryId.trim())
     } else {
@@ -414,7 +414,6 @@ async function fetchData() {
     }
     if (res.code === 200) {
       const data = res.data || []
-      // 非分页接口返回数组，手动分页
       total.value = data.length
       const start = (queryParams.pageNum - 1) * queryParams.pageSize
       const end = start + queryParams.pageSize
@@ -428,8 +427,7 @@ async function fetchData() {
   }
 }
 
-/** 查询（重置页码） */
-function handleQuery() {
+function handleQuery(): void {
   if (!queryParams.queryId.trim()) {
     ElMessage.warning('请输入查询ID')
     return
@@ -438,8 +436,7 @@ function handleQuery() {
   fetchData()
 }
 
-/** 重置查询条件 */
-function handleReset() {
+function handleReset(): void {
   queryParams.pageNum = 1
   queryParams.queryType = 'user'
   queryParams.queryId = ''
@@ -447,22 +444,19 @@ function handleReset() {
   total.value = 0
 }
 
-/** 查看详情 */
-function handleView(row) {
+function handleView(row: ServiceTrackVO): void {
   currentTrack.value = row
   detailVisible.value = true
 }
 
-/** 打开新建咨询弹窗 */
-function handleCreate() {
+function handleCreate(): void {
   createForm.userId = ''
   createForm.workOrderId = ''
   createForm.consultContent = ''
   createDialogVisible.value = true
 }
 
-/** 确认创建咨询 */
-async function confirmCreate() {
+async function confirmCreate(): Promise<void> {
   if (!createFormRef.value) return
   try {
     await createFormRef.value.validate()
@@ -476,11 +470,10 @@ async function confirmCreate() {
       workOrderId: createForm.workOrderId || undefined,
       consultContent: createForm.consultContent
     }
-    const res = await serviceTrackApi.create(params)
+    const res: Result<null> = await serviceTrackApi.create(params)
     if (res.code === 200) {
       ElMessage.success('咨询创建成功')
       createDialogVisible.value = false
-      // 如果当前查询条件匹配，刷新列表
       if (queryParams.queryId.trim()) {
         fetchData()
       }
@@ -495,8 +488,7 @@ async function confirmCreate() {
   }
 }
 
-/** 打开预约弹窗 */
-function handleBook(row) {
+function handleBook(row: ServiceTrackVO): void {
   bookForm.id = row.id
   bookForm.userId = row.userId || ''
   bookForm.bookedStartTime = ''
@@ -505,8 +497,7 @@ function handleBook(row) {
   bookDialogVisible.value = true
 }
 
-/** 确认预约 */
-async function confirmBook() {
+async function confirmBook(): Promise<void> {
   if (!bookFormRef.value) return
   try {
     await bookFormRef.value.validate()
@@ -520,7 +511,7 @@ async function confirmBook() {
       bookedEndTime: bookForm.bookedEndTime,
       serviceType: bookForm.serviceType || undefined
     }
-    const res = await serviceTrackApi.book(bookForm.id, bookForm.userId, data)
+    const res: Result<null> = await serviceTrackApi.book(bookForm.id!, bookForm.userId, data)
     if (res.code === 200) {
       ElMessage.success('预约成功')
       bookDialogVisible.value = false
@@ -536,16 +527,14 @@ async function confirmBook() {
   }
 }
 
-/** 打开开始服务弹窗 */
-function handleStart(row) {
+function handleStart(row: ServiceTrackVO): void {
   startForm.id = row.id
   startForm.companionId = row.companionId || ''
   startForm.companionName = row.companionName || ''
   startDialogVisible.value = true
 }
 
-/** 确认开始服务 */
-async function confirmStart() {
+async function confirmStart(): Promise<void> {
   if (!startFormRef.value) return
   try {
     await startFormRef.value.validate()
@@ -554,7 +543,7 @@ async function confirmStart() {
   }
   actionLoading.value = true
   try {
-    const res = await serviceTrackApi.start(startForm.id, startForm.companionId, startForm.companionName)
+    const res: Result<null> = await serviceTrackApi.start(startForm.id!, startForm.companionId, startForm.companionName)
     if (res.code === 200) {
       ElMessage.success('服务已开始')
       startDialogVisible.value = false
@@ -570,18 +559,16 @@ async function confirmStart() {
   }
 }
 
-/** 打开结束服务弹窗 */
-function handleEnd(row) {
+function handleEnd(row: ServiceTrackVO): void {
   endForm.id = row.id
   endForm.remark = ''
   endDialogVisible.value = true
 }
 
-/** 确认结束服务 */
-async function confirmEnd() {
+async function confirmEnd(): Promise<void> {
   actionLoading.value = true
   try {
-    const res = await serviceTrackApi.end(endForm.id, { remark: endForm.remark })
+    const res: Result<null> = await serviceTrackApi.end(endForm.id!, { remark: endForm.remark })
     if (res.code === 200) {
       ElMessage.success('服务已结束')
       endDialogVisible.value = false
@@ -597,16 +584,14 @@ async function confirmEnd() {
   }
 }
 
-/** 打开评价弹窗 */
-function handleRating(row) {
+function handleRating(row: ServiceTrackVO): void {
   ratingForm.id = row.id
   ratingForm.rating = 0
   ratingForm.feedback = ''
   ratingDialogVisible.value = true
 }
 
-/** 确认提交评价 */
-async function confirmRating() {
+async function confirmRating(): Promise<void> {
   if (!ratingFormRef.value) return
   try {
     await ratingFormRef.value.validate()
@@ -619,7 +604,7 @@ async function confirmRating() {
   }
   actionLoading.value = true
   try {
-    const res = await serviceTrackApi.rating(ratingForm.id, ratingForm.rating, ratingForm.feedback)
+    const res: Result<null> = await serviceTrackApi.rating(ratingForm.id!, ratingForm.rating, ratingForm.feedback)
     if (res.code === 200) {
       ElMessage.success('评价提交成功')
       ratingDialogVisible.value = false
@@ -636,7 +621,6 @@ async function confirmRating() {
 }
 
 onMounted(() => {
-  // 初始不自动查询，等待用户输入查询条件
 })
 </script>
 

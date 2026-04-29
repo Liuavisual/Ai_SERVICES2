@@ -156,39 +156,40 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
-import { serviceItemApi, gameConfigApi, clubConfigApi, companionLevelApi } from '@/api/index.js'
+import { Plus, Download, Upload } from '@element-plus/icons-vue'
+import { serviceItemApi, gameConfigApi, clubConfigApi, companionLevelApi, downloadExcel, uploadExcel } from '@/api/index.js'
+import type { Result, ServiceItemVO } from '@/types'
 
-const loading = ref(false)
-const serviceList = ref([])
-const gameList = ref([])
-const levelList = ref([])
-const dialogVisible = ref(false)
-const dialogTitle = ref('新增服务')
-const priceDialogVisible = ref(false)
-const priceFormVisible = ref(false)
-const priceFormTitle = ref('新增定价')
-const currentServiceItemId = ref(null)
-const priceRules = ref([])
-const clubConfigId = ref(1)
+const loading = ref<boolean>(false)
+const serviceList = ref<ServiceItemVO[]>([])
+const gameList = ref<any[]>([])
+const levelList = ref<any[]>([])
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('新增服务')
+const priceDialogVisible = ref<boolean>(false)
+const priceFormVisible = ref<boolean>(false)
+const priceFormTitle = ref<string>('新增定价')
+const currentServiceItemId = ref<number | null>(null)
+const priceRules = ref<any[]>([])
+const clubConfigId = ref<number>(1)
 
-const form = ref({ id: null, clubConfigId: 1, itemName: '', itemCode: '', category: 'TECHNICAL', gameConfigId: null, description: '', basePrice: null, priceUnit: 'HOUR', minDuration: null, guaranteeText: '', refundPolicy: '', sortOrder: 0, enabled: 1 })
-const priceForm = ref({ id: null, serviceItemId: null, companionLevelId: null, price: null, originalPrice: null, priceUnit: 'HOUR', enabled: 1 })
+const form = ref<Record<string, any>>({ id: null, clubConfigId: 1, itemName: '', itemCode: '', category: 'TECHNICAL', gameConfigId: null, description: '', basePrice: null, priceUnit: 'HOUR', minDuration: null, guaranteeText: '', refundPolicy: '', sortOrder: 0, enabled: 1 })
+const priceForm = ref<Record<string, any>>({ id: null, serviceItemId: null, companionLevelId: null, price: null, originalPrice: null, priceUnit: 'HOUR', enabled: 1 })
 
-const isAdmin = computed(() => {
+const isAdmin = computed<boolean>(() => {
   try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
 })
 
-const categoryLabel = (c) => ({ TECHNICAL: '技术陪玩', ENTERTAINMENT: '娱乐陪玩', PURE_PLAY: '纯陪玩', ESCORT: '护航服务', ACTIVITY: '活动玩法' }[c] || c)
-const categoryTag = (c) => ({ TECHNICAL: 'danger', ENTERTAINMENT: 'warning', PURE_PLAY: 'success', ESCORT: 'info', ACTIVITY: 'primary' }[c] || 'info')
+const categoryLabel = (c: string): string => ({ TECHNICAL: '技术陪玩', ENTERTAINMENT: '娱乐陪玩', PURE_PLAY: '纯陪玩', ESCORT: '护航服务', ACTIVITY: '活动玩法' }[c] || c)
+const categoryTag = (c: string): string => ({ TECHNICAL: 'danger', ENTERTAINMENT: 'warning', PURE_PLAY: 'success', ESCORT: 'info', ACTIVITY: 'primary' }[c] || 'info')
 
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await clubConfigApi.get()
+    const res: Result<any> = await clubConfigApi.get()
     if (res.code === 200 && res.data) clubConfigId.value = res.data.id || 1
     form.value.clubConfigId = clubConfigId.value
     const [svcRes, gameRes, lvlRes] = await Promise.all([
@@ -203,20 +204,20 @@ const loadData = async () => {
   loading.value = false
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   dialogTitle.value = '新增服务'
   form.value = { id: null, clubConfigId: clubConfigId.value, itemName: '', itemCode: '', category: 'TECHNICAL', gameConfigId: null, description: '', basePrice: null, priceUnit: 'HOUR', minDuration: null, guaranteeText: '', refundPolicy: '', sortOrder: 0, enabled: 1 }
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: ServiceItemVO): void => {
   dialogTitle.value = '编辑服务'
   const { id, clubConfigId, itemName, itemCode, category, gameConfigId, description, basePrice, priceUnit, minDuration, guaranteeText, refundPolicy, sortOrder, enabled } = row
   Object.assign(form.value, { id, clubConfigId, itemName, itemCode, category, gameConfigId, description, basePrice, priceUnit, minDuration, guaranteeText, refundPolicy, sortOrder, enabled })
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
     if (form.value.id) await serviceItemApi.update(form.value)
     else await serviceItemApi.create(form.value)
@@ -226,57 +227,77 @@ const handleSubmit = async () => {
   } catch (e) { ElMessage.error('保存失败') }
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: ServiceItemVO): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定删除此服务项目？关联的定价规则也会被删除', '提示', { type: 'warning' })
     await serviceItemApi.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
-  } catch (e) {
+  } catch (e: any) {
     if (e !== 'cancel' && e?.message !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
-const handlePriceRules = async (row) => {
+const handlePriceRules = async (row: ServiceItemVO): Promise<void> => {
   currentServiceItemId.value = row.id
   try {
-    const res = await serviceItemApi.getPriceRules(row.id)
+    const res: Result<any[]> = await serviceItemApi.getPriceRules(row.id)
     priceRules.value = res.data || []
   } catch { priceRules.value = [] }
   priceDialogVisible.value = true
 }
 
-const addPriceRule = () => {
+const addPriceRule = (): void => {
   priceFormTitle.value = '新增定价'
   priceForm.value = { id: null, serviceItemId: currentServiceItemId.value, companionLevelId: null, price: null, originalPrice: null, priceUnit: 'HOUR', enabled: 1 }
   priceFormVisible.value = true
 }
 
-const editPriceRule = (row) => {
+const editPriceRule = (row: any): void => {
   priceFormTitle.value = '编辑定价'
   const { id, serviceItemId, companionLevelId, price, originalPrice, priceUnit, enabled } = row
   Object.assign(priceForm.value, { id, serviceItemId, companionLevelId, price, originalPrice, priceUnit, enabled })
   priceFormVisible.value = true
 }
 
-const submitPriceRule = async () => {
+const submitPriceRule = async (): Promise<void> => {
   try {
     await serviceItemApi.savePriceRule(priceForm.value)
     ElMessage.success('保存成功')
     priceFormVisible.value = false
-    const res = await serviceItemApi.getPriceRules(currentServiceItemId.value)
+    const res: Result<any[]> = await serviceItemApi.getPriceRules(currentServiceItemId.value!)
     priceRules.value = res.data || []
   } catch (e) { ElMessage.error('保存失败') }
 }
 
-const deletePriceRule = async (row) => {
+const deletePriceRule = async (row: any): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定删除此定价规则？', '提示', { type: 'warning' })
     await serviceItemApi.deletePriceRule(row.id)
-    const res = await serviceItemApi.getPriceRules(currentServiceItemId.value)
+    const res: Result<any[]> = await serviceItemApi.getPriceRules(currentServiceItemId.value!)
     priceRules.value = res.data || []
-  } catch (e) {
+  } catch (e: any) {
     if (e !== 'cancel' && e?.message !== 'cancel') ElMessage.error('删除失败')
+  }
+}
+
+const importRef = ref<HTMLInputElement | null>(null)
+
+const handleExport = (): void => {
+  downloadExcel('/service-items/export', { clubConfigId: clubConfigId.value }, '服务项目.xlsx')
+}
+
+const handleImport = async (event: Event): Promise<void> => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  try {
+    const res: Result<any> = await uploadExcel('/service-items/import?clubConfigId=' + clubConfigId.value, file)
+    ElMessage.success(`导入完成：成功${res.data.success}条，失败${res.data.fail}条，共${res.data.total}条`)
+    loadData()
+  } catch (e) {
+    ElMessage.error('导入失败')
+  } finally {
+    (event.target as HTMLInputElement).value = ''
   }
 }
 

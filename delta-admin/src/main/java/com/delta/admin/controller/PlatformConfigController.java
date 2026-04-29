@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.PlatformConfigDTO;
 import com.delta.common.service.PlatformConfigService;
 import com.delta.common.vo.PlatformConfigVO;
@@ -7,7 +8,7 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,13 +22,13 @@ import java.util.List;
  *
  * @author delta
  */
+@RequiredArgsConstructor
 @Tag(name = "平台配置管理", description = "平台配置管理接口")
 @RestController
-@RequestMapping("/v1/platform-configs")
+@RequestMapping(ApiVersionConstants.V1 + "/platform-configs")
 public class PlatformConfigController {
 
-    @Autowired
-    private PlatformConfigService platformConfigService;
+    private final PlatformConfigService platformConfigService;
 
     /**
      * 获取所有平台配置

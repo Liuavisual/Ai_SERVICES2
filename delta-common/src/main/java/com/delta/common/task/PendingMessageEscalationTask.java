@@ -5,9 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.delta.common.entity.PendingMessage;
 import com.delta.common.enums.PendingMessageStatusEnum;
 import com.delta.common.mapper.PendingMessageMapper;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -20,12 +20,12 @@ import java.util.List;
  * @author delta
  */
 @Component
+@RequiredArgsConstructor
 public class PendingMessageEscalationTask {
 
     private static final Logger log = LoggerFactory.getLogger(PendingMessageEscalationTask.class);
 
-    @Autowired
-    private PendingMessageMapper pendingMessageMapper;
+    private final PendingMessageMapper pendingMessageMapper;
 
     private static final int WARNING_SECONDS = 300;
     private static final int ESCALATE_SECONDS = 600;

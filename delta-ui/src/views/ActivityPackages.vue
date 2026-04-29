@@ -118,35 +118,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Upload } from '@element-plus/icons-vue'
 import { activityPackageApi, gameConfigApi, serviceItemApi, clubConfigApi, downloadExcel, uploadExcel } from '@/api/index.js'
+import type { Result, ActivityPackageVO, GameConfigVO, ServiceItemVO } from '@/types'
 
-const loading = ref(false)
-const packageList = ref([])
-const gameList = ref([])
-const serviceList = ref([])
-const dialogVisible = ref(false)
-const dialogTitle = ref('新增活动')
-const clubConfigId = ref(1)
-const selectedServiceIds = ref([])
+const loading = ref<boolean>(false)
+const packageList = ref<any[]>([])
+const gameList = ref<GameConfigVO[]>([])
+const serviceList = ref<ServiceItemVO[]>([])
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('新增活动')
+const clubConfigId = ref<number>(1)
+const selectedServiceIds = ref<number[]>([])
 
-const form = ref({ id: null, clubConfigId: 1, title: '', description: '', activityType: 'SEASON', gameConfigId: null, serviceItemIds: '', packagePrice: null, originalPrice: null, startTime: null, endTime: null, bannerUrl: '', terms: '', sortOrder: 0, enabled: 1 })
+const form = ref<Record<string, any>>({ id: null, clubConfigId: 1, title: '', description: '', activityType: 'SEASON', gameConfigId: null, serviceItemIds: '', packagePrice: null, originalPrice: null, startTime: null, endTime: null, bannerUrl: '', terms: '', sortOrder: 0, enabled: 1 })
 
-const isAdmin = computed(() => {
+const isAdmin = computed<boolean>(() => {
   try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
 })
 
-const typeLabel = (t) => ({ SEASON: '赛季活动', FESTIVAL: '节日特惠', LIMITED: '限时优惠', PROMOTION: '促销活动' }[t] || t)
-const typeTag = (t) => ({ SEASON: 'danger', FESTIVAL: 'warning', LIMITED: 'success', PROMOTION: 'info' }[t] || 'info')
-const statusTag = (s) => ({ '进行中': 'success', '未开始': 'warning', '已结束': 'info', '已禁用': 'danger', '永久有效': 'info' }[s] || 'info')
+const typeLabel = (t: string): string => ({ SEASON: '赛季活动', FESTIVAL: '节日特惠', LIMITED: '限时优惠', PROMOTION: '促销活动' }[t] || t)
+const typeTag = (t: string): string => ({ SEASON: 'danger', FESTIVAL: 'warning', LIMITED: 'success', PROMOTION: 'info' }[t] || 'info')
+const statusTag = (s: string): string => ({ '进行中': 'success', '未开始': 'warning', '已结束': 'info', '已禁用': 'danger', '永久有效': 'info' }[s] || 'info')
 
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await clubConfigApi.get()
+    const res: Result<any> = await clubConfigApi.get()
     if (res.code === 200 && res.data) clubConfigId.value = res.data.id || 1
     form.value.clubConfigId = clubConfigId.value
     const [pkgRes, gameRes, svcRes] = await Promise.all([
@@ -161,14 +162,14 @@ const loadData = async () => {
   loading.value = false
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   dialogTitle.value = '新增活动'
   form.value = { id: null, clubConfigId: clubConfigId.value, title: '', description: '', activityType: 'SEASON', gameConfigId: null, serviceItemIds: '', packagePrice: null, originalPrice: null, startTime: null, endTime: null, bannerUrl: '', terms: '', sortOrder: 0, enabled: 1 }
   selectedServiceIds.value = []
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: any): void => {
   dialogTitle.value = '编辑活动'
   const { id, clubConfigId, title, description, activityType, gameConfigId, serviceItemIds, packagePrice, originalPrice, startTime, endTime, bannerUrl, terms, sortOrder, enabled } = row
   Object.assign(form.value, { id, clubConfigId, title, description, activityType, gameConfigId, serviceItemIds, packagePrice, originalPrice, startTime, endTime, bannerUrl, terms, sortOrder, enabled })
@@ -176,7 +177,7 @@ const handleEdit = (row) => {
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
     form.value.serviceItemIds = selectedServiceIds.value.join(',')
     if (form.value.id) await activityPackageApi.update(form.value)
@@ -187,34 +188,34 @@ const handleSubmit = async () => {
   } catch (e) { ElMessage.error('保存失败') }
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: any): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定删除此活动套餐？', '提示', { type: 'warning' })
     await activityPackageApi.delete(row.id)
     ElMessage.success('删除成功')
     loadData()
-  } catch (e) {
+  } catch (e: any) {
     if (e !== 'cancel' && e?.message !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
-const importRef = ref(null)
+const importRef = ref<HTMLInputElement | null>(null)
 
-const handleExport = () => {
+const handleExport = (): void => {
   downloadExcel('/activity-packages/export', { clubConfigId: clubConfigId.value }, '活动套餐.xlsx')
 }
 
-const handleImport = async (event) => {
-  const file = event.target.files?.[0]
+const handleImport = async (event: Event): Promise<void> => {
+  const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
   try {
-    const res = await uploadExcel('/activity-packages/import?clubConfigId=' + clubConfigId.value, file)
+    const res: Result<any> = await uploadExcel('/activity-packages/import?clubConfigId=' + clubConfigId.value, file)
     ElMessage.success(`导入完成：成功${res.data.success}条，失败${res.data.fail}条，共${res.data.total}条`)
     loadData()
   } catch (e) {
     ElMessage.error('导入失败')
   } finally {
-    event.target.value = ''
+    (event.target as HTMLInputElement).value = ''
   }
 }
 

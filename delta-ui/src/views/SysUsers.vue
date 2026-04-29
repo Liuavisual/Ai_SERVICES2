@@ -193,31 +193,45 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { sysUserApi } from '@/api'
+import type { Result, PageResult, SysUserVO, UserRole } from '@/types'
 
-const isAdmin = computed(() => {
+const isAdmin = computed<boolean>(() => {
   try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
 })
 
-const loading = ref(false)
-const submitLoading = ref(false)
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const tableData = ref([])
-const pageNum = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
+const loading = ref<boolean>(false)
+const submitLoading = ref<boolean>(false)
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('')
+const tableData = ref<SysUserVO[]>([])
+const pageNum = ref<number>(1)
+const pageSize = ref<number>(10)
+const total = ref<number>(0)
 
-const searchForm = reactive({
+const searchForm = reactive<{
+  role: UserRole | null
+  status: string | null
+}>({
   role: null,
   status: null
 })
 
-const form = reactive({
+const form = reactive<{
+  id: number | null
+  username: string
+  password: string
+  realName: string
+  phone: string
+  email: string
+  role: string
+  status: string
+}>({
   id: null,
   username: '',
   password: '',
@@ -232,7 +246,7 @@ const rules = computed(() => ({
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: form.id
     ? [{
-        validator: (rule, value, callback) => {
+        validator: (_rule: any, value: string, callback: (err?: Error) => void) => {
           if (value && value.length < 8) {
             callback(new Error('密码长度至少 8 个字符'))
           } else {
@@ -251,12 +265,12 @@ const rules = computed(() => ({
   role: [{ required: true, message: '请选择角色', trigger: 'change' }]
 }))
 
-const formRef = ref(null)
+const formRef = ref<FormInstance>()
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await sysUserApi.getPage({
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({
       pageNum: pageNum.value,
       pageSize: pageSize.value,
       role: searchForm.role,
@@ -274,27 +288,27 @@ const fetchData = async () => {
   }
 }
 
-const resetSearch = () => {
+const resetSearch = (): void => {
   searchForm.role = null
   searchForm.status = null
   pageNum.value = 1
   fetchData()
 }
 
-const handleCreate = () => {
+const handleCreate = (): void => {
   dialogTitle.value = '添加用户'
   resetForm()
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: SysUserVO): void => {
   dialogTitle.value = '编辑用户'
   const { id, username, realName, phone, email, role, status } = row
   Object.assign(form, { id, username, realName, phone, email, role, status })
   dialogVisible.value = true
 }
 
-const handleAudit = async (row, status) => {
+const handleAudit = async (row: SysUserVO, status: string): Promise<void> => {
   const action = status === 'ACTIVE' ? '通过' : '拒绝'
   try {
     await ElMessageBox.confirm(`确定要${action}该用户吗？`, '提示', {
@@ -303,7 +317,7 @@ const handleAudit = async (row, status) => {
       type: 'warning'
     })
     
-    const res = await sysUserApi.audit({ userId: row.id, status })
+    const res: Result<null> = await sysUserApi.audit({ userId: row.id, status })
     if (res.code === 200) {
       ElMessage.success(`审核${action}成功`)
       fetchData()
@@ -316,7 +330,7 @@ const handleAudit = async (row, status) => {
   }
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: SysUserVO): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定要删除该用户吗？', '提示', {
       confirmButtonText: '确定',
@@ -324,7 +338,7 @@ const handleDelete = async (row) => {
       type: 'warning'
     })
     
-    const res = await sysUserApi.delete(row.id)
+    const res: Result<null> = await sysUserApi.delete(row.id)
     if (res.code === 200) {
       ElMessage.success('删除成功')
       fetchData()
@@ -337,12 +351,12 @@ const handleDelete = async (row) => {
   }
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (!formRef.value) return
   try {
     await formRef.value.validate()
     submitLoading.value = true
-    let res
+    let res: Result<null>
     if (form.id) {
       res = await sysUserApi.update(form)
     } else {
@@ -360,7 +374,7 @@ const handleSubmit = async () => {
   }
 }
 
-const resetForm = () => {
+const resetForm = (): void => {
   form.id = null
   form.username = ''
   form.password = ''
@@ -374,14 +388,14 @@ const resetForm = () => {
   }
 }
 
-const maskPhone = (phone) => {
+const maskPhone = (phone: string): string => {
   if (!phone) return ''
   if (phone.length < 7) return phone
   return phone.substring(0, 3) + '****' + phone.substring(7)
 }
 
-const getRoleTagType = (role) => {
-  const map = {
+const getRoleTagType = (role: string): string => {
+  const map: Record<string, string> = {
     'SYS_ADMIN': 'danger',
     'CS_LEADER': 'warning',
     'CS_STAFF': 'success'
@@ -389,8 +403,8 @@ const getRoleTagType = (role) => {
   return map[role] || 'info'
 }
 
-const getStatusTagType = (status) => {
-  const map = {
+const getStatusTagType = (status: string): string => {
+  const map: Record<string, string> = {
     'PENDING': 'info',
     'ACTIVE': 'success',
     'DISABLED': 'danger'

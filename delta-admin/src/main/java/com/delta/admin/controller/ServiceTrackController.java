@@ -1,24 +1,25 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ServiceTrackBookDTO;
 import com.delta.common.dto.ServiceTrackEndDTO;
 import com.delta.common.service.ServiceTrackService;
 import com.delta.common.vo.ServiceTrackVO;
 import com.delta.common.vo.Result;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/service-tracks")
+@RequestMapping(ApiVersionConstants.V1 + "/service-tracks")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class ServiceTrackController extends BaseController {
 
-    @Autowired
-    private ServiceTrackService serviceTrackService;
+    private final ServiceTrackService serviceTrackService;
 
     @GetMapping("/{id}")
     public Result<ServiceTrackVO> getById(@PathVariable String id) {

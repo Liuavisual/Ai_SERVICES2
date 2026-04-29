@@ -195,21 +195,29 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onMounted, defineAsyncComponent } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { companionApi, companionLevelApi } from '@/api'
+import type { Result, PageResult, CompanionVO, CompanionLevelVO } from '@/types'
 
-const isAdmin = computed(() => {
+const isAdmin = computed<boolean>(() => {
   try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
 })
 
 const CompanionSchedule = defineAsyncComponent(() => import('./CompanionSchedule.vue'))
 
-const tableData = ref([])
-const total = ref(0)
-const levels = ref([])
-const queryParams = reactive({
+const tableData = ref<CompanionVO[]>([])
+const total = ref<number>(0)
+const levels = ref<CompanionLevelVO[]>([])
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  levelId: number | null
+  nickname: string
+  enabled: string | null
+}>({
   pageNum: 1,
   pageSize: 10,
   levelId: null,
@@ -217,14 +225,26 @@ const queryParams = reactive({
   enabled: null
 })
 
-const dialogVisible = ref(false)
-const scheduleDialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref(null)
-const scheduleRef = ref(null)
-const currentCompanion = ref(null)
+const dialogVisible = ref<boolean>(false)
+const scheduleDialogVisible = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const formRef = ref<FormInstance>()
+const scheduleRef = ref<any>(null)
+const currentCompanion = ref<CompanionVO | null>(null)
 
-const formData = reactive({
+const formData = reactive<{
+  id: number | null
+  realName: string
+  nickname: string
+  phone: string
+  wechat: string
+  levelId: number | null
+  avatar: string
+  gameType: string
+  description: string
+  price: number | null
+  enabled: boolean
+}>({
   id: null,
   realName: '',
   nickname: '',
@@ -243,13 +263,13 @@ const formRules = {
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }]
 }
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   try {
     const params = {
       ...queryParams,
       enabled: queryParams.enabled === '1' ? 1 : queryParams.enabled === '0' ? 0 : null
     }
-    const res = await companionApi.getPage(params)
+    const res: Result<PageResult<CompanionVO>> = await companionApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data.records.map(item => ({
         ...item,
@@ -266,9 +286,9 @@ const fetchData = async () => {
   }
 }
 
-const fetchLevels = async () => {
+const fetchLevels = async (): Promise<void> => {
   try {
-    const res = await companionLevelApi.getAll()
+    const res: Result<CompanionLevelVO[]> = await companionLevelApi.getAll()
     if (res.code === 200) {
       levels.value = res.data
     }
@@ -278,12 +298,12 @@ const fetchLevels = async () => {
   }
 }
 
-const handleQuery = () => {
+const handleQuery = (): void => {
   queryParams.pageNum = 1
   fetchData()
 }
 
-const handleReset = () => {
+const handleReset = (): void => {
   queryParams.pageNum = 1
   queryParams.levelId = null
   queryParams.nickname = ''
@@ -291,7 +311,7 @@ const handleReset = () => {
   fetchData()
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   isEdit.value = false
   Object.assign(formData, {
     id: null,
@@ -309,7 +329,7 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: CompanionVO): void => {
   isEdit.value = true
   Object.assign(formData, {
     ...row,
@@ -320,9 +340,9 @@ const handleEdit = (row) => {
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
-    await formRef.value.validate()
+    await formRef.value!.validate()
     if (isEdit.value) {
       await companionApi.update(formData)
       ElMessage.success('更新成功')
@@ -337,7 +357,7 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = (row) => {
+const handleDelete = (row: CompanionVO): void => {
   ElMessageBox.confirm('确定要删除该陪玩师吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -349,7 +369,7 @@ const handleDelete = (row) => {
   }).catch(() => {})
 }
 
-const handleSchedule = (row) => {
+const handleSchedule = (row: CompanionVO): void => {
   currentCompanion.value = row
   scheduleDialogVisible.value = true
 }

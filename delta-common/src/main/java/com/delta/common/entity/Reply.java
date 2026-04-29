@@ -3,8 +3,10 @@ package com.delta.common.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.NonNull;
 
 /**
@@ -17,6 +19,8 @@ import org.springframework.lang.NonNull;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("replies")
 @Table(name = "replies", indexes = {
         @Index(name = "idx_replies_enabled", columnList = "enabled")

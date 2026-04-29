@@ -4,11 +4,18 @@ import com.delta.common.dto.ChatTestSendDTO;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.User;
 import com.delta.common.exception.BusinessException;
-import com.delta.common.mapper.UserMapper;
+import com.delta.common.mapper.*;
 import com.delta.common.service.ChatTestService;
+import com.delta.common.service.CustomerProfileService;
+import com.delta.common.service.DeepSeekService;
+import com.delta.common.service.OrderService;
+import com.delta.common.service.PendingMessageService;
+import com.delta.common.service.RedisService;
+import com.delta.common.service.ReplyService;
+import com.delta.common.service.matcher.KeywordMatcherService;
 import com.delta.common.constant.AiCustomerServiceConstants;
 import com.delta.common.vo.ChatTestReplyVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +25,33 @@ import java.util.List;
 @Service
 public class ChatTestServiceImpl extends BaseMessageProcessService implements ChatTestService {
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
+
+    public ChatTestServiceImpl(
+            MessageMapper messageMapper,
+            PendingMessageMapper pendingMessageMapper,
+            PendingMessageService pendingMessageService,
+            @Nullable DeepSeekService deepSeekService,
+            KeywordMatcherService keywordMatcherService,
+            ReplyService replyService,
+            RedisService redisService,
+            CustomerProfileService customerProfileService,
+            ClubConfigMapper clubConfigMapper,
+            ServiceItemMapper serviceItemMapper,
+            ActivityPackageMapper activityPackageMapper,
+            CompanionLevelMapper companionLevelMapper,
+            ServicePriceRuleMapper servicePriceRuleMapper,
+            CompanionMapper companionMapper,
+            @Nullable OrderService orderService,
+            UserMapper userMapper) {
+        super(messageMapper, pendingMessageMapper, pendingMessageService,
+                keywordMatcherService, replyService, redisService, customerProfileService,
+                clubConfigMapper, serviceItemMapper, activityPackageMapper, companionLevelMapper,
+                servicePriceRuleMapper, companionMapper);
+        this.deepSeekService = deepSeekService;
+        this.orderService = orderService;
+        this.userMapper = userMapper;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

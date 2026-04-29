@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ChatTestSendDTO;
 import com.delta.common.service.ChatTestService;
 import com.delta.common.vo.ChatTestReplyVO;
@@ -7,7 +8,7 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +17,14 @@ import org.springframework.web.bind.annotation.*;
  *
  * @author delta
  */
+@RequiredArgsConstructor
 @Tag(name = "对话测试", description = "对话测试接口")
 @RestController
-@RequestMapping("/v1/chat-test")
+@RequestMapping(ApiVersionConstants.V1 + "/chat-test")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class ChatTestController {
 
-    @Autowired
-    private ChatTestService chatTestService;
+    private final ChatTestService chatTestService;
 
     @Operation(summary = "发送测试消息")
     @PostMapping("/send")

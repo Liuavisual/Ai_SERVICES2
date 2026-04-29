@@ -101,26 +101,34 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { keywordApi, downloadExcel, uploadExcel } from '@/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Upload } from '@element-plus/icons-vue'
+import type { FormInstance } from 'element-plus'
+import type { Result, PageResult, KeywordVO } from '@/types'
 
-const loading = ref(false)
-const tableData = ref([])
-const currentPage = ref(1)
-const pageSize = ref(10)
-const total = ref(0)
-const importRef = ref(null)
-const searchKeyword = ref('')
+const loading = ref<boolean>(false)
+const tableData = ref<KeywordVO[]>([])
+const currentPage = ref<number>(1)
+const pageSize = ref<number>(10)
+const total = ref<number>(0)
+const importRef = ref<HTMLInputElement | null>(null)
+const searchKeyword = ref<string>('')
 
-const dialogVisible = ref(false)
-const dialogTitle = ref('新增关键词')
-const formRef = ref(null)
-const isEdit = ref(false)
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('新增关键词')
+const formRef = ref<FormInstance>()
+const isEdit = ref<boolean>(false)
 
-const form = ref({
+const form = ref<{
+  id: number | null
+  keyword: string
+  category: string
+  priority: number
+  enabled: boolean
+}>({
   id: null,
   keyword: '',
   category: '',
@@ -133,15 +141,15 @@ const rules = {
   category: [{ required: true, message: '请选择分类', trigger: 'change' }]
 }
 
-const getCategoryType = (category) => {
-  const map = { '游戏术语': '', '服务相关': 'success', '价格相关': 'warning', '敏感词': 'danger', '其他': 'info' }
+const getCategoryType = (category: string): string => {
+  const map: Record<string, string> = { '游戏术语': '', '服务相关': 'success', '价格相关': 'warning', '敏感词': 'danger', '其他': 'info' }
   return map[category] || 'info'
 }
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await keywordApi.getPage({
+    const res: Result<PageResult<KeywordVO>> = await keywordApi.getPage({
       pageNum: currentPage.value,
       pageSize: pageSize.value,
       keyword: searchKeyword.value || undefined
@@ -158,30 +166,30 @@ const fetchData = async () => {
   }
 }
 
-const handleSearch = () => {
+const handleSearch = (): void => {
   currentPage.value = 1
   fetchData()
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   isEdit.value = false
   dialogTitle.value = '新增关键词'
   form.value = { id: null, keyword: '', category: '', priority: 10, enabled: true }
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: KeywordVO): void => {
   isEdit.value = true
   dialogTitle.value = '编辑关键词'
   form.value = { ...row }
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (!formRef.value) return
   try {
     await formRef.value.validate()
-    const res = isEdit.value
+    const res: Result<null> = isEdit.value
       ? await keywordApi.update(form.value)
       : await keywordApi.create(form.value)
     if (res.code === 200) {
@@ -194,14 +202,14 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: KeywordVO): Promise<void> => {
   try {
     await ElMessageBox.confirm('确认删除该关键词？', '删除确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const res = await keywordApi.delete(row.id)
+    const res: Result<null> = await keywordApi.delete(row.id)
     if (res.code === 200) {
       ElMessage.success('删除成功')
       fetchData()
@@ -218,23 +226,23 @@ onMounted(() => {
   fetchData()
 })
 
-const handleExport = () => {
-  const params = {}
+const handleExport = (): void => {
+  const params: Record<string, string> = {}
   if (searchKeyword.value) params.keyword = searchKeyword.value
   downloadExcel('/keywords/export', params, '关键词列表.xlsx')
 }
 
-const handleImport = async (event) => {
-  const file = event.target.files?.[0]
+const handleImport = async (event: Event): Promise<void> => {
+  const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
   try {
-    const res = await uploadExcel('/keywords/import', file)
+    const res: Result<any> = await uploadExcel('/keywords/import', file)
     ElMessage.success(`导入完成：成功${res.data.success}条，失败${res.data.fail}条，共${res.data.total}条`)
     fetchData()
   } catch (e) {
     ElMessage.error('导入失败')
   } finally {
-    event.target.value = ''
+    (event.target as HTMLInputElement).value = ''
   }
 }
 </script>

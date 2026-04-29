@@ -6,13 +6,13 @@ import com.delta.common.dto.ChatTestSendDTO;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.PendingMessage;
 import com.delta.common.entity.User;
-import com.delta.common.mapper.MessageMapper;
-import com.delta.common.mapper.PendingMessageMapper;
-import com.delta.common.mapper.UserMapper;
+import com.delta.common.mapper.*;
 import com.delta.common.service.DeepSeekService;
+import com.delta.common.service.OrderService;
 import com.delta.common.service.PendingMessageService;
 import com.delta.common.service.RedisService;
 import com.delta.common.service.ReplyService;
+import com.delta.common.service.CustomerProfileService;
 import com.delta.common.service.matcher.KeywordMatcherService;
 import com.delta.common.vo.ChatTestReplyVO;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +61,30 @@ public class ChatTestServiceImplTest {
     @Mock
     private RedisService redisService;
 
-    @InjectMocks
+    @Mock
+    private CustomerProfileService customerProfileService;
+
+    @Mock
+    private ClubConfigMapper clubConfigMapper;
+
+    @Mock
+    private ServiceItemMapper serviceItemMapper;
+
+    @Mock
+    private ActivityPackageMapper activityPackageMapper;
+
+    @Mock
+    private CompanionLevelMapper companionLevelMapper;
+
+    @Mock
+    private ServicePriceRuleMapper servicePriceRuleMapper;
+
+    @Mock
+    private CompanionMapper companionMapper;
+
+    @Mock
+    private OrderService orderService;
+
     private ChatTestServiceImpl chatTestService;
 
     private User testUser;
@@ -69,6 +92,13 @@ public class ChatTestServiceImplTest {
     @SuppressWarnings("null")
     @BeforeEach
     void setUp() {
+        chatTestService = new ChatTestServiceImpl(
+                messageMapper, pendingMessageMapper, pendingMessageService,
+                deepSeekService, keywordMatcherService, replyService, redisService,
+                customerProfileService, clubConfigMapper, serviceItemMapper,
+                activityPackageMapper, companionLevelMapper, servicePriceRuleMapper,
+                companionMapper, orderService, userMapper);
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setPlatform("wechat");
@@ -92,13 +122,13 @@ public class ChatTestServiceImplTest {
     }
 
     @Test
-    @DisplayName("价格关键词应直接返回预设回复，不调用AI（0 token消耗）")
+    @DisplayName("DIRECT_REPLY_KEYWORDS中的关键词应走直接回复路径")
     void testDirectReplyForPrice() {
-        when(keywordMatcherService.matchKeywords("多少钱")).thenReturn(List.of("价格"));
+        when(keywordMatcherService.matchKeywords("价格")).thenReturn(List.of("价格"));
         when(replyService.getKeywordReply("价格")).thenReturn("二品50/h，一品80/h，顶尖200/h");
 
         ChatTestSendDTO dto = new ChatTestSendDTO();
-        dto.setContent("多少钱");
+        dto.setContent("价格");
         dto.setPlatform("wechat");
         dto.setCustomerNickname("测试用户");
 

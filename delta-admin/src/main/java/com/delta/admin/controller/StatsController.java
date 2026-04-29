@@ -1,9 +1,10 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.StatsService;
 import com.delta.common.vo.Result;
 import com.delta.common.vo.StatsVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,13 +14,13 @@ import org.springframework.web.bind.annotation.*;
  *
  * @author delta
  */
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/stats")
+@RequestMapping(ApiVersionConstants.V1 + "/stats")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 public class StatsController extends BaseController {
 
-    @Autowired
-    private StatsService statsService;
+    private final StatsService statsService;
 
     /**
      * 获取个人统计数据

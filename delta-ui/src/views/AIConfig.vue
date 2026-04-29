@@ -121,42 +121,50 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { aiConfigApi } from '@/api'
 import { ElMessage } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
+import type { Result } from '@/types'
 
-const loading = ref(false)
-const originalConfigs = ref([])
-const configForm = ref({})
+interface AiConfigItem {
+  id: number
+  configKey: string
+  configValue: string
+  description: string
+}
 
-const temperatureValue = computed({
-  get: () => {
+const loading = ref<boolean>(false)
+const originalConfigs = ref<AiConfigItem[]>([])
+const configForm = ref<Record<string, string>>({})
+
+const temperatureValue = computed<number>({
+  get: (): number => {
     const val = configForm.value['deepseek.temperature']
     return val !== undefined && val !== null && val !== '' ? parseFloat(val) : 0.7
   },
-  set: (val) => {
+  set: (val: number): void => {
     configForm.value['deepseek.temperature'] = String(val)
   }
 })
 
-const maxTokensValue = computed({
-  get: () => {
+const maxTokensValue = computed<number>({
+  get: (): number => {
     const val = configForm.value['deepseek.max_tokens']
     return val !== undefined && val !== null && val !== '' ? parseInt(val) : 2000
   },
-  set: (val) => {
+  set: (val: number): void => {
     configForm.value['deepseek.max_tokens'] = String(val)
   }
 })
 
-const loadConfigs = async () => {
+const loadConfigs = async (): Promise<void> => {
   try {
-    const res = await aiConfigApi.getAll()
+    const res: Result<AiConfigItem[]> = await aiConfigApi.getAll()
     if (res.code === 200) {
       originalConfigs.value = res.data
-      const newConfigForm = {}
+      const newConfigForm: Record<string, string> = {}
       res.data.forEach(config => {
         newConfigForm[config.configKey] = config.configValue
       })
@@ -168,7 +176,7 @@ const loadConfigs = async () => {
   }
 }
 
-const handleSave = async () => {
+const handleSave = async (): Promise<void> => {
   loading.value = true
   try {
     const updates = Object.keys(configForm.value)
@@ -187,7 +195,7 @@ const handleSave = async () => {
       return
     }
 
-    const res = await aiConfigApi.update({ updates })
+    const res: Result<null> = await aiConfigApi.update({ updates })
     if (res.code === 200) {
       ElMessage.success('保存成功')
       loadConfigs()
@@ -200,7 +208,7 @@ const handleSave = async () => {
   }
 }
 
-const getOriginalValue = (key) => {
+const getOriginalValue = (key: string): string | undefined => {
   const config = originalConfigs.value.find(c => c.configKey === key)
   return config ? config.configValue : undefined
 }

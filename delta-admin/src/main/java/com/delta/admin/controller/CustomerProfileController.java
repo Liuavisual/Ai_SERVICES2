@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CustomerOrderRecordDTO;
 import com.delta.common.dto.CustomerProfileUpdateDTO;
 import com.delta.common.service.CustomerProfileService;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "客户画像管理", description = "客户画像和消费记录管理接口")
 @RestController
-@RequestMapping("/v1/customer-profiles")
+@RequestMapping(ApiVersionConstants.V1 + "/customer-profiles")
 @RequiredArgsConstructor
 public class CustomerProfileController extends BaseController {
 

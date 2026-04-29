@@ -1,6 +1,6 @@
 package com.delta.admin.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -11,10 +11,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author delta
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
 
-    @Autowired
-    private PageSizeLimitInterceptor pageSizeLimitInterceptor;
+    private final PageSizeLimitInterceptor pageSizeLimitInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {

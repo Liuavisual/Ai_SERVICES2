@@ -126,23 +126,37 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { companionLevelApi } from '@/api'
+import type { Result, PageResult, CompanionLevelVO } from '@/types'
 
-const tableData = ref([])
-const total = ref(0)
-const queryParams = reactive({
+const tableData = ref<CompanionLevelVO[]>([])
+const total = ref<number>(0)
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  levelName: string
+}>({
   pageNum: 1,
   pageSize: 10,
   levelName: ''
 })
 
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref(null)
-const formData = reactive({
+const dialogVisible = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const formRef = ref<FormInstance>()
+const formData = reactive<{
+  id: number | null
+  levelName: string
+  levelCode: string
+  sortOrder: number
+  basePrice: number
+  description: string
+  enabled: boolean
+}>({
   id: null,
   levelName: '',
   levelCode: '',
@@ -157,9 +171,9 @@ const formRules = {
   levelCode: [{ required: true, message: '请输入等级代码', trigger: 'blur' }]
 }
 
-const fetchData = async () => {
+const fetchData = async (): Promise<void> => {
   try {
-    const res = await companionLevelApi.getPage(queryParams)
+    const res: Result<PageResult<CompanionLevelVO>> = await companionLevelApi.getPage(queryParams)
     if (res.code === 200) {
       tableData.value = res.data.records.map(item => ({
         ...item,
@@ -175,7 +189,7 @@ const fetchData = async () => {
   }
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   isEdit.value = false
   Object.assign(formData, {
     id: null,
@@ -189,7 +203,7 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: CompanionLevelVO): void => {
   isEdit.value = true
   Object.assign(formData, {
     ...row,
@@ -199,9 +213,9 @@ const handleEdit = (row) => {
   dialogVisible.value = true
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
-    await formRef.value.validate()
+    await formRef.value!.validate()
     if (isEdit.value) {
       await companionLevelApi.update(formData)
       ElMessage.success('更新成功')
@@ -216,7 +230,7 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = (row) => {
+const handleDelete = (row: CompanionLevelVO): void => {
   ElMessageBox.confirm('确定要删除该等级吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',

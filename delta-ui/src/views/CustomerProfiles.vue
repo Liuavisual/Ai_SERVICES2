@@ -335,16 +335,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { customerProfileApi, companionApi } from '@/api'
+import type { Result, PageResult, CustomerProfileVO, CompanionVO } from '@/types'
 
-const loading = ref(false)
-const tableData = ref([])
-const total = ref(0)
+interface OrderRecord {
+  orderTime: string
+  orderType: string
+  companionName: string
+  amount: number | null
+  durationHours: number | null
+  rating: number | null
+  reviewContent: string
+  status: string
+}
 
-const queryForm = reactive({
+const loading = ref<boolean>(false)
+const tableData = ref<CustomerProfileVO[]>([])
+const total = ref<number>(0)
+
+const queryForm = reactive<{
+  pageNum: number
+  pageSize: number
+  rfmSegment: string | null
+  lifecycleStage: string | null
+  memberLevel: string | null
+  riskLevel: string | null
+  keyword: string
+}>({
   pageNum: 1,
   pageSize: 10,
   rfmSegment: null,
@@ -354,12 +374,23 @@ const queryForm = reactive({
   keyword: ''
 })
 
-const profileDialogVisible = ref(false)
-const currentProfile = ref(null)
-const orderRecords = ref([])
+const profileDialogVisible = ref<boolean>(false)
+const currentProfile = ref<CustomerProfileVO | null>(null)
+const orderRecords = ref<OrderRecord[]>([])
 
-const orderDialogVisible = ref(false)
-const orderForm = reactive({
+const orderDialogVisible = ref<boolean>(false)
+const orderForm = reactive<{
+  userId: string | null
+  companionId: number | null
+  orderType: string
+  amount: number
+  durationHours: number | null
+  gameType: string
+  timeSlot: string | null
+  rating: number
+  reviewContent: string
+  remark: string
+}>({
   userId: null,
   companionId: null,
   orderType: 'ACCOMPANY_PLAY',
@@ -372,85 +403,85 @@ const orderForm = reactive({
   remark: ''
 })
 
-const companionList = ref([])
+const companionList = ref<CompanionVO[]>([])
 
-const formatMoney = (val) => {
+const formatMoney = (val: number | null | undefined): string => {
   if (val == null) return '0.00'
   return Number(val).toFixed(2)
 }
 
-const getMemberLabel = (level) => {
-  const map = { NORMAL: '普通', BRONZE: '青铜', SILVER: '白银', GOLD: '黄金', PLATINUM: '铂金', DIAMOND: '钻石' }
+const getMemberLabel = (level: string): string => {
+  const map: Record<string, string> = { NORMAL: '普通', BRONZE: '青铜', SILVER: '白银', GOLD: '黄金', PLATINUM: '铂金', DIAMOND: '钻石' }
   return map[level] || level
 }
 
-const getMemberTagType = (level) => {
-  const map = { NORMAL: 'info', BRONZE: '', SILVER: '', GOLD: 'warning', PLATINUM: '', DIAMOND: 'danger' }
+const getMemberTagType = (level: string): string => {
+  const map: Record<string, string> = { NORMAL: 'info', BRONZE: '', SILVER: '', GOLD: 'warning', PLATINUM: '', DIAMOND: 'danger' }
   return map[level] || 'info'
 }
 
-const getRfmLabel = (segment) => {
-  const map = { CHAMPION: '重要价值', LOYAL: '忠诚', POTENTIAL: '潜力', NEW: '新客', AT_RISK: '流失预警', HIBERNATE: '休眠', LOST: '流失' }
+const getRfmLabel = (segment: string): string => {
+  const map: Record<string, string> = { CHAMPION: '重要价值', LOYAL: '忠诚', POTENTIAL: '潜力', NEW: '新客', AT_RISK: '流失预警', HIBERNATE: '休眠', LOST: '流失' }
   return map[segment] || segment
 }
 
-const getRfmTagType = (segment) => {
-  const map = { CHAMPION: 'danger', LOYAL: 'warning', POTENTIAL: '', NEW: 'info', AT_RISK: 'warning', HIBERNATE: 'info', LOST: 'info' }
+const getRfmTagType = (segment: string): string => {
+  const map: Record<string, string> = { CHAMPION: 'danger', LOYAL: 'warning', POTENTIAL: '', NEW: 'info', AT_RISK: 'warning', HIBERNATE: 'info', LOST: 'info' }
   return map[segment] || 'info'
 }
 
-const getRfmColor = (score) => {
-  if (score >= 4) return 'var(--gu-success)'
-  if (score >= 3) return 'var(--gu-warning)'
+const getRfmColor = (score: number | null | undefined): string => {
+  if (score && score >= 4) return 'var(--gu-success)'
+  if (score && score >= 3) return 'var(--gu-warning)'
   return 'var(--gu-danger)'
 }
 
-const getLifecycleLabel = (stage) => {
-  const map = { NEW: '新客', ACTIVE: '活跃', SILENT: '沉默', CHURNED: '流失', REACTIVATED: '回流' }
+const getLifecycleLabel = (stage: string): string => {
+  const map: Record<string, string> = { NEW: '新客', ACTIVE: '活跃', SILENT: '沉默', CHURNED: '流失', REACTIVATED: '回流' }
   return map[stage] || stage
 }
 
-const getLifecycleTagType = (stage) => {
-  const map = { NEW: 'info', ACTIVE: 'success', SILENT: 'warning', CHURNED: 'danger', REACTIVATED: '' }
+const getLifecycleTagType = (stage: string): string => {
+  const map: Record<string, string> = { NEW: 'info', ACTIVE: 'success', SILENT: 'warning', CHURNED: 'danger', REACTIVATED: '' }
   return map[stage] || 'info'
 }
 
-const getNeedLabel = (type) => {
-  const map = { EMOTIONAL: '情感', SKILL: '技能', SOCIAL: '社交', ENTERTAINMENT: '娱乐' }
+const getNeedLabel = (type: string): string => {
+  const map: Record<string, string> = { EMOTIONAL: '情感', SKILL: '技能', SOCIAL: '社交', ENTERTAINMENT: '娱乐' }
   return map[type] || type
 }
 
-const getNeedTagType = (type) => {
-  const map = { EMOTIONAL: 'danger', SKILL: 'warning', SOCIAL: 'success', ENTERTAINMENT: 'info' }
+const getNeedTagType = (type: string): string => {
+  const map: Record<string, string> = { EMOTIONAL: 'danger', SKILL: 'warning', SOCIAL: 'success', ENTERTAINMENT: 'info' }
   return map[type] || 'info'
 }
 
-const getPlatformLabel = (platform) => {
-  const map = { wechat: '微信', kook: 'KOOK', yy: 'YY' }
+const getPlatformLabel = (platform: string): string => {
+  const map: Record<string, string> = { wechat: '微信', kook: 'KOOK', yy: 'YY' }
   return map[platform] || platform
 }
 
-const getPlatformTagType = (platform) => {
-  const map = { wechat: 'primary', kook: 'success', yy: 'warning' }
+const getPlatformTagType = (platform: string): string => {
+  const map: Record<string, string> = { wechat: 'primary', kook: 'success', yy: 'warning' }
   return map[platform] || 'info'
 }
 
-const getChurnTagType = (score) => {
+const getChurnTagType = (score: number | null | undefined): string => {
   if (!score) return 'success'
   if (score >= 7) return 'danger'
   if (score >= 4) return 'warning'
   return 'success'
 }
 
-const getOrderTypeLabel = (type) => {
-  const map = { ACCOMPANY_PLAY: '陪玩', NIGHT_PACKAGE: '包夜', SPECIFIC_GAME: '指定游戏', OTHER: '其他' }
+const getOrderTypeLabel = (type: string): string => {
+  const map: Record<string, string> = { ACCOMPANY_PLAY: '陪玩', NIGHT_PACKAGE: '包夜', SPECIFIC_GAME: '指定游戏', OTHER: '其他' }
   return map[type] || type
 }
 
-const handleQuery = async () => {
+const handleQuery = async (): Promise<void> => {
   loading.value = true
   try {
-    const res = await customerProfileApi.getPage(queryForm)
+    const res: Result<PageResult<CustomerProfileVO>> = await customerProfileApi.getPage(queryForm)
     if (res.code === 200) {
       tableData.value = res.data.records
       total.value = res.data.total
@@ -462,7 +493,7 @@ const handleQuery = async () => {
   }
 }
 
-const handleReset = () => {
+const handleReset = (): void => {
   queryForm.pageNum = 1
   queryForm.rfmSegment = null
   queryForm.lifecycleStage = null
@@ -472,9 +503,9 @@ const handleReset = () => {
   handleQuery()
 }
 
-const handleViewProfile = async (row) => {
+const handleViewProfile = async (row: CustomerProfileVO): Promise<void> => {
   try {
-    const res = await customerProfileApi.getByUserId(row.userId)
+    const res: Result<CustomerProfileVO> = await customerProfileApi.getByUserId(row.userId)
     if (res.code === 200) {
       currentProfile.value = res.data
       profileDialogVisible.value = true
@@ -485,9 +516,9 @@ const handleViewProfile = async (row) => {
   }
 }
 
-const loadOrderRecords = async (userId) => {
+const loadOrderRecords = async (userId: string): Promise<void> => {
   try {
-    const res = await customerProfileApi.getOrderPage({ pageNum: 1, pageSize: 20, userId })
+    const res: Result<PageResult<OrderRecord>> = await customerProfileApi.getOrderPage({ pageNum: 1, pageSize: 20, userId })
     if (res.code === 200) {
       orderRecords.value = res.data.records
     }
@@ -497,7 +528,7 @@ const loadOrderRecords = async (userId) => {
   }
 }
 
-const handleAddOrder = (row) => {
+const handleAddOrder = (row: CustomerProfileVO): void => {
   orderForm.userId = row.userId
   orderForm.companionId = null
   orderForm.orderType = 'ACCOMPANY_PLAY'
@@ -511,7 +542,7 @@ const handleAddOrder = (row) => {
   orderDialogVisible.value = true
 }
 
-const handleConfirmOrder = async () => {
+const handleConfirmOrder = async (): Promise<void> => {
   if (!orderForm.orderType || orderForm.amount <= 0) {
     ElMessage.warning('请填写订单类型和消费金额')
     return
@@ -523,7 +554,7 @@ const handleConfirmOrder = async () => {
       rating: orderForm.rating || null,
       status: 'COMPLETED'
     }
-    const res = await customerProfileApi.addOrder(data)
+    const res: Result<null> = await customerProfileApi.addOrder(data)
     if (res.code === 200) {
       ElMessage.success('添加成功')
       orderDialogVisible.value = false
@@ -534,9 +565,9 @@ const handleConfirmOrder = async () => {
   }
 }
 
-const handleRefresh = async (row) => {
+const handleRefresh = async (row: CustomerProfileVO): Promise<void> => {
   try {
-    const res = await customerProfileApi.refresh(row.userId)
+    const res: Result<null> = await customerProfileApi.refresh(row.userId)
     if (res.code === 200) {
       ElMessage.success('刷新成功')
       handleQuery()
@@ -546,9 +577,9 @@ const handleRefresh = async (row) => {
   }
 }
 
-const loadCompanions = async () => {
+const loadCompanions = async (): Promise<void> => {
   try {
-    const res = await companionApi.getAll()
+    const res: Result<CompanionVO[]> = await companionApi.getAll()
     if (res.code === 200) {
       companionList.value = res.data
     }

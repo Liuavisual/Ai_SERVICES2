@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CompanionLevelDTO;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.service.CompanionLevelService;
@@ -25,7 +26,7 @@ import java.util.Map;
  */
 @Tag(name = "陪玩师等级管理", description = "陪玩师等级管理接口")
 @RestController
-@RequestMapping("/v1/companion-levels")
+@RequestMapping(ApiVersionConstants.V1 + "/companion-levels")
 @RequiredArgsConstructor
 public class CompanionLevelController extends BaseController {
 

@@ -120,23 +120,35 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { replyApi } from '@/api'
+import type { Result, PageResult, ReplyVO } from '@/types'
 
-const tableData = ref([])
-const total = ref(0)
-const queryParams = reactive({
+const tableData = ref<ReplyVO[]>([])
+const total = ref<number>(0)
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  triggerType: string | null
+}>({
   pageNum: 1,
   pageSize: 10,
   triggerType: null
 })
 
-const dialogVisible = ref(false)
-const isEdit = ref(false)
-const formRef = ref(null)
-const formData = reactive({
+const dialogVisible = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const formRef = ref<FormInstance>()
+const formData = reactive<{
+  id: number | null
+  triggerType: string
+  triggerKey: string
+  content: string
+  enabled: boolean
+}>({
   id: null,
   triggerType: '',
   triggerKey: '',
@@ -149,8 +161,8 @@ const formRules = {
   content: [{ required: true, message: '请输入回复内容', trigger: 'blur' }]
 }
 
-const getTriggerTypeText = (type) => {
-  const map = {
+const getTriggerTypeText = (type: string): string => {
+  const map: Record<string, string> = {
     'keyword': '关键词',
     'welcome': '欢迎语',
     'default': '默认回复'
@@ -158,8 +170,8 @@ const getTriggerTypeText = (type) => {
   return map[type] || type
 }
 
-const fetchData = async () => {
-  const res = await replyApi.getPage(queryParams)
+const fetchData = async (): Promise<void> => {
+  const res: Result<PageResult<ReplyVO>> = await replyApi.getPage(queryParams)
   if (res.code === 200) {
     tableData.value = res.data.records.map(item => ({
       ...item,
@@ -169,7 +181,7 @@ const fetchData = async () => {
   }
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   isEdit.value = false
   Object.assign(formData, {
     id: null,
@@ -181,7 +193,7 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: ReplyVO): void => {
   isEdit.value = true
   Object.assign(formData, {
     ...row,
@@ -190,15 +202,15 @@ const handleEdit = (row) => {
   dialogVisible.value = true
 }
 
-const handleTriggerTypeChange = () => {
+const handleTriggerTypeChange = (): void => {
   if (formData.triggerType !== 'keyword') {
     formData.triggerKey = ''
   }
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   try {
-    await formRef.value.validate()
+    await formRef.value!.validate()
     if (isEdit.value) {
       await replyApi.update(formData)
       ElMessage.success('更新成功')
@@ -213,7 +225,7 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = (row) => {
+const handleDelete = (row: ReplyVO): void => {
   ElMessageBox.confirm('确定要删除该回复话术吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',

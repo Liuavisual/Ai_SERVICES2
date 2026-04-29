@@ -111,30 +111,43 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { faqItemApi } from '@/api'
+import type { Result, PageResult, FaqItemVO } from '@/types'
 
-const loading = ref(false)
-const submitLoading = ref(false)
-const dialogVisible = ref(false)
-const dialogTitle = ref('')
-const formRef = ref(null)
-const tableData = ref([])
+const loading = ref<boolean>(false)
+const submitLoading = ref<boolean>(false)
+const dialogVisible = ref<boolean>(false)
+const dialogTitle = ref<string>('')
+const formRef = ref<FormInstance>()
+const tableData = ref<FaqItemVO[]>([])
 
-const searchForm = reactive({
+const searchForm = reactive<{ category: string }>({
   category: ''
 })
 
-const pagination = reactive({
+const pagination = reactive<{
+  page: number
+  size: number
+  total: number
+}>({
   page: 1,
   size: 10,
   total: 0
 })
 
-const form = reactive({
+const form = reactive<{
+  id: number | null
+  category: string
+  question: string
+  answer: string
+  sortOrder: number
+  enabled: number
+}>({
   id: null,
   category: '',
   question: '',
@@ -149,8 +162,8 @@ const rules = {
   answer: [{ required: true, message: '请输入答案', trigger: 'blur' }]
 }
 
-const getCategoryType = (category) => {
-  const map = {
+const getCategoryType = (category: string): string => {
+  const map: Record<string, string> = {
     '价格': 'success',
     '预约': 'primary',
     '陪玩师': 'warning',
@@ -160,7 +173,7 @@ const getCategoryType = (category) => {
   return map[category] || 'info'
 }
 
-const loadData = async () => {
+const loadData = async (): Promise<void> => {
   loading.value = true
   try {
     const params = {
@@ -168,7 +181,7 @@ const loadData = async () => {
       size: pagination.size,
       ...(searchForm.category ? { category: searchForm.category } : {})
     }
-    const res = await faqItemApi.getPage(params)
+    const res: Result<PageResult<FaqItemVO>> = await faqItemApi.getPage(params)
     if (res.data) {
       tableData.value = res.data.records
       pagination.total = res.data.total
@@ -181,17 +194,17 @@ const loadData = async () => {
   }
 }
 
-const handleSearch = () => {
+const handleSearch = (): void => {
   pagination.page = 1
   loadData()
 }
 
-const handleReset = () => {
+const handleReset = (): void => {
   searchForm.category = ''
   handleSearch()
 }
 
-const handleAdd = () => {
+const handleAdd = (): void => {
   dialogTitle.value = '新增FAQ'
   Object.assign(form, {
     id: null,
@@ -204,14 +217,14 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = (row: FaqItemVO): void => {
   dialogTitle.value = '编辑FAQ'
   const { id, category, question, answer, sortOrder, enabled } = row
   Object.assign(form, { id, category, question, answer, sortOrder, enabled })
   dialogVisible.value = true
 }
 
-const handleDelete = async (row) => {
+const handleDelete = async (row: FaqItemVO): Promise<void> => {
   try {
     await ElMessageBox.confirm('确定要删除这条FAQ吗？', '提示', {
       type: 'warning'
@@ -227,7 +240,7 @@ const handleDelete = async (row) => {
   }
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (!formRef.value) return
   try {
     await formRef.value.validate()

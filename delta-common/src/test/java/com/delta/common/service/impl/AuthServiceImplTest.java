@@ -39,6 +39,9 @@ public class AuthServiceImplTest {
     @Mock
     private RedisService redisService;
 
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 

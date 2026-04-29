@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ServiceItemDTO;
 import com.delta.common.dto.ServicePriceRuleDTO;
 import com.delta.common.service.ServiceItemService;
@@ -9,19 +10,19 @@ import com.delta.common.vo.ServicePriceRuleVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @Tag(name = "服务项目管理", description = "服务项目管理接口")
 @RestController
-@RequestMapping("/v1/service-items")
+@RequestMapping(ApiVersionConstants.V1 + "/service-items")
 public class ServiceItemController extends BaseController {
 
-    @Autowired
-    private ServiceItemService serviceItemService;
+    private final ServiceItemService serviceItemService;
 
     @Operation(summary = "获取俱乐部的服务项目")
     @GetMapping("/club/{clubConfigId}")

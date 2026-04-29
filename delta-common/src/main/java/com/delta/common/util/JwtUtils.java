@@ -3,7 +3,7 @@ package com.delta.common.util;
 import com.delta.common.config.JwtConfig;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -13,10 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
+@RequiredArgsConstructor
 public class JwtUtils {
 
-    @Autowired
-    private JwtConfig jwtConfig;
+    private final JwtConfig jwtConfig;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtConfig.getSecret().getBytes(StandardCharsets.UTF_8);

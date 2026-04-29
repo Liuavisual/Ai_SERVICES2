@@ -2,9 +2,9 @@ package com.delta.admin.listener;
 
 import com.delta.admin.websocket.AdminNotificationHandler;
 import com.delta.common.event.PendingMessageCreatedEvent;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +14,12 @@ import org.springframework.stereotype.Component;
  * @author delta
  */
 @Component
+@RequiredArgsConstructor
 public class PendingMessageCreatedEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(PendingMessageCreatedEventListener.class);
 
-    @Autowired
-    private AdminNotificationHandler notificationHandler;
+    private final AdminNotificationHandler notificationHandler;
 
     @EventListener
     public void handlePendingMessageCreatedEvent(PendingMessageCreatedEvent event) {

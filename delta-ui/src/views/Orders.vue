@@ -188,20 +188,27 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { orderApi } from '@/api'
+import type { Result, PageResult, OrderVO, OrderStatus } from '@/types'
 
-const loading = ref(false)
-const tableData = ref([])
-const total = ref(0)
-const detailVisible = ref(false)
-const cancelVisible = ref(false)
-const cancelLoading = ref(false)
-const currentOrder = ref(null)
+const loading = ref<boolean>(false)
+const tableData = ref<OrderVO[]>([])
+const total = ref<number>(0)
+const detailVisible = ref<boolean>(false)
+const cancelVisible = ref<boolean>(false)
+const cancelLoading = ref<boolean>(false)
+const currentOrder = ref<OrderVO | null>(null)
 
-const queryParams = reactive({
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  orderStatus: OrderStatus | ''
+  paymentStatus: string
+  orderNo: string
+}>({
   pageNum: 1,
   pageSize: 10,
   orderStatus: '',
@@ -209,11 +216,9 @@ const queryParams = reactive({
   orderNo: ''
 })
 
-const cancelForm = reactive({
-  reason: ''
-})
+const cancelForm = reactive<{ reason: string }>({ reason: '' })
 
-const statusTagMap = {
+const statusTagMap: Record<string, string> = {
   PENDING: 'info',
   CONFIRMED: '',
   IN_PROGRESS: 'warning',
@@ -225,21 +230,21 @@ const statusTagMap = {
   ARCHIVED: 'info'
 }
 
-function statusTagType(status) {
+function statusTagType(status: string): string {
   return statusTagMap[status] || 'info'
 }
 
-function formatDateTime(val) {
+function formatDateTime(val: string): string {
   if (!val) return '-'
   const d = new Date(val)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-async function fetchData() {
+async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const res = await orderApi.queryOrders(queryParams)
+    const res: Result<PageResult<OrderVO>> = await orderApi.queryOrders(queryParams)
     if (res.code === 200) {
       tableData.value = res.data?.records || res.data || []
       total.value = res.data?.total || (Array.isArray(res.data) ? res.data.length : 0)
@@ -251,12 +256,12 @@ async function fetchData() {
   }
 }
 
-function handleQuery() {
+function handleQuery(): void {
   queryParams.pageNum = 1
   fetchData()
 }
 
-function handleReset() {
+function handleReset(): void {
   queryParams.orderStatus = ''
   queryParams.paymentStatus = ''
   queryParams.orderNo = ''
@@ -264,15 +269,15 @@ function handleReset() {
   fetchData()
 }
 
-function handleView(row) {
+function handleView(row: OrderVO): void {
   currentOrder.value = row
   detailVisible.value = true
 }
 
-async function handleConfirm(row) {
+async function handleConfirm(row: OrderVO): Promise<void> {
   try {
     await ElMessageBox.confirm(`确认订单 ${row.orderNo}？`, '确认操作', { type: 'info' })
-    const res = await orderApi.confirm(row.id)
+    const res: Result<null> = await orderApi.confirm(row.id)
     if (res.code === 200) {
       ElMessage.success('订单已确认')
       fetchData()
@@ -284,10 +289,10 @@ async function handleConfirm(row) {
   }
 }
 
-async function handleStart(row) {
+async function handleStart(row: OrderVO): Promise<void> {
   try {
     await ElMessageBox.confirm(`开始服务：订单 ${row.orderNo}？`, '确认操作', { type: 'warning' })
-    const res = await orderApi.startService(row.id)
+    const res: Result<null> = await orderApi.startService(row.id)
     if (res.code === 200) {
       ElMessage.success('服务已开始')
       fetchData()
@@ -299,10 +304,10 @@ async function handleStart(row) {
   }
 }
 
-async function handleComplete(row) {
+async function handleComplete(row: OrderVO): Promise<void> {
   try {
     await ElMessageBox.confirm(`完成服务：订单 ${row.orderNo}？将自动进入待评价状态。`, '确认操作', { type: 'success' })
-    const res = await orderApi.completeOrder(row.id)
+    const res: Result<null> = await orderApi.completeOrder(row.id)
     if (res.code === 200) {
       ElMessage.success('服务已完成，等待客户评价')
       fetchData()
@@ -314,20 +319,20 @@ async function handleComplete(row) {
   }
 }
 
-function handleCancel(row) {
+function handleCancel(row: OrderVO): void {
   currentOrder.value = row
   cancelForm.reason = ''
   cancelVisible.value = true
 }
 
-async function confirmCancel() {
+async function confirmCancel(): Promise<void> {
   if (!cancelForm.reason.trim()) {
     ElMessage.warning('请输入取消原因')
     return
   }
   cancelLoading.value = true
   try {
-    const res = await orderApi.cancelOrder(currentOrder.value.id, { reason: cancelForm.reason })
+    const res: Result<null> = await orderApi.cancelOrder(currentOrder.value!.id, { reason: cancelForm.reason })
     if (res.code === 200) {
       ElMessage.success('订单已取消')
       cancelVisible.value = false

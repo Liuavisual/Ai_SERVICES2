@@ -1,7 +1,7 @@
 package com.delta.common.service.impl;
 
 import com.delta.common.service.RedisService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
@@ -17,10 +17,10 @@ import java.util.concurrent.TimeUnit;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService {
 
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public void set(@NonNull String key, @NonNull Object value) {

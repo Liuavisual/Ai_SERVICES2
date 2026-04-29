@@ -1,10 +1,11 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.CacheStatsService;
 import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,13 +19,13 @@ import java.util.Map;
  *
  * @author delta
  */
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/cache-stats")
+@RequestMapping(ApiVersionConstants.V1 + "/cache-stats")
 @Tag(name = "缓存统计", description = "缓存统计相关接口")
 public class CacheStatsController {
 
-    @Autowired
-    private CacheStatsService cacheStatsService;
+    private final CacheStatsService cacheStatsService;
 
     @GetMapping("/{cacheName}")
     @Operation(summary = "获取指定缓存的统计信息")

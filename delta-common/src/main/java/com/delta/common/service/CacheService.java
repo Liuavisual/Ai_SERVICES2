@@ -5,9 +5,9 @@ import com.delta.common.entity.FaqItem;
 import com.delta.common.service.matcher.KeywordMatcherService;
 import com.delta.common.vo.CompanionLevelVO;
 import com.delta.common.vo.ServiceItemVO;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,24 +19,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class CacheService {
 
     private static final Logger log = LoggerFactory.getLogger(CacheService.class);
 
-    @Autowired
-    private KeywordMatcherService keywordMatcherService;
+    private final KeywordMatcherService keywordMatcherService;
 
-    @Autowired
-    private ClubConfigService clubConfigService;
+    private final ClubConfigService clubConfigService;
 
-    @Autowired
-    private FaqItemService faqItemService;
+    private final FaqItemService faqItemService;
 
-    @Autowired
-    private CompanionLevelService companionLevelService;
+    private final CompanionLevelService companionLevelService;
 
-    @Autowired
-    private ServiceItemService serviceItemService;
+    private final ServiceItemService serviceItemService;
 
     private volatile ClubConfig cachedClubConfig = null;
     private volatile List<FaqItem> cachedFaqItems = null;

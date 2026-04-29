@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.FaqItemDTO;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 @Tag(name = "FAQ知识库管理", description = "FAQ知识库管理接口")
 @RestController
-@RequestMapping("/v1/faq-items")
+@RequestMapping(ApiVersionConstants.V1 + "/faq-items")
 @RequiredArgsConstructor
 public class FaqItemController extends BaseController {
 

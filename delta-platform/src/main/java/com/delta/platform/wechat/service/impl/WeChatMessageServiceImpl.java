@@ -6,9 +6,11 @@ import com.delta.common.constant.PlatformConstants;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.User;
 import com.delta.common.mapper.UserMapper;
+import com.delta.common.service.DeepSeekService;
+import com.delta.common.service.OrderService;
 import com.delta.common.service.impl.BaseMessageProcessService;
 import com.delta.platform.wechat.service.WeChatMessageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +20,33 @@ import java.util.List;
 @Service
 public class WeChatMessageServiceImpl extends BaseMessageProcessService implements WeChatMessageService {
 
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
+
+    public WeChatMessageServiceImpl(
+            com.delta.common.mapper.MessageMapper messageMapper,
+            com.delta.common.mapper.PendingMessageMapper pendingMessageMapper,
+            com.delta.common.service.PendingMessageService pendingMessageService,
+            @Nullable DeepSeekService deepSeekService,
+            com.delta.common.service.matcher.KeywordMatcherService keywordMatcherService,
+            com.delta.common.service.ReplyService replyService,
+            com.delta.common.service.RedisService redisService,
+            com.delta.common.service.CustomerProfileService customerProfileService,
+            com.delta.common.mapper.ClubConfigMapper clubConfigMapper,
+            com.delta.common.mapper.ServiceItemMapper serviceItemMapper,
+            com.delta.common.mapper.ActivityPackageMapper activityPackageMapper,
+            com.delta.common.mapper.CompanionLevelMapper companionLevelMapper,
+            com.delta.common.mapper.ServicePriceRuleMapper servicePriceRuleMapper,
+            com.delta.common.mapper.CompanionMapper companionMapper,
+            @Nullable OrderService orderService,
+            UserMapper userMapper) {
+        super(messageMapper, pendingMessageMapper, pendingMessageService,
+                keywordMatcherService, replyService, redisService, customerProfileService,
+                clubConfigMapper, serviceItemMapper, activityPackageMapper, companionLevelMapper,
+                servicePriceRuleMapper, companionMapper);
+        this.deepSeekService = deepSeekService;
+        this.orderService = orderService;
+        this.userMapper = userMapper;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

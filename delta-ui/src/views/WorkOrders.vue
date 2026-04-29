@@ -337,33 +337,35 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { workOrderApi } from '@/api'
+import type { Result, PageResult, WorkOrderVO, WorkOrderStatus, WorkOrderPriority, WorkOrderType } from '@/types'
 
-/** 加载状态 */
-const loading = ref(false)
-/** 操作加载状态 */
-const actionLoading = ref(false)
-/** 表格数据 */
-const tableData = ref([])
-/** 数据总数 */
-const total = ref(0)
+const loading = ref<boolean>(false)
+const actionLoading = ref<boolean>(false)
+const tableData = ref<WorkOrderVO[]>([])
+const total = ref<number>(0)
 
-/** 当前用户信息 */
-let userInfo = {}
+let userInfo: Record<string, any> = {}
 try {
   userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
 } catch (e) {}
-/** 是否管理员或主管 */
-const isAdminOrLeader = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
-/** 是否管理员 */
-const isAdmin = userInfo.role === 'SYS_ADMIN'
+const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
+const isAdmin: boolean = userInfo.role === 'SYS_ADMIN'
 
-/** 查询参数 */
-const queryParams = reactive({
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  status: WorkOrderStatus | ''
+  orderType: WorkOrderType | ''
+  priority: WorkOrderPriority | ''
+  platform: string
+  keyword: string
+}>({
   pageNum: 1,
   pageSize: 10,
   status: '',
@@ -373,50 +375,46 @@ const queryParams = reactive({
   keyword: ''
 })
 
-/** 详情弹窗 */
-const detailVisible = ref(false)
-/** 当前查看的工单 */
-const currentOrder = ref(null)
+const detailVisible = ref<boolean>(false)
+const currentOrder = ref<WorkOrderVO | null>(null)
 
-/** 提交处理弹窗 */
-const submitDialogVisible = ref(false)
-const submitForm = reactive({ id: null, title: '', result: '' })
+const submitDialogVisible = ref<boolean>(false)
+const submitForm = reactive<{ id: string | null; title: string; result: string }>({ id: null, title: '', result: '' })
 
-/** 确认完成弹窗 */
-const confirmDialogVisible = ref(false)
-const confirmForm = reactive({ id: null, title: '', remark: '' })
+const confirmDialogVisible = ref<boolean>(false)
+const confirmForm = reactive<{ id: string | null; title: string; remark: string }>({ id: null, title: '', remark: '' })
 
-/** 关闭工单弹窗 */
-const closeDialogVisible = ref(false)
-const closeForm = reactive({ id: null, closeReason: '' })
+const closeDialogVisible = ref<boolean>(false)
+const closeForm = reactive<{ id: string | null; closeReason: string }>({ id: null, closeReason: '' })
 
-/** 取消工单弹窗 */
-const cancelDialogVisible = ref(false)
-const cancelForm = reactive({ id: null, cancelReason: '' })
+const cancelDialogVisible = ref<boolean>(false)
+const cancelForm = reactive<{ id: string | null; cancelReason: string }>({ id: null, cancelReason: '' })
 
-/** 新建工单弹窗 */
-const createDialogVisible = ref(false)
-const createFormRef = ref(null)
-const createForm = reactive({
+const createDialogVisible = ref<boolean>(false)
+const createFormRef = ref<FormInstance>()
+const createForm = reactive<{
+  title: string
+  description: string
+  orderType: WorkOrderType | ''
+  priority: WorkOrderPriority
+  platform: string
+}>({
   title: '',
   description: '',
   orderType: '',
   priority: 'MEDIUM',
   platform: ''
 })
-/** 新建表单校验规则 */
 const createRules = {
   title: [{ required: true, message: '请输入工单标题', trigger: 'blur' }],
   orderType: [{ required: true, message: '请选择工单类型', trigger: 'change' }],
   priority: [{ required: true, message: '请选择优先级', trigger: 'change' }]
 }
 
-/** 重新打开弹窗 */
-const reopenDialogVisible = ref(false)
-const reopenForm = reactive({ id: null, reopenReason: '' })
+const reopenDialogVisible = ref<boolean>(false)
+const reopenForm = reactive<{ id: string | null; reopenReason: string }>({ id: null, reopenReason: '' })
 
-/** 状态标签类型映射 */
-const statusTagMap = {
+const statusTagMap: Record<WorkOrderStatus, string> = {
   OPEN: 'warning',
   IN_PROGRESS: 'primary',
   SUBMITTED: '',
@@ -425,16 +423,14 @@ const statusTagMap = {
   CANCELLED: 'danger'
 }
 
-/** 优先级标签类型映射 */
-const priorityTagMap = {
+const priorityTagMap: Record<WorkOrderPriority, string> = {
   LOW: 'info',
   MEDIUM: '',
   HIGH: 'warning',
   URGENT: 'danger'
 }
 
-/** 工单类型标签类型映射 */
-const orderTypeTagMap = {
+const orderTypeTagMap: Record<WorkOrderType, string> = {
   CONSULT: '',
   COMPLAINT: 'danger',
   REFUND: 'warning',
@@ -442,13 +438,10 @@ const orderTypeTagMap = {
   OTHER: 'info'
 }
 
-/**
- * 获取工单分页数据
- */
-async function fetchData() {
+async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const res = await workOrderApi.getPage(queryParams)
+    const res: Result<PageResult<WorkOrderVO>> = await workOrderApi.getPage(queryParams)
     if (res.code === 200) {
       tableData.value = res.data?.records || []
       total.value = res.data?.total || 0
@@ -461,14 +454,12 @@ async function fetchData() {
   }
 }
 
-/** 查询（重置页码） */
-function handleQuery() {
+function handleQuery(): void {
   queryParams.pageNum = 1
   fetchData()
 }
 
-/** 重置筛选条件 */
-function handleReset() {
+function handleReset(): void {
   queryParams.pageNum = 1
   queryParams.status = ''
   queryParams.orderType = ''
@@ -478,17 +469,15 @@ function handleReset() {
   fetchData()
 }
 
-/** 查看工单详情 */
-function handleView(row) {
+function handleView(row: WorkOrderVO): void {
   currentOrder.value = row
   detailVisible.value = true
 }
 
-/** 接手工单 */
-async function handleAccept(row) {
+async function handleAccept(row: WorkOrderVO): Promise<void> {
   try {
     await ElMessageBox.confirm(`确认接手工单「${row.title}」？`, '接手确认', { type: 'info' })
-    const res = await workOrderApi.accept(row.id)
+    const res: Result<null> = await workOrderApi.accept(row.id)
     if (res.code === 200) {
       ElMessage.success('接手成功')
       fetchData()
@@ -500,23 +489,21 @@ async function handleAccept(row) {
   }
 }
 
-/** 打开提交处理弹窗 */
-function handleSubmit(row) {
+function handleSubmit(row: WorkOrderVO): void {
   submitForm.id = row.id
   submitForm.title = row.title
   submitForm.result = ''
   submitDialogVisible.value = true
 }
 
-/** 确认提交处理 */
-async function confirmSubmit() {
+async function confirmSubmit(): Promise<void> {
   if (!submitForm.result.trim()) {
     ElMessage.warning('请填写处理结果')
     return
   }
   actionLoading.value = true
   try {
-    const res = await workOrderApi.submit(submitForm.id, { result: submitForm.result })
+    const res: Result<null> = await workOrderApi.submit(submitForm.id!, { result: submitForm.result })
     if (res.code === 200) {
       ElMessage.success('提交成功')
       submitDialogVisible.value = false
@@ -532,19 +519,17 @@ async function confirmSubmit() {
   }
 }
 
-/** 打开确认完成弹窗 */
-function handleConfirm(row) {
+function handleConfirm(row: WorkOrderVO): void {
   confirmForm.id = row.id
   confirmForm.title = row.title
   confirmForm.remark = ''
   confirmDialogVisible.value = true
 }
 
-/** 确认完成 */
-async function confirmComplete() {
+async function confirmComplete(): Promise<void> {
   actionLoading.value = true
   try {
-    const res = await workOrderApi.confirm(confirmForm.id, { remark: confirmForm.remark })
+    const res: Result<null> = await workOrderApi.confirm(confirmForm.id!, { remark: confirmForm.remark })
     if (res.code === 200) {
       ElMessage.success('已确认完成')
       confirmDialogVisible.value = false
@@ -560,22 +545,20 @@ async function confirmComplete() {
   }
 }
 
-/** 打开关闭工单弹窗 */
-function handleClose(row) {
+function handleClose(row: WorkOrderVO): void {
   closeForm.id = row.id
   closeForm.closeReason = ''
   closeDialogVisible.value = true
 }
 
-/** 确认关闭 */
-async function confirmClose() {
+async function confirmClose(): Promise<void> {
   if (!closeForm.closeReason.trim()) {
     ElMessage.warning('请输入关闭原因')
     return
   }
   actionLoading.value = true
   try {
-    const res = await workOrderApi.close(closeForm.id, closeForm.closeReason)
+    const res: Result<null> = await workOrderApi.close(closeForm.id!, closeForm.closeReason)
     if (res.code === 200) {
       ElMessage.success('工单已关闭')
       closeDialogVisible.value = false
@@ -591,22 +574,20 @@ async function confirmClose() {
   }
 }
 
-/** 打开取消工单弹窗 */
-function handleCancel(row) {
+function handleCancel(row: WorkOrderVO): void {
   cancelForm.id = row.id
   cancelForm.cancelReason = ''
   cancelDialogVisible.value = true
 }
 
-/** 确认取消 */
-async function confirmCancel() {
+async function confirmCancel(): Promise<void> {
   if (!cancelForm.cancelReason.trim()) {
     ElMessage.warning('请输入取消原因')
     return
   }
   actionLoading.value = true
   try {
-    const res = await workOrderApi.cancel(cancelForm.id, cancelForm.cancelReason)
+    const res: Result<null> = await workOrderApi.cancel(cancelForm.id!, cancelForm.cancelReason)
     if (res.code === 200) {
       ElMessage.success('工单已取消')
       cancelDialogVisible.value = false
@@ -622,8 +603,7 @@ async function confirmCancel() {
   }
 }
 
-/** 打开新建工单弹窗 */
-function handleCreate() {
+function handleCreate(): void {
   createForm.title = ''
   createForm.description = ''
   createForm.orderType = ''
@@ -632,8 +612,7 @@ function handleCreate() {
   createDialogVisible.value = true
 }
 
-/** 确认创建工单 */
-async function confirmCreate() {
+async function confirmCreate(): Promise<void> {
   if (!createFormRef.value) return
   try {
     await createFormRef.value.validate()
@@ -642,7 +621,7 @@ async function confirmCreate() {
   }
   actionLoading.value = true
   try {
-    const res = await workOrderApi.create(createForm)
+    const res: Result<null> = await workOrderApi.create(createForm)
     if (res.code === 200) {
       ElMessage.success('工单创建成功')
       createDialogVisible.value = false
@@ -658,22 +637,20 @@ async function confirmCreate() {
   }
 }
 
-/** 打开重新打开弹窗 */
-function handleReopen(row) {
+function handleReopen(row: WorkOrderVO): void {
   reopenForm.id = row.id
   reopenForm.reopenReason = ''
   reopenDialogVisible.value = true
 }
 
-/** 确认重新打开 */
-async function confirmReopen() {
+async function confirmReopen(): Promise<void> {
   if (!reopenForm.reopenReason.trim()) {
     ElMessage.warning('请输入重新打开原因')
     return
   }
   actionLoading.value = true
   try {
-    const res = await workOrderApi.reopen(reopenForm.id, reopenForm.reopenReason)
+    const res: Result<null> = await workOrderApi.reopen(reopenForm.id!, reopenForm.reopenReason)
     if (res.code === 200) {
       ElMessage.success('工单已重新打开')
       reopenDialogVisible.value = false

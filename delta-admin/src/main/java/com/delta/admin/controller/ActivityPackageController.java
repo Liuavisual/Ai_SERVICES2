@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ActivityPackageDTO;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.ActivityPackageService;
@@ -10,9 +11,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,15 +24,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @Tag(name = "活动套餐管理", description = "活动套餐管理接口")
 @RestController
-@RequestMapping("/v1/activity-packages")
+@RequestMapping(ApiVersionConstants.V1 + "/activity-packages")
 public class ActivityPackageController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(ActivityPackageController.class);
 
-    @Autowired
-    private ActivityPackageService activityPackageService;
+    private final ActivityPackageService activityPackageService;
 
     @Operation(summary = "获取俱乐部的活动套餐")
     @GetMapping("/club/{clubConfigId}")

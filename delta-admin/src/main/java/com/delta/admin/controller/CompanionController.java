@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CompanionDTO;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.service.CompanionService;
@@ -23,7 +24,7 @@ import java.util.Map;
 
 @Tag(name = "陪玩师管理", description = "陪玩师管理接口")
 @RestController
-@RequestMapping("/v1/companions")
+@RequestMapping(ApiVersionConstants.V1 + "/companions")
 @RequiredArgsConstructor
 public class CompanionController extends BaseController {
 

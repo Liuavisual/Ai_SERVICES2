@@ -30,9 +30,10 @@ import com.delta.common.service.PendingMessageService;
 import com.delta.common.service.RedisService;
 import com.delta.common.service.ReplyService;
 import com.delta.common.service.matcher.KeywordMatcherService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 public abstract class BaseMessageProcessService {
 
     protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -51,49 +53,36 @@ public abstract class BaseMessageProcessService {
     protected static final String EMOTION_HANDOFF_REPLY = AiCustomerServiceConstants.EMOTION_HANDOFF_REPLY;
     protected static final String AI_FAILURE_HANDOFF_REPLY = AiCustomerServiceConstants.AI_FAILURE_HANDOFF_REPLY;
 
-    @Autowired
-    protected MessageMapper messageMapper;
+    protected final MessageMapper messageMapper;
 
-    @Autowired
-    protected PendingMessageMapper pendingMessageMapper;
+    protected final PendingMessageMapper pendingMessageMapper;
 
-    @Autowired
-    protected PendingMessageService pendingMessageService;
+    protected final PendingMessageService pendingMessageService;
 
-    @Autowired(required = false)
+    @Nullable
     protected DeepSeekService deepSeekService;
 
-    @Autowired
-    protected KeywordMatcherService keywordMatcherService;
+    protected final KeywordMatcherService keywordMatcherService;
 
-    @Autowired
-    protected ReplyService replyService;
+    protected final ReplyService replyService;
 
-    @Autowired
-    protected RedisService redisService;
+    protected final RedisService redisService;
 
-    @Autowired
-    protected CustomerProfileService customerProfileService;
+    protected final CustomerProfileService customerProfileService;
 
-    @Autowired
-    protected ClubConfigMapper clubConfigMapper;
+    protected final ClubConfigMapper clubConfigMapper;
 
-    @Autowired
-    protected ServiceItemMapper serviceItemMapper;
+    protected final ServiceItemMapper serviceItemMapper;
 
-    @Autowired
-    protected ActivityPackageMapper activityPackageMapper;
+    protected final ActivityPackageMapper activityPackageMapper;
 
-    @Autowired
-    protected CompanionLevelMapper companionLevelMapper;
+    protected final CompanionLevelMapper companionLevelMapper;
 
-    @Autowired
-    protected ServicePriceRuleMapper servicePriceRuleMapper;
+    protected final ServicePriceRuleMapper servicePriceRuleMapper;
 
-    @Autowired
-    protected CompanionMapper companionMapper;
+    protected final CompanionMapper companionMapper;
 
-    @Autowired(required = false)
+    @Nullable
     protected OrderService orderService;
 
     protected HandoffState getHandoffState(Long userId) {

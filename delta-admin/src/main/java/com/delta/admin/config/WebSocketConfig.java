@@ -1,7 +1,7 @@
 package com.delta.admin.config;
 
 import com.delta.admin.websocket.AdminNotificationHandler;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -10,13 +10,12 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 @Configuration
 @EnableWebSocket
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    @Autowired
-    private AdminNotificationHandler notificationHandler;
+    private final AdminNotificationHandler notificationHandler;
 
-    @Autowired
-    private WebSocketAuthInterceptor webSocketAuthInterceptor;
+    private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     @Value("${websocket.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:8080}")
     private String allowedOrigins;

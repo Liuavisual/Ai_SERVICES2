@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.dto.KeywordDTO;
 import com.delta.common.service.CacheService;
@@ -27,7 +28,7 @@ import java.util.Map;
  */
 @Tag(name = "关键词管理", description = "关键词管理接口")
 @RestController
-@RequestMapping("/v1/keywords")
+@RequestMapping(ApiVersionConstants.V1 + "/keywords")
 @RequiredArgsConstructor
 public class KeywordController extends BaseController {
 

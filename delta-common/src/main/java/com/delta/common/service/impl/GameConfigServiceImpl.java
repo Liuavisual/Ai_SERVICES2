@@ -9,7 +9,7 @@ import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.GameConfigMapper;
 import com.delta.common.service.GameConfigService;
 import com.delta.common.vo.GameConfigVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class GameConfigServiceImpl implements GameConfigService {
 
-    @Autowired
-    private GameConfigMapper gameConfigMapper;
+    private final GameConfigMapper gameConfigMapper;
 
     @Override
     public List<GameConfigVO> getByClubId(Long clubConfigId) {

@@ -17,9 +17,9 @@ import com.delta.common.vo.CompanionLevelVO;
 import com.delta.common.vo.ServiceItemVO;
 import com.delta.common.vo.ServicePriceRuleVO;
 import com.delta.message.ai.config.DeepSeekConfig;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -43,23 +43,20 @@ import java.util.concurrent.TimeUnit;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class DeepSeekServiceImpl implements DeepSeekService {
 
     private static final Logger log = LoggerFactory.getLogger(DeepSeekServiceImpl.class);
 
     private static final String AI_REPLY_CACHE_PREFIX = "delta:ai:reply:";
 
-    @Autowired
-    private DeepSeekConfig deepSeekConfig;
+    private final DeepSeekConfig deepSeekConfig;
 
-    @Autowired
-    private CacheService cacheService;
+    private final CacheService cacheService;
 
-    @Autowired
-    private AiConfigService aiConfigService;
+    private final AiConfigService aiConfigService;
 
-    @Autowired
-    private RedisService redisService;
+    private final RedisService redisService;
 
     @Override
     public String getChatReply(String userMessage) {

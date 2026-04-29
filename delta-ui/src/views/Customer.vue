@@ -151,23 +151,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { customerApi, sysUserApi } from '@/api'
+import type { Result, PageResult, CustomerVO, SysUserVO } from '@/types'
 
-let userInfo = {}
+interface CustomerRow extends CustomerVO {
+  aiEnabled: boolean
+  assignedCsUserId?: string
+}
+
+let userInfo: Record<string, any> = {}
 try {
   userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
 } catch (e) {}
-const isAdminOrLeader = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
+const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
 
-const loading = ref(false)
-const tableData = ref([])
-const total = ref(0)
-const csList = ref([])
+const loading = ref<boolean>(false)
+const tableData = ref<CustomerRow[]>([])
+const total = ref<number>(0)
+const csList = ref<SysUserVO[]>([])
 
-const queryForm = reactive({
+const queryForm = reactive<{
+  pageNum: number
+  pageSize: number
+  platform: string | null
+  aiEnabled: string | null
+  csUserId: string | null
+  keyword: string
+}>({
   pageNum: 1,
   pageSize: 10,
   platform: null,
@@ -176,18 +189,22 @@ const queryForm = reactive({
   keyword: ''
 })
 
-const detailDialogVisible = ref(false)
-const currentCustomer = ref(null)
+const detailDialogVisible = ref<boolean>(false)
+const currentCustomer = ref<CustomerVO | null>(null)
 
-const assignDialogVisible = ref(false)
-const assignForm = reactive({
+const assignDialogVisible = ref<boolean>(false)
+const assignForm = reactive<{
+  csUserId: string | null
+  assignType: string
+  remark: string
+}>({
   csUserId: null,
   assignType: 'MANUAL',
   remark: ''
 })
 
-const getPlatformLabel = (platform) => {
-  const map = {
+const getPlatformLabel = (platform: string): string => {
+  const map: Record<string, string> = {
     wechat: '微信',
     kook: 'KOOK',
     yy: 'YY'
@@ -195,8 +212,8 @@ const getPlatformLabel = (platform) => {
   return map[platform] || platform
 }
 
-const getPlatformTagType = (platform) => {
-  const map = {
+const getPlatformTagType = (platform: string): string => {
+  const map: Record<string, string> = {
     wechat: 'primary',
     kook: 'success',
     yy: 'warning'
@@ -204,14 +221,14 @@ const getPlatformTagType = (platform) => {
   return map[platform] || 'info'
 }
 
-const handleQuery = async () => {
+const handleQuery = async (): Promise<void> => {
   loading.value = true
   try {
     const params = {
       ...queryForm,
       aiEnabled: queryForm.aiEnabled === '1' ? true : queryForm.aiEnabled === '0' ? false : null
     }
-    const res = await customerApi.getPage(params)
+    const res: Result<PageResult<CustomerRow>> = await customerApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data.records.map(item => ({
         ...item,
@@ -226,7 +243,7 @@ const handleQuery = async () => {
   }
 }
 
-const handleReset = () => {
+const handleReset = (): void => {
   queryForm.pageNum = 1
   queryForm.platform = null
   queryForm.aiEnabled = null
@@ -235,14 +252,14 @@ const handleReset = () => {
   handleQuery()
 }
 
-const handleViewDetail = async (row) => {
+const handleViewDetail = async (row: CustomerVO): Promise<void> => {
   try {
-    const res = await customerApi.getById(row.id)
+    const res: Result<CustomerVO> = await customerApi.getById(row.id)
     if (res.code === 200) {
       currentCustomer.value = res.data
       detailDialogVisible.value = true
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error.message && error.message.includes('无权')) {
       ElMessage.error('您无权查看此客户信息')
     } else {
@@ -251,21 +268,21 @@ const handleViewDetail = async (row) => {
   }
 }
 
-const handleAssign = (row) => {
+const handleAssign = (row: CustomerRow): void => {
   currentCustomer.value = row
-  assignForm.csUserId = row.assignedCsUserId
+  assignForm.csUserId = row.assignedCsUserId || null
   assignForm.assignType = 'MANUAL'
   assignForm.remark = ''
   assignDialogVisible.value = true
 }
 
-const handleConfirmAssign = async () => {
+const handleConfirmAssign = async (): Promise<void> => {
   if (!assignForm.csUserId) {
     ElMessage.warning('请选择客服')
     return
   }
   try {
-    const res = await customerApi.assignCustomer(currentCustomer.value.id, assignForm)
+    const res: Result<null> = await customerApi.assignCustomer(currentCustomer.value!.id, assignForm)
     if (res.code === 200) {
       ElMessage.success('分配成功')
       assignDialogVisible.value = false
@@ -276,14 +293,14 @@ const handleConfirmAssign = async () => {
   }
 }
 
-const handleToggleAi = async (row) => {
+const handleToggleAi = async (row: CustomerRow): Promise<void> => {
   try {
     await ElMessageBox.confirm(
       `确定要${row.aiEnabled ? '禁用' : '启用'}该客户的AI吗？`,
       '提示',
       { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
     )
-    const res = await customerApi.toggleAiEnabled(row.id, { aiEnabled: !row.aiEnabled })
+    const res: Result<null> = await customerApi.toggleAiEnabled(row.id, { aiEnabled: !row.aiEnabled })
     if (res.code === 200) {
       ElMessage.success('操作成功')
       handleQuery()
@@ -295,10 +312,10 @@ const handleToggleAi = async (row) => {
   }
 }
 
-const loadCsList = async () => {
+const loadCsList = async (): Promise<void> => {
   if (!isAdminOrLeader) return
   try {
-    const res = await sysUserApi.getPage({ pageNum: 1, pageSize: 100, role: 'CS_STAFF' })
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ pageNum: 1, pageSize: 100, role: 'CS_STAFF' })
     if (res.code === 200) {
       csList.value = res.data.records
     }

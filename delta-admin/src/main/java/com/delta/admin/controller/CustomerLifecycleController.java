@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.CustomerLifecycleService;
 import com.delta.common.vo.CustomerVO;
 import com.delta.common.vo.Result;
@@ -20,7 +21,7 @@ import java.util.List;
  */
 @Tag(name = "客户生命周期管理", description = "客户生命周期管理接口")
 @RestController
-@RequestMapping("/customer-lifecycle")
+@RequestMapping(ApiVersionConstants.V1 + "/customer-lifecycle")
 @RequiredArgsConstructor
 public class CustomerLifecycleController extends BaseController {
 

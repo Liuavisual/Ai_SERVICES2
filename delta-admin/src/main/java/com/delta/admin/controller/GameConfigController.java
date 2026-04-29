@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.dto.GameConfigDTO;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.GameConfigService;
 import com.delta.common.util.ExcelUtils;
@@ -10,7 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,13 +21,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @Tag(name = "游戏配置管理", description = "游戏配置管理接口")
 @RestController
-@RequestMapping("/v1/game-configs")
+@RequestMapping(ApiVersionConstants.V1 + "/game-configs")
 public class GameConfigController extends BaseController {
 
-    @Autowired
-    private GameConfigService gameConfigService;
+    private final GameConfigService gameConfigService;
 
     @Operation(summary = "获取俱乐部的游戏配置")
     @GetMapping("/club/{clubConfigId}")

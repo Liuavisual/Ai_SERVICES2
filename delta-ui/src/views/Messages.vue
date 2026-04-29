@@ -175,26 +175,30 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, h, onMounted } from 'vue'
 import { messageApi } from '@/api'
 import { ElMessage, ElTag, ElButton } from 'element-plus'
 import { useRouter } from 'vue-router'
+import type { Result, PageResult, MessageVO } from '@/types'
 
 const router = useRouter()
-/** 加载状态 */
-const loading = ref(false)
-/** 表格数据 */
-const tableData = ref([])
-/** 数据总数 */
-const total = ref(0)
-/** 是否开启虚拟滚动模式 */
-const virtualMode = ref(false)
-/** 虚拟表格高度 */
-const virtualTableHeight = ref(500)
+const loading = ref<boolean>(false)
+const tableData = ref<MessageVO[]>([])
+const total = ref<number>(0)
+const virtualMode = ref<boolean>(false)
+const virtualTableHeight = ref<number>(500)
 
-/** 查询参数 */
-const queryParams = reactive({
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  userId: string | null
+  platform: string | null
+  direction: string | null
+  ai: string | null
+  keywordTriggered: string | null
+  keyword: string
+}>({
   pageNum: 1,
   pageSize: 20,
   userId: null,
@@ -205,13 +209,8 @@ const queryParams = reactive({
   keyword: ''
 })
 
-/**
- * 获取平台显示文本
- * @param {string} platform - 平台标识
- * @returns {string} 平台中文名
- */
-const getPlatformText = (platform) => {
-  const map = {
+const getPlatformText = (platform: string): string => {
+  const map: Record<string, string> = {
     'wechat': '微信',
     'kook': 'KOOK',
     'yy': 'YY'
@@ -219,13 +218,8 @@ const getPlatformText = (platform) => {
   return map[platform] || platform
 }
 
-/**
- * 获取平台标签类型
- * @param {string} platform - 平台标识
- * @returns {string} Element Plus Tag 类型
- */
-const getPlatformTagType = (platform) => {
-  const map = {
+const getPlatformTagType = (platform: string): string => {
+  const map: Record<string, string> = {
     'wechat': 'primary',
     'kook': 'success',
     'yy': 'warning'
@@ -233,10 +227,13 @@ const getPlatformTagType = (platform) => {
   return map[platform] || 'info'
 }
 
-/**
- * el-table-v2 列定义（虚拟滚动模式使用）
- * 使用 cellRenderer 渲染自定义内容
- */
+interface MessageRow extends MessageVO {
+  ai: boolean
+  keywordTriggered: boolean
+  userPlatform: string
+  direction: string
+}
+
 const v2Columns = computed(() => [
   { key: 'id', dataKey: 'id', title: 'ID', width: 80 },
   { key: 'userNickname', dataKey: 'userNickname', title: '用户昵称', width: 150 },
@@ -245,16 +242,14 @@ const v2Columns = computed(() => [
     dataKey: 'userPlatform',
     title: '平台',
     width: 100,
-    /** 平台列渲染：显示Tag标签 */
-    cellRenderer: ({ cellData }) => h(ElTag, { type: getPlatformTagType(cellData) }, () => getPlatformText(cellData))
+    cellRenderer: ({ cellData }: { cellData: string }) => h(ElTag, { type: getPlatformTagType(cellData) }, () => getPlatformText(cellData))
   },
   {
     key: 'direction',
     dataKey: 'direction',
     title: '方向',
     width: 100,
-    /** 方向列渲染：接收/发送Tag */
-    cellRenderer: ({ cellData }) => h(ElTag, { type: cellData === 'in' ? 'primary' : 'success' }, () => cellData === 'in' ? '接收' : '发送')
+    cellRenderer: ({ cellData }: { cellData: string }) => h(ElTag, { type: cellData === 'in' ? 'primary' : 'success' }, () => cellData === 'in' ? '接收' : '发送')
   },
   { key: 'content', dataKey: 'content', title: '消息内容', width: 200 },
   {
@@ -262,16 +257,14 @@ const v2Columns = computed(() => [
     dataKey: 'ai',
     title: 'AI发送',
     width: 100,
-    /** AI发送列渲染：AI/人工Tag */
-    cellRenderer: ({ cellData }) => h(ElTag, { type: cellData ? 'primary' : 'info' }, () => cellData ? 'AI' : '人工')
+    cellRenderer: ({ cellData }: { cellData: boolean }) => h(ElTag, { type: cellData ? 'primary' : 'info' }, () => cellData ? 'AI' : '人工')
   },
   {
     key: 'keywordTriggered',
     dataKey: 'keywordTriggered',
     title: '触发关键词',
     width: 120,
-    /** 触发关键词列渲染：是/否Tag */
-    cellRenderer: ({ cellData }) => h(ElTag, { type: cellData ? 'warning' : 'info' }, () => cellData ? '是' : '否')
+    cellRenderer: ({ cellData }: { cellData: boolean }) => h(ElTag, { type: cellData ? 'warning' : 'info' }, () => cellData ? '是' : '否')
   },
   { key: 'createdAt', dataKey: 'createdAt', title: '时间', width: 180 },
   {
@@ -280,8 +273,7 @@ const v2Columns = computed(() => [
     title: '操作',
     width: 100,
     fixed: 'right',
-    /** 操作列渲染：查看客户按钮 */
-    cellRenderer: ({ cellData: userId }) => h(ElButton, {
+    cellRenderer: ({ cellData: userId }: { cellData: string }) => h(ElButton, {
       size: 'small',
       type: 'primary',
       link: true,
@@ -290,10 +282,7 @@ const v2Columns = computed(() => [
   }
 ])
 
-/**
- * 查询消息列表
- */
-const handleQuery = async () => {
+const handleQuery = async (): Promise<void> => {
   loading.value = true
   try {
     const params = {
@@ -301,7 +290,7 @@ const handleQuery = async () => {
       ai: queryParams.ai === 'true' ? true : queryParams.ai === 'false' ? false : null,
       keywordTriggered: queryParams.keywordTriggered === 'true' ? true : queryParams.keywordTriggered === 'false' ? false : null
     }
-    const res = await messageApi.getPage(params)
+    const res: Result<PageResult<MessageRow>> = await messageApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data.records.map(item => ({
         ...item,
@@ -309,7 +298,6 @@ const handleQuery = async () => {
         keywordTriggered: Boolean(item.keywordTriggered)
       }))
       total.value = res.data.total
-      /** 数据量超过100条时自动提示可切换虚拟滚动 */
       if (total.value > 100 && !virtualMode.value) {
         ElMessage.info('数据量较大，可开启虚拟滚动模式提升性能')
       }
@@ -322,10 +310,7 @@ const handleQuery = async () => {
   }
 }
 
-/**
- * 重置筛选条件
- */
-const handleReset = () => {
+const handleReset = (): void => {
   queryParams.pageNum = 1
   queryParams.platform = null
   queryParams.direction = null
@@ -335,11 +320,7 @@ const handleReset = () => {
   handleQuery()
 }
 
-/**
- * 查看客户详情
- * @param {string} userId - 用户ID
- */
-const handleViewCustomer = (userId) => {
+const handleViewCustomer = (userId: string): void => {
   router.push({
     path: '/customers',
     query: { keyword: '' }

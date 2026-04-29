@@ -17,7 +17,7 @@ import com.delta.common.mapper.ServicePriceRuleMapper;
 import com.delta.common.service.ServiceItemService;
 import com.delta.common.vo.ServiceItemVO;
 import com.delta.common.vo.ServicePriceRuleVO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,19 +25,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ServiceItemServiceImpl implements ServiceItemService {
 
-    @Autowired
-    private ServiceItemMapper serviceItemMapper;
+    private final ServiceItemMapper serviceItemMapper;
 
-    @Autowired
-    private ServicePriceRuleMapper servicePriceRuleMapper;
+    private final ServicePriceRuleMapper servicePriceRuleMapper;
 
-    @Autowired
-    private GameConfigMapper gameConfigMapper;
+    private final GameConfigMapper gameConfigMapper;
 
-    @Autowired
-    private CompanionLevelMapper companionLevelMapper;
+    private final CompanionLevelMapper companionLevelMapper;
 
     @Override
     public List<ServiceItemVO> getByClubId(Long clubConfigId) {

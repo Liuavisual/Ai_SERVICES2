@@ -113,60 +113,35 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Warning, CircleClose, Refresh } from '@element-plus/icons-vue'
 import { lifecycleApi, customerApi } from '@/api'
+import type { Result, CustomerVO } from '@/types'
 
-/** 加载状态 */
-const loading = ref(false)
-/** 标签更新加载状态 */
-const updateLoading = ref(false)
-/** 详情加载状态 */
-const detailLoading = ref(false)
-/** 当前激活的Tab */
-const activeTab = ref('atRisk')
-/** 流失风险客户数据 */
-const atRiskData = ref([])
-/** 已流失客户数据 */
-const churnedData = ref([])
-/** 详情弹窗可见性 */
-const detailVisible = ref(false)
-/** 详情信息 */
-const detailInfo = ref(null)
+const loading = ref<boolean>(false)
+const updateLoading = ref<boolean>(false)
+const detailLoading = ref<boolean>(false)
+const activeTab = ref<'atRisk' | 'churned'>('atRisk')
+const atRiskData = ref<CustomerVO[]>([])
+const churnedData = ref<CustomerVO[]>([])
+const detailVisible = ref<boolean>(false)
+const detailInfo = ref<CustomerVO | null>(null)
 
-/** 流失风险客户数量 */
-const atRiskCount = computed(() => atRiskData.value.length)
-/** 已流失客户数量 */
-const churnedCount = computed(() => churnedData.value.length)
+const atRiskCount = computed<number>(() => atRiskData.value.length)
+const churnedCount = computed<number>(() => churnedData.value.length)
 
-/** 当前Tab对应的表格数据 */
-const tableData = computed(() => {
+const tableData = computed<CustomerVO[]>(() => {
   const data = activeTab.value === 'atRisk' ? atRiskData.value : churnedData.value
   return data.map((item, index) => ({ ...item, rowNum: index + 1 }))
 })
 
-/**
- * 获取平台标签类型
- * @param {string} platform - 平台标识
- * @returns {string} 标签类型
- */
-const getPlatformType = (platform) => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[platform] || 'info')
+const getPlatformType = (platform: string): string => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[platform] || 'info')
 
-/**
- * 获取平台显示文本
- * @param {string} platform - 平台标识
- * @returns {string} 显示文本
- */
-const getPlatformText = (platform) => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[platform] || platform || '—')
+const getPlatformText = (platform: string): string => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[platform] || platform || '—')
 
-/**
- * 获取生命周期阶段标签类型
- * @param {string} stage - 生命周期阶段
- * @returns {string} 标签类型
- */
-const getStageType = (stage) => ({
+const getStageType = (stage: string): string => ({
   NEW: 'info',
   ACTIVE: 'primary',
   LOYAL: 'success',
@@ -174,12 +149,7 @@ const getStageType = (stage) => ({
   CHURNED: 'danger'
 }[stage] || 'info')
 
-/**
- * 获取生命周期阶段显示文本
- * @param {string} stage - 生命周期阶段
- * @returns {string} 显示文本
- */
-const getStageText = (stage) => ({
+const getStageText = (stage: string): string => ({
   NEW: '新客户',
   ACTIVE: '活跃',
   LOYAL: '忠实',
@@ -187,24 +157,16 @@ const getStageText = (stage) => ({
   CHURNED: '已流失'
 }[stage] || stage || '—')
 
-/**
- * 格式化日期时间
- * @param {string} val - 日期时间字符串
- * @returns {string} 格式化后的日期时间
- */
-function formatDateTime(val) {
+function formatDateTime(val: string): string {
   if (!val) return '—'
   const d = new Date(val)
-  const pad = n => String(n).padStart(2, '0')
+  const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/**
- * 获取流失风险客户列表
- */
-async function fetchAtRiskData() {
+async function fetchAtRiskData(): Promise<void> {
   try {
-    const res = await lifecycleApi.getAtRisk()
+    const res: Result<CustomerVO[]> = await lifecycleApi.getAtRisk()
     if (res.code === 200) {
       atRiskData.value = res.data || []
     }
@@ -214,12 +176,9 @@ async function fetchAtRiskData() {
   }
 }
 
-/**
- * 获取已流失客户列表
- */
-async function fetchChurnedData() {
+async function fetchChurnedData(): Promise<void> {
   try {
-    const res = await lifecycleApi.getChurned()
+    const res: Result<CustomerVO[]> = await lifecycleApi.getChurned()
     if (res.code === 200) {
       churnedData.value = res.data || []
     }
@@ -229,10 +188,7 @@ async function fetchChurnedData() {
   }
 }
 
-/**
- * 加载所有数据
- */
-async function loadAllData() {
+async function loadAllData(): Promise<void> {
   loading.value = true
   try {
     await Promise.all([fetchAtRiskData(), fetchChurnedData()])
@@ -241,13 +197,10 @@ async function loadAllData() {
   }
 }
 
-/**
- * 手动更新客户生命周期标签
- */
-async function handleUpdateTags() {
+async function handleUpdateTags(): Promise<void> {
   updateLoading.value = true
   try {
-    const res = await lifecycleApi.updateTags()
+    const res: Result<null> = await lifecycleApi.updateTags()
     if (res.code === 200) {
       ElMessage.success('标签更新已触发')
       await loadAllData()
@@ -262,16 +215,12 @@ async function handleUpdateTags() {
   }
 }
 
-/**
- * 查看客户详情
- * @param {Object} row - 当前行数据
- */
-async function handleViewDetail(row) {
+async function handleViewDetail(row: CustomerVO): Promise<void> {
   detailVisible.value = true
   detailLoading.value = true
   detailInfo.value = null
   try {
-    const res = await customerApi.getById(row.id)
+    const res: Result<CustomerVO> = await customerApi.getById(row.id)
     if (res.code === 200) {
       detailInfo.value = res.data
     }
@@ -283,8 +232,7 @@ async function handleViewDetail(row) {
   }
 }
 
-/** 监听Tab切换，按需加载数据 */
-watch(activeTab, (newTab) => {
+watch(activeTab, (newTab: 'atRisk' | 'churned') => {
   if (newTab === 'atRisk' && atRiskData.value.length === 0) {
     fetchAtRiskData()
   } else if (newTab === 'churned' && churnedData.value.length === 0) {

@@ -6,8 +6,8 @@ import com.delta.common.entity.AiConfig;
 import com.delta.common.mapper.AiConfigMapper;
 import com.delta.common.service.AiConfigService;
 import com.delta.common.vo.AiConfigVO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
  * @author delta
  */
 @Service
+@RequiredArgsConstructor
 public class AiConfigServiceImpl implements AiConfigService {
 
-    @Autowired
-    private AiConfigMapper aiConfigMapper;
+    private final AiConfigMapper aiConfigMapper;
 
     @Override
     public List<AiConfigVO> getAllConfigs() {

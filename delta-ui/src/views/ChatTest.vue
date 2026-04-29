@@ -117,29 +117,42 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import { chatTestApi, sysUserApi } from '@/api'
 import { ElMessage } from 'element-plus'
 import { Refresh, Promotion } from '@element-plus/icons-vue'
+import type { Result, PageResult, SysUserVO } from '@/types'
 
-const messagesContainer = ref(null)
-const loading = ref(false)
-const inputContent = ref('')
-const messages = ref([])
+interface ChatMessage {
+  role: 'customer' | 'service'
+  content: string
+  time: string
+  isAi: boolean
+  keyword: string | null
+}
 
-const configForm = ref({
+const messagesContainer = ref<HTMLDivElement | null>(null)
+const loading = ref<boolean>(false)
+const inputContent = ref<string>('')
+const messages = ref<ChatMessage[]>([])
+
+const configForm = ref<{
+  customerNickname: string
+  platform: string
+  csUserId: string | null
+}>({
   customerNickname: '测试目标',
   platform: 'wechat',
   csUserId: null
 })
 
-const csUsers = ref([])
-const quickMessages = ['你好', '预约', '价格', '陪玩', '人工']
+const csUsers = ref<SysUserVO[]>([])
+const quickMessages: string[] = ['你好', '预约', '价格', '陪玩', '人工']
 
-const loadCsUsers = async () => {
+const loadCsUsers = async (): Promise<void> => {
   try {
-    const res = await sysUserApi.getPage({ pageNum: 1, pageSize: 100, role: 'CS_STAFF' })
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ pageNum: 1, pageSize: 100, role: 'CS_STAFF' })
     if (res.code === 200) {
       csUsers.value = res.data.records || []
     }
@@ -149,18 +162,18 @@ const loadCsUsers = async () => {
   }
 }
 
-const loadHistory = () => {
+const loadHistory = (): void => {
   const history = localStorage.getItem('chatTestHistory')
   if (history) {
     try { messages.value = JSON.parse(history) } catch (e) {}
   }
 }
 
-const saveHistory = () => {
+const saveHistory = (): void => {
   localStorage.setItem('chatTestHistory', JSON.stringify(messages.value))
 }
 
-const scrollToBottom = () => {
+const scrollToBottom = (): void => {
   nextTick(() => {
     if (messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -168,12 +181,12 @@ const scrollToBottom = () => {
   })
 }
 
-const sendQuickMessage = (msg) => {
+const sendQuickMessage = (msg: string): void => {
   inputContent.value = msg
   handleSend()
 }
 
-const handleSend = async () => {
+const handleSend = async (): Promise<void> => {
   if (!inputContent.value.trim()) return
 
   const content = inputContent.value.trim()
@@ -192,7 +205,7 @@ const handleSend = async () => {
   loading.value = true
 
   try {
-    const res = await chatTestApi.send({
+    const res: Result<any> = await chatTestApi.send({
       customerNickname: configForm.value.customerNickname,
       platform: configForm.value.platform,
       csUserId: configForm.value.csUserId,
@@ -218,7 +231,7 @@ const handleSend = async () => {
   }
 }
 
-const handleReset = () => {
+const handleReset = (): void => {
   messages.value = []
   localStorage.removeItem('chatTestHistory')
   ElMessage.success('已重置')

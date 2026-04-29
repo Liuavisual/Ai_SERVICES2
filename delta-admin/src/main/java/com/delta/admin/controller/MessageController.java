@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.MessageService;
 import com.delta.common.vo.MessageVO;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "消息管理", description = "消息管理接口")
 @RestController
-@RequestMapping("/v1/messages")
+@RequestMapping(ApiVersionConstants.V1 + "/messages")
 @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
 @RequiredArgsConstructor
 public class MessageController extends BaseController {

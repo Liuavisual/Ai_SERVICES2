@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.AuditUserDTO;
 import com.delta.common.dto.SysUserDTO;
@@ -36,7 +37,7 @@ import java.util.Map;
  */
 @Tag(name = "系统用户管理", description = "系统用户管理接口")
 @RestController
-@RequestMapping("/v1/sys-users")
+@RequestMapping(ApiVersionConstants.V1 + "/sys-users")
 @RequiredArgsConstructor
 public class SysUserController extends BaseController {
 
