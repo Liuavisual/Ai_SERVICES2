@@ -412,3 +412,13 @@ export const lifecycleApi = {
   /** 手动触发更新客户生命周期标签 */
   updateTags: () => request({ url: '/customer-lifecycle/update-tags', method: 'post' })
 }
+
+/** 客户满意度评价API */
+export const satisfactionApi = {
+  /** 提交满意度评价 */
+  submit: (data) => request({ url: '/satisfaction', method: 'post', data }),
+  /** 分页查询满意度评价 */
+  getPage: (params) => request({ url: '/satisfaction/page', method: 'get', params }),
+  /** 获取陪玩师平均评分 */
+  getAverage: (companionId) => request({ url: `/satisfaction/average/${companionId}`, method: 'get' })
+}

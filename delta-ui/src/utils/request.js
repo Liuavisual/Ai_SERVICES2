@@ -5,7 +5,9 @@ import router, { redirectToLogin } from '@/router'
 const request = axios.create({
   baseURL: '/api/v1',
   timeout: 30000,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  // httpOnly Cookie方案：允许跨域请求携带Cookie
+  withCredentials: true
 })
 
 let isRefreshing = false
@@ -71,10 +73,14 @@ async function proactiveRefresh() {
 
 request.interceptors.request.use(
   async config => {
+    // httpOnly Cookie会自动发送，无需手动添加Authorization Header
+    // 但为了兼容性，如果localStorage中有token，仍然添加到Header作为fallback
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // httpOnly Cookie方案：确保每次请求都携带Cookie
+    config.withCredentials = true
     if (shouldProactivelyRefresh() && !config.url?.includes('/auth/')) {
       await proactiveRefresh()
       const newToken = localStorage.getItem('token')

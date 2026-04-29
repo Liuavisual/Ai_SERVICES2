@@ -147,6 +147,12 @@ const routes = [
         meta: { title: '客户生命周期', roles: ['SYS_ADMIN', 'CS_LEADER'] }
       },
       {
+        path: 'satisfaction',
+        name: 'Satisfaction',
+        component: () => import('@/views/Satisfaction.vue'),
+        meta: { title: '满意度评价', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
         path: 'ai-config',
         name: 'AIConfig',
         component: () => import('@/views/AIConfig.vue'),

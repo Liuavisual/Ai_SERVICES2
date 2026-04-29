@@ -94,7 +94,7 @@
 import { computed, ref, onMounted, onUnmounted, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElNotification } from 'element-plus'
-import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position, TrendCharts } from '@element-plus/icons-vue'
+import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position, TrendCharts, Star } from '@element-plus/icons-vue'
 import { pendingMessageApi } from '@/api'
 
 const route = useRoute()
@@ -149,6 +149,7 @@ const allMenus = [
   { path: '/work-orders', title: '工单管理', icon: 'Tickets', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/service-tracks', title: '服务追踪', icon: 'Position', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
   { path: '/customer-lifecycle', title: '客户生命周期', icon: 'TrendCharts', roles: ['SYS_ADMIN','CS_LEADER'] },
+  { path: '/satisfaction', title: '满意度评价', icon: 'Star', roles: ['SYS_ADMIN','CS_LEADER'] },
   { path: 'd5', title: '', icon: '', roles: [], divider: true, label: '系统设置' },
   { path: '/ai-config', title: 'AI配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
   { path: '/platform-configs', title: '平台配置', icon: 'Tools', roles: ['SYS_ADMIN'] }
