@@ -57,37 +57,53 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import type { FormInstance } from 'element-plus'
 import { authApi } from '@/api'
 import { getRoleHomePage } from '@/router'
+import type { LoginDTO, RegisterDTO, LoginVO, UserRole } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
-const activeTab = ref('login')
-const loading = ref(false)
-const registerLoading = ref(false)
-const loginFormRef = ref(null)
-const registerFormRef = ref(null)
+/** 当前激活的Tab页 */
+const activeTab = ref<string>('login')
+/** 登录加载状态 */
+const loading = ref<boolean>(false)
+/** 注册加载状态 */
+const registerLoading = ref<boolean>(false)
+/** 登录表单引用 */
+const loginFormRef = ref<FormInstance | null>(null)
+/** 注册表单引用 */
+const registerFormRef = ref<FormInstance | null>(null)
 
-const loginForm = reactive({ username: '', password: '' })
-const registerForm = reactive({ username: '', password: '', realName: '', phone: '', email: '' })
+/** 登录表单数据 */
+const loginForm = reactive<LoginDTO>({ username: '', password: '' })
+/** 注册表单数据 */
+const registerForm = reactive<RegisterDTO>({ username: '', password: '', realName: '', phone: '', email: '' })
 
+/** 登录表单校验规则 */
 const loginRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
+
+/** 注册表单校验规则 */
 const registerRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }, { min: 3, max: 50, message: '用户名长度在 3 到 50 个字符', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 8, message: '密码长度至少 8 个字符', trigger: 'blur' }],
   realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
   phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
-  email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }]
+  email: [{ type: 'email' as const, message: '邮箱格式不正确', trigger: 'blur' }]
 }
 
-const handleLogin = async () => {
+/**
+ * 处理用户登录
+ * 验证表单后调用登录API，成功后存储Token并跳转
+ */
+const handleLogin = async (): Promise<void> => {
   if (!loginFormRef.value) return
   try {
     await loginFormRef.value.validate()
@@ -98,21 +114,22 @@ const handleLogin = async () => {
   try {
     const res = await authApi.login(loginForm)
     if (res.code === 200) {
-      localStorage.setItem('token', res.data.token)
-      localStorage.setItem('refreshToken', res.data.refreshToken)
-      localStorage.setItem('expiresIn', res.data.expiresIn)
-      const tokenExpiry = Date.now() + (res.data.expiresIn || 7200) * 1000
-      localStorage.setItem('tokenExpiry', tokenExpiry)
-      localStorage.setItem('userInfo', JSON.stringify(res.data))
+      const data = res.data as LoginVO
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      localStorage.setItem('expiresIn', String(data.expiresIn))
+      const tokenExpiry = Date.now() + (data.expiresIn || 7200) * 1000
+      localStorage.setItem('tokenExpiry', String(tokenExpiry))
+      localStorage.setItem('userInfo', JSON.stringify(data))
       ElMessage.success('登录成功')
-      const redirect = route.query.redirect
+      const redirect = route.query.redirect as string
       if (redirect && redirect !== '/login') {
         router.push(redirect)
       } else {
-        router.push(getRoleHomePage(res.data.role))
+        router.push(getRoleHomePage(data.role as UserRole))
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     if (!error.response) {
       ElMessage.error('网络连接异常，请检查网络后重试')
     }
@@ -120,7 +137,11 @@ const handleLogin = async () => {
   } finally { loading.value = false }
 }
 
-const handleRegister = async () => {
+/**
+ * 处理用户注册
+ * 验证表单后调用注册API，成功后切换到登录Tab
+ */
+const handleRegister = async (): Promise<void> => {
   if (!registerFormRef.value) return
   try {
     await registerFormRef.value.validate()
@@ -131,7 +152,7 @@ const handleRegister = async () => {
   try {
     const res = await authApi.register(registerForm)
     if (res.code === 200) { ElMessage.success('注册成功，请等待客服负责人审核'); activeTab.value = 'login' }
-  } catch (error) {
+  } catch (error: any) {
     if (!error.response) {
       ElMessage.error('网络连接异常，请检查网络后重试')
     }

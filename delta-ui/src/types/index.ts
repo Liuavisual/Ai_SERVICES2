@@ -702,3 +702,65 @@ export interface NotificationVO {
   /** 附加数据 */
   data?: Record<string, unknown>
 }
+
+// ============ 满意度评价相关 ============
+
+/** 满意度评价视图对象 */
+export interface SatisfactionVO {
+  /** 评价ID */
+  id: string
+  /** 行号 */
+  rowNum: number
+  /** 用户ID */
+  userId: string
+  /** 用户昵称 */
+  userNickname: string
+  /** 陪玩师ID */
+  companionId: string
+  /** 陪玩师名称 */
+  companionName: string
+  /** 评分（1-5） */
+  rating: number
+  /** 反馈内容 */
+  feedback?: string
+  /** 标签（逗号分隔） */
+  tags?: string
+  /** 服务类型 */
+  serviceType?: string
+  /** 是否匿名（0否1是） */
+  isAnonymous: number
+  /** 创建时间 */
+  createdAt: string
+}
+
+// ============ 注册相关 ============
+
+/** 注册请求参数 */
+export interface RegisterDTO {
+  /** 用户名 */
+  username: string
+  /** 密码 */
+  password: string
+  /** 真实姓名 */
+  realName: string
+  /** 手机号 */
+  phone?: string
+  /** 邮箱 */
+  email?: string
+}
+
+/** 概览卡片数据（Dashboard内部使用） */
+export interface OverviewCard {
+  /** 卡片标题 */
+  title: string
+  /** 卡片数值 */
+  value: string | number
+  /** 图标组件 */
+  icon: any
+  /** 颜色值 */
+  color: string
+  /** 图标背景色 */
+  iconBg: string
+  /** 卡片类型 */
+  type: string
+}

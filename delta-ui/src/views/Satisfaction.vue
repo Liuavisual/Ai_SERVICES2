@@ -150,28 +150,35 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, Tickets } from '@element-plus/icons-vue'
 import { satisfactionApi, companionApi } from '@/api'
+import type { SatisfactionVO, CompanionVO } from '@/types'
 
 /** 加载状态 */
-const loading = ref(false)
+const loading = ref<boolean>(false)
 /** 表格数据 */
-const tableData = ref([])
+const tableData = ref<SatisfactionVO[]>([])
 /** 数据总数 */
-const total = ref(0)
+const total = ref<number>(0)
 /** 平均评分 */
-const avgRating = ref('0.0')
+const avgRating = ref<string>('0.0')
 /** 陪玩师列表（下拉选择用） */
-const companionList = ref([])
+const companionList = ref<CompanionVO[]>([])
 
 /** 星级颜色配置 */
-const rateColors = ['#99A9BF', '#F7BA2A', '#FF9900']
+const rateColors: string[] = ['#99A9BF', '#F7BA2A', '#FF9900']
 
 /** 查询参数 */
-const queryParams = reactive({
+const queryParams = reactive<{
+  pageNum: number
+  pageSize: number
+  companionId: string
+  minRating: number | null
+  maxRating: number | null
+}>({
   pageNum: 1,
   pageSize: 10,
   companionId: '',
@@ -182,10 +189,10 @@ const queryParams = reactive({
 /**
  * 获取满意度评价分页数据
  */
-async function fetchData() {
+async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const params = {
+    const params: Record<string, any> = {
       page: queryParams.pageNum,
       size: queryParams.pageSize
     }
@@ -205,7 +212,7 @@ async function fetchData() {
       total.value = res.data?.total || 0
       // 计算当前页的平均评分
       if (tableData.value.length > 0) {
-        const sum = tableData.value.reduce((acc, item) => acc + (item.rating || 0), 0)
+        const sum = tableData.value.reduce((acc: number, item: SatisfactionVO) => acc + (item.rating || 0), 0)
         avgRating.value = (sum / tableData.value.length).toFixed(1)
       } else {
         avgRating.value = '0.0'
@@ -222,7 +229,7 @@ async function fetchData() {
 /**
  * 加载陪玩师列表（用于筛选下拉）
  */
-async function loadCompanions() {
+async function loadCompanions(): Promise<void> {
   try {
     const res = await companionApi.getAll()
     if (res.code === 200) {
@@ -234,13 +241,13 @@ async function loadCompanions() {
 }
 
 /** 查询（重置页码） */
-function handleQuery() {
+function handleQuery(): void {
   queryParams.pageNum = 1
   fetchData()
 }
 
 /** 重置筛选条件 */
-function handleReset() {
+function handleReset(): void {
   queryParams.pageNum = 1
   queryParams.companionId = ''
   queryParams.minRating = null
@@ -249,7 +256,7 @@ function handleReset() {
 }
 
 /** 评价总数（计算属性，直接用total） */
-const totalCount = computed(() => total.value)
+const totalCount = computed<number>(() => total.value)
 
 onMounted(() => {
   fetchData()

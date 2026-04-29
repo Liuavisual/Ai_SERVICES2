@@ -138,24 +138,37 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { statsApi } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 import { ChatDotRound, User, Clock, Bell, ChatLineRound, Money, TrendCharts, DataAnalysis } from '@element-plus/icons-vue'
+import type { StatsVO, UserRole, OverviewCard } from '@/types'
 
-const loading = ref(false)
-const period = ref('DAILY')
-const statsData = ref(null)
+/** 加载状态 */
+const loading = ref<boolean>(false)
+/** 统计周期 */
+const period = ref<string>('DAILY')
+/** 统计数据 */
+const statsData = ref<StatsVO | null>(null)
+/** 认证Store */
 const authStore = useAuthStore()
 
-const periodLabel = computed(() => {
-  const map = { DAILY: '今日', WEEKLY: '本周', MONTHLY: '本月', QUARTERLY: '本季', YEARLY: '本年' }
+/**
+ * 统计周期标签
+ * @returns {string} 周期中文文本
+ */
+const periodLabel = computed<string>(() => {
+  const map: Record<string, string> = { DAILY: '今日', WEEKLY: '本周', MONTHLY: '本月', QUARTERLY: '本季', YEARLY: '本年' }
   return map[period.value] || ''
 })
 
-const aiRatio = computed(() => {
+/**
+ * AI回复占比百分比
+ * @returns {number} AI占比（0-100）
+ */
+const aiRatio = computed<number>(() => {
   const o = statsData.value?.overview
   if (!o) return 0
   const total = (o.aiReplyCount || 0) + (o.manualReplyCount || 0)
@@ -163,10 +176,14 @@ const aiRatio = computed(() => {
   return Math.round((o.aiReplyCount || 0) / total * 100)
 })
 
-const overviewCards = computed(() => {
+/**
+ * 概览卡片数据列表
+ * @returns {OverviewCard[]} 卡片数据数组
+ */
+const overviewCards = computed<OverviewCard[]>(() => {
   if (!statsData.value?.overview) return []
   const o = statsData.value.overview
-  const cards = [
+  const cards: OverviewCard[] = [
     { title: '消息总数', value: o.totalMessages || 0, icon: ChatDotRound, color: '#6366F1', iconBg: 'rgba(99,102,241,0.08)', type: 'primary' },
     { title: '服务客户', value: o.totalCustomers || 0, icon: User, color: '#10B981', iconBg: 'rgba(16,185,129,0.08)', type: 'success' }
   ]
@@ -177,26 +194,40 @@ const overviewCards = computed(() => {
   return cards
 })
 
-const getBarHeight = (count) => {
+/**
+ * 计算柱状图高度百分比
+ * @param {number} count - 消息数量
+ * @returns {number} 高度百分比（2-100）
+ */
+const getBarHeight = (count: number): number => {
   if (!statsData.value?.trendData?.length) return 0
   const max = Math.max(...statsData.value.trendData.map(d => d.messageCount || 0), 1)
   return Math.max((count / max) * 100, 2)
 }
 
-const getProgressColor = (val) => {
+/**
+ * 获取进度条颜色
+ * @param {number} val - 百分比值
+ * @returns {string} 颜色值
+ */
+const getProgressColor = (val: number): string => {
   if (val >= 80) return '#10B981'
   if (val >= 50) return '#F59E0B'
   return '#EF4444'
 }
 
-const fetchData = async () => {
+/**
+ * 获取统计数据
+ * 根据用户角色调用不同的API接口
+ */
+const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
-    let res
-    const params = { period: period.value }
-    const role = authStore.role
+    let res: any
+    const params: Record<string, string | number> = { period: period.value }
+    const role = authStore.role as UserRole
     if (role === 'CS_STAFF') {
-      params.csUserId = authStore.userId
+      params.csUserId = authStore.userId || ''
       res = await statsApi.getPersonal(params)
     } else if (role === 'CS_LEADER') {
       res = await statsApi.getTeam(params)
