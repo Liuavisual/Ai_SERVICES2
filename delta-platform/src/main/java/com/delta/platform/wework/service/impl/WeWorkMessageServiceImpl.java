@@ -77,7 +77,6 @@ public class WeWorkMessageServiceImpl extends BaseMessageProcessService implemen
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String handleTextMessage(String externalUserId, String content) {
         log.info("收到企业微信用户消息: externalUserId={}", externalUserId);
 

@@ -1,6 +1,7 @@
 package com.delta.common.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.CustomerSatisfactionDTO;
 import com.delta.common.entity.Companion;
@@ -165,21 +166,21 @@ public class CustomerSatisfactionServiceImpl implements CustomerSatisfactionServ
     }
 
     /**
-     * 获取陪玩师平均评分
+     * 获取陪玩师平均评分（SQL聚合替代全量加载）
      *
      * @param companionId 陪玩师ID
      * @return 平均评分，无评价时返回0.0
      */
     @Override
     public Double getAverageRating(Long companionId) {
-        LambdaQueryWrapper<CustomerSatisfaction> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CustomerSatisfaction::getCompanionId, companionId);
-        wrapper.select(CustomerSatisfaction::getRating);
-        List<CustomerSatisfaction> list = satisfactionMapper.selectList(wrapper);
-        if (list.isEmpty()) {
+        QueryWrapper<CustomerSatisfaction> wrapper = new QueryWrapper<>();
+        wrapper.select("AVG(rating) as avg_rating");
+        wrapper.eq("companion_id", companionId);
+        List<Map<String, Object>> result = satisfactionMapper.selectMaps(wrapper);
+        if (result.isEmpty() || result.get(0).get("avg_rating") == null) {
             return 0.0;
         }
-        return list.stream().mapToInt(CustomerSatisfaction::getRating).average().orElse(0.0);
+        return ((Number) result.get(0).get("avg_rating")).doubleValue();
     }
 
     /**

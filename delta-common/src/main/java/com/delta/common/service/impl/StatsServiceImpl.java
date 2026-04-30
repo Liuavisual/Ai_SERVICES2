@@ -1,6 +1,7 @@
 package com.delta.common.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.MessageConstants;
 import com.delta.common.entity.Message;
@@ -302,6 +303,38 @@ public class StatsServiceImpl implements StatsService {
         return sysUserMapper.selectList(wrapper);
     }
 
+    /**
+     * 按日期分组统计消息数量（单次SQL查询替代循环查询）
+     *
+     * @param customerIds 客户ID列表，为null或空时统计全部
+     * @param start       起始时间
+     * @param end         结束时间
+     * @param aiOnly      是否仅统计AI回复
+     * @return 日期到消息数的映射
+     */
+    private Map<LocalDate, Long> getMessageCountByDateRange(List<Long> customerIds, LocalDateTime start, LocalDateTime end, boolean aiOnly) {
+        QueryWrapper<Message> wrapper = new QueryWrapper<>();
+        wrapper.select("DATE(created_at) as date", "COUNT(*) as count");
+        if (customerIds != null && !customerIds.isEmpty()) {
+            wrapper.in("user_id", customerIds);
+        }
+        if (aiOnly) {
+            wrapper.eq("direction", MessageConstants.DIRECTION_OUT);
+            wrapper.eq("is_ai", true);
+        }
+        wrapper.ge("created_at", start);
+        wrapper.lt("created_at", end);
+        wrapper.groupBy("DATE(created_at)");
+        List<Map<String, Object>> results = messageMapper.selectMaps(wrapper);
+        Map<LocalDate, Long> map = new HashMap<>();
+        for (Map<String, Object> row : results) {
+            LocalDate date = LocalDate.parse(row.get("date").toString());
+            Long count = ((Number) row.get("count")).longValue();
+            map.put(date, count);
+        }
+        return map;
+    }
+
     private List<StatsVO.TrendData> generateTrendData(List<Long> customerIds, String period) {
         List<StatsVO.TrendData> trendData = new ArrayList<>();
         LocalDate today = LocalDate.now();
@@ -319,32 +352,16 @@ public class StatsServiceImpl implements StatsService {
         }
 
         LocalDate startDate = today.minusDays(days - 1);
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = today.plusDays(1).atStartOfDay();
 
-        Map<String, Long> dailyCounts = new HashMap<>();
-        DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        for (int i = 0; i < days; i++) {
-            LocalDate d = startDate.plusDays(i);
-            LocalDateTime dayStart = d.atStartOfDay();
-            LocalDateTime dayEnd = d.atTime(LocalTime.MAX);
-
-            LambdaQueryWrapper<Message> wrapper = new LambdaQueryWrapper<>();
-            if (customerIds != null && !customerIds.isEmpty()) {
-                wrapper.in(Message::getUserId, customerIds);
-            }
-            wrapper.ge(Message::getCreatedAt, dayStart);
-            wrapper.le(Message::getCreatedAt, dayEnd);
-            long count = messageMapper.selectCount(wrapper);
-
-            String dayKey = d.format(dayFormatter);
-            dailyCounts.put(dayKey, count);
-        }
+        // 单次SQL查询获取所有日期的消息统计，替代循环查询
+        Map<LocalDate, Long> msgCountMap = getMessageCountByDateRange(customerIds, startDateTime, endDateTime, false);
 
         for (int i = days - 1; i >= 0; i--) {
             LocalDate d = today.minusDays(i);
             String label = d.format(formatter);
-            String dayKey = d.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            long count = dailyCounts.getOrDefault(dayKey, 0L);
+            long count = msgCountMap.getOrDefault(d, 0L);
             trendData.add(new StatsVO.TrendData(label, (int) count));
         }
 

@@ -73,13 +73,20 @@ async function proactiveRefresh() {
 
 request.interceptors.request.use(
   async config => {
-    // httpOnly Cookie会自动发送，无需手动添加Authorization Header
-    // 但为了兼容性，如果localStorage中有token，仍然添加到Header作为fallback
+    if (config.params) {
+      if ('pageNum' in config.params) {
+        config.params.page = config.params.pageNum
+        delete config.params.pageNum
+      }
+      if ('pageSize' in config.params) {
+        config.params.size = config.params.pageSize
+        delete config.params.pageSize
+      }
+    }
     const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    // httpOnly Cookie方案：确保每次请求都携带Cookie
     config.withCredentials = true
     if (shouldProactivelyRefresh() && !config.url?.includes('/auth/')) {
       await proactiveRefresh()

@@ -34,7 +34,6 @@ vi.mock('element-plus', () => ({
   }
 }))
 
-import axios from 'axios'
 import request from '@/utils/request'
 
 describe('HTTP请求工具测试', () => {
@@ -88,7 +87,7 @@ describe('HTTP请求工具测试', () => {
       try {
         await request.get('/test')
         expect(adapterSpy).toHaveBeenCalled()
-        const config = adapterSpy.mock.calls[0][0]
+        const config = adapterSpy.mock.calls[0]![0]!
         expect(config.headers.Authorization).toBe('Bearer test-token-123')
       } finally {
         request.defaults.adapter = originalAdapter
@@ -113,7 +112,7 @@ describe('HTTP请求工具测试', () => {
       try {
         await request.get('/test')
         expect(adapterSpy).toHaveBeenCalled()
-        const config = adapterSpy.mock.calls[0][0]
+        const config = adapterSpy.mock.calls[0]![0]!
         expect(config.headers.Authorization).toBeFalsy()
       } finally {
         request.defaults.adapter = originalAdapter
@@ -134,8 +133,33 @@ describe('HTTP请求工具测试', () => {
 
       try {
         await request.get('/test')
-        const config = adapterSpy.mock.calls[0][0]
+        const config = adapterSpy.mock.calls[0]![0]!
         expect(config.withCredentials).toBe(true)
+      } finally {
+        request.defaults.adapter = originalAdapter
+      }
+    })
+
+    it('应将pageNum映射为page，pageSize映射为size', async () => {
+      const adapterSpy = vi.fn(() => Promise.resolve({
+        data: { code: 200, message: 'ok', data: null },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+        request: {}
+      }))
+      const originalAdapter = request.defaults.adapter
+      request.defaults.adapter = adapterSpy
+
+      try {
+        await request.get('/test', { params: { pageNum: 2, pageSize: 20, keyword: 'test' } })
+        const config = adapterSpy.mock.calls[0]![0]!
+        expect(config.params.page).toBe(2)
+        expect(config.params.size).toBe(20)
+        expect(config.params.pageNum).toBeUndefined()
+        expect(config.params.pageSize).toBeUndefined()
+        expect(config.params.keyword).toBe('test')
       } finally {
         request.defaults.adapter = originalAdapter
       }

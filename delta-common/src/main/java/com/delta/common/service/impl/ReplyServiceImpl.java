@@ -173,12 +173,19 @@ public class ReplyServiceImpl implements ReplyService {
         return content;
     }
 
+    /** 关键词回复缓存空值标记（防止缓存穿透） */
+    private static final String KEYWORD_REPLY_NULL_MARKER = "__NULL__";
+
+    /** 关键词回复空值缓存TTL（秒） */
+    private static final long KEYWORD_REPLY_NULL_TTL_SECONDS = 30L;
+
     @Override
     public String getKeywordReply(String keyword) {
         String cacheKey = KEYWORD_REPLY_PREFIX + keyword;
         Object cached = redisService.get(cacheKey);
         if (cached != null) {
-            return cached.toString();
+            String value = cached.toString();
+            return KEYWORD_REPLY_NULL_MARKER.equals(value) ? null : value;
         }
 
         LambdaQueryWrapper<Reply> wrapper = new LambdaQueryWrapper<>();
@@ -192,6 +199,8 @@ public class ReplyServiceImpl implements ReplyService {
         
         if (content != null) {
             redisService.set(cacheKey, content);
+        } else {
+            redisService.set(cacheKey, KEYWORD_REPLY_NULL_MARKER, KEYWORD_REPLY_NULL_TTL_SECONDS, java.util.concurrent.TimeUnit.SECONDS);
         }
         return content;
     }

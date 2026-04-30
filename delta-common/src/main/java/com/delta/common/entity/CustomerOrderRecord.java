@@ -2,6 +2,8 @@ package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -16,6 +18,12 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("customer_order_record")
+@Table(name = "customer_order_record", indexes = {
+    @Index(name = "idx_cor_user_id", columnList = "user_id"),
+    @Index(name = "idx_cor_companion_id", columnList = "companion_id"),
+    @Index(name = "idx_cor_status", columnList = "status"),
+    @Index(name = "idx_cor_order_time", columnList = "order_time")
+})
 public class CustomerOrderRecord extends BaseEntity {
 
     private Long userId;

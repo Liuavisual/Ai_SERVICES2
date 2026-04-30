@@ -621,17 +621,32 @@ public abstract class BaseMessageProcessService {
         return trimmed;
     }
 
+    /** 人格提示词Redis缓存Key */
+    private static final String PERSONALITY_PROMPT_CACHE_KEY = "delta:ai:personality_prompt";
+
+    /** 人格提示词缓存TTL（秒） */
+    private static final long PERSONALITY_PROMPT_CACHE_TTL_SECONDS = 600L;
+
     /**
-     * 构建AI人格提示词
+     * 构建AI人格提示词（带Redis缓存，TTL 10分钟）
      * <p>
      * 从俱乐部配置获取人格风格，结合服务项目、活动套餐、
      * 陪玩等级和趣味玩法生成完整的系统提示词。
+     * 缓存完整提示词避免每次消息处理5-7次DB查询。
      * </p>
      *
      * @return 人格提示词文本
      */
     protected String buildPersonalityPrompt() {
         try {
+            // 先查缓存
+            Object cached = redisService.get(PERSONALITY_PROMPT_CACHE_KEY);
+            if (cached != null) {
+                log.debug("【消息处理】人格提示词命中缓存 | key={}", PERSONALITY_PROMPT_CACHE_KEY);
+                return cached.toString();
+            }
+
+            // 缓存未命中，构建提示词
             LambdaQueryWrapper<ClubConfig> wrapper = new LambdaQueryWrapper<>();
             wrapper.last("LIMIT 1");
             ClubConfig clubConfig = clubConfigMapper.selectOne(wrapper);
@@ -649,9 +664,14 @@ public abstract class BaseMessageProcessService {
 
             String awarenessPrompt = AiPersonalityConstants.getServiceAwarenessPrompt(serviceItems, activePackages, companionLevels, funGameplay);
 
-            log.debug("【消息处理】人格提示词构建完成 | personality={} | 提示词长度={}", personality, (systemPrompt + awarenessPrompt).length());
+            String result = systemPrompt + awarenessPrompt;
 
-            return systemPrompt + awarenessPrompt;
+            // 缓存结果，TTL 10分钟
+            redisService.set(PERSONALITY_PROMPT_CACHE_KEY, result, PERSONALITY_PROMPT_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+
+            log.debug("【消息处理】人格提示词构建完成并缓存 | personality={} | 提示词长度={}", personality, result.length());
+
+            return result;
         } catch (Exception e) {
             log.debug("【消息处理】构建AI人格提示词失败", e);
             return "";

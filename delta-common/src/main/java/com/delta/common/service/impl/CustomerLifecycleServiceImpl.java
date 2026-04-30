@@ -1,6 +1,7 @@
 package com.delta.common.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.delta.common.constant.CustomerLifecycleConstants;
 import com.delta.common.entity.CustomerProfile;
 import com.delta.common.entity.User;
@@ -18,6 +19,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 客户生命周期服务实现
@@ -54,7 +57,6 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
             return CustomerLifecycleConstants.STAGE_NEW;
         }
 
-        // 从客户画像获取数据
         CustomerProfile profile = customerProfileMapper.selectOne(
                 new LambdaQueryWrapper<CustomerProfile>().eq(CustomerProfile::getUserId, userId)
         );
@@ -67,7 +69,6 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
             totalMessages = profile.getTotalMessages() != null ? profile.getTotalMessages() : 0;
         }
 
-        // 如果画像不存在或无活跃时间，视为新客户
         if (lastActiveAt == null) {
             return CustomerLifecycleConstants.STAGE_NEW;
         }
@@ -75,7 +76,38 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
         LocalDateTime now = LocalDateTime.now();
         long daysSinceLastActive = Duration.between(lastActiveAt, now).toDays();
 
-        // 按优先级判断：已流失 > 流失风险 > 忠实 > 活跃 > 新客户
+        if (daysSinceLastActive > CustomerLifecycleConstants.CHURNED_DAYS_THRESHOLD) {
+            return CustomerLifecycleConstants.STAGE_CHURNED;
+        }
+        if (daysSinceLastActive > CustomerLifecycleConstants.AT_RISK_DAYS_THRESHOLD) {
+            return CustomerLifecycleConstants.STAGE_AT_RISK;
+        }
+        if (totalMessages > 50) {
+            return CustomerLifecycleConstants.STAGE_LOYAL;
+        }
+        if (totalMessages > 5) {
+            return CustomerLifecycleConstants.STAGE_ACTIVE;
+        }
+        return CustomerLifecycleConstants.STAGE_NEW;
+    }
+
+    /**
+     * 根据画像数据直接计算生命周期阶段（无需额外DB查询）
+     *
+     * @param profile 客户画像
+     * @return 生命周期阶段标识
+     */
+    private String determineStageFromProfile(CustomerProfile profile) {
+        LocalDateTime lastActiveAt = profile.getLastActiveAt();
+        int totalMessages = profile.getTotalMessages() != null ? profile.getTotalMessages() : 0;
+
+        if (lastActiveAt == null) {
+            return CustomerLifecycleConstants.STAGE_NEW;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        long daysSinceLastActive = Duration.between(lastActiveAt, now).toDays();
+
         if (daysSinceLastActive > CustomerLifecycleConstants.CHURNED_DAYS_THRESHOLD) {
             return CustomerLifecycleConstants.STAGE_CHURNED;
         }
@@ -93,8 +125,6 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
 
     /**
      * 获取流失风险客户列表
-     * <p>
-     * 查询客户画像中最后活跃时间在 AT_RISK 和 CHURNED 阈值之间的客户。</p>
      *
      * @return 流失风险客户VO列表
      */
@@ -114,8 +144,6 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
 
     /**
      * 获取已流失客户列表
-     * <p>
-     * 查询客户画像中最后活跃时间超过 CHURNED 阈值的客户。</p>
      *
      * @return 已流失客户VO列表
      */
@@ -132,58 +160,85 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
     }
 
     /**
-     * 更新客户生命周期标签
+     * 更新客户生命周期标签（批量SQL更新替代N+1循环）
      * <p>
-     * 遍历所有有活跃时间的客户画像，根据生命周期阶段自动添加对应标签，
-     * 同时更新画像中的 lifecycleStage 字段。</p>
+     * 使用LambdaUpdateWrapper按条件批量更新，避免逐条select+update。
+     * 每个阶段一条UPDATE语句，共5条SQL替代原先N*2条。
+     * </p>
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCustomerLifecycleTags() {
         log.info("开始更新客户生命周期标签...");
 
-        LambdaQueryWrapper<CustomerProfile> wrapper = new LambdaQueryWrapper<>();
-        wrapper.isNotNull(CustomerProfile::getLastActiveAt);
-        List<CustomerProfile> profiles = customerProfileMapper.selectList(wrapper);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime churnedThreshold = now.minusDays(CustomerLifecycleConstants.CHURNED_DAYS_THRESHOLD);
+        LocalDateTime atRiskThreshold = now.minusDays(CustomerLifecycleConstants.AT_RISK_DAYS_THRESHOLD);
 
         int updated = 0;
-        for (CustomerProfile profile : profiles) {
-            String stage = determineLifecycleStage(profile.getUserId());
 
-            // 更新画像中的生命周期阶段
-            profile.setLifecycleStage(stage);
+        LambdaUpdateWrapper<CustomerProfile> churnedWrapper = new LambdaUpdateWrapper<>();
+        churnedWrapper.set(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_CHURNED)
+                .isNotNull(CustomerProfile::getLastActiveAt)
+                .lt(CustomerProfile::getLastActiveAt, churnedThreshold)
+                .ne(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_CHURNED);
+        updated += customerProfileMapper.update(null, churnedWrapper);
 
-            // 根据阶段确定标签
-            String tag = switch (stage) {
-                case CustomerLifecycleConstants.STAGE_AT_RISK -> CustomerLifecycleConstants.TAG_AT_RISK;
-                case CustomerLifecycleConstants.STAGE_CHURNED -> CustomerLifecycleConstants.TAG_AT_RISK;
-                case CustomerLifecycleConstants.STAGE_LOYAL -> CustomerLifecycleConstants.TAG_LOYAL;
-                case CustomerLifecycleConstants.STAGE_NEW -> CustomerLifecycleConstants.TAG_NEW;
-                default -> null;
-            };
+        LambdaUpdateWrapper<CustomerProfile> atRiskWrapper = new LambdaUpdateWrapper<>();
+        atRiskWrapper.set(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_AT_RISK)
+                .isNotNull(CustomerProfile::getLastActiveAt)
+                .ge(CustomerProfile::getLastActiveAt, churnedThreshold)
+                .lt(CustomerProfile::getLastActiveAt, atRiskThreshold)
+                .ne(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_AT_RISK);
+        updated += customerProfileMapper.update(null, atRiskWrapper);
 
-            // 如果有标签且当前标签中不包含，则追加
-            if (tag != null) {
-                String currentTags = profile.getTags();
-                if (currentTags == null || !currentTags.contains(tag)) {
-                    String newTags = currentTags == null ? tag : currentTags + "," + tag;
-                    profile.setTags(newTags);
-                }
-            }
+        LambdaUpdateWrapper<CustomerProfile> loyalWrapper = new LambdaUpdateWrapper<>();
+        loyalWrapper.set(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_LOYAL)
+                .isNotNull(CustomerProfile::getLastActiveAt)
+                .ge(CustomerProfile::getLastActiveAt, atRiskThreshold)
+                .gt(CustomerProfile::getTotalMessages, 50)
+                .ne(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_LOYAL);
+        updated += customerProfileMapper.update(null, loyalWrapper);
 
-            customerProfileMapper.updateById(profile);
-            updated++;
-        }
+        LambdaUpdateWrapper<CustomerProfile> activeWrapper = new LambdaUpdateWrapper<>();
+        activeWrapper.set(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_ACTIVE)
+                .isNotNull(CustomerProfile::getLastActiveAt)
+                .ge(CustomerProfile::getLastActiveAt, atRiskThreshold)
+                .le(CustomerProfile::getTotalMessages, 50)
+                .gt(CustomerProfile::getTotalMessages, 5)
+                .ne(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_ACTIVE);
+        updated += customerProfileMapper.update(null, activeWrapper);
+
+        LambdaUpdateWrapper<CustomerProfile> newWrapper = new LambdaUpdateWrapper<>();
+        newWrapper.set(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_NEW)
+                .isNotNull(CustomerProfile::getLastActiveAt)
+                .ge(CustomerProfile::getLastActiveAt, atRiskThreshold)
+                .le(CustomerProfile::getTotalMessages, 5)
+                .ne(CustomerProfile::getLifecycleStage, CustomerLifecycleConstants.STAGE_NEW);
+        updated += customerProfileMapper.update(null, newWrapper);
+
         log.info("客户生命周期标签更新完成，共更新{}个客户", updated);
     }
 
     /**
-     * 将客户画像列表转换为CustomerVO列表
+     * 将客户画像列表转换为CustomerVO列表（批量查询替代N+1）
      *
      * @param profiles 客户画像列表
      * @return 客户VO列表
      */
     private List<CustomerVO> convertToCustomerVOList(List<CustomerProfile> profiles) {
+        if (profiles.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Long> userIds = profiles.stream()
+                .map(CustomerProfile::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, User> userMap = userMapper.selectByIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         List<CustomerVO> result = new ArrayList<>();
         for (CustomerProfile profile : profiles) {
             CustomerVO vo = new CustomerVO();
@@ -191,15 +246,13 @@ public class CustomerLifecycleServiceImpl implements CustomerLifecycleService {
             vo.setLastActiveAt(profile.getLastActiveAt());
             vo.setMessageCount(profile.getTotalMessages());
 
-            // 从用户表获取基本信息
-            User user = userMapper.selectById(profile.getUserId());
+            User user = userMap.get(profile.getUserId());
             if (user != null) {
                 vo.setNickname(user.getNickname());
                 vo.setPlatform(user.getPlatform());
             }
 
-            // 设置生命周期阶段
-            String stage = determineLifecycleStage(profile.getUserId());
+            String stage = determineStageFromProfile(profile);
             vo.setLifecycleStage(stage);
 
             result.add(vo);

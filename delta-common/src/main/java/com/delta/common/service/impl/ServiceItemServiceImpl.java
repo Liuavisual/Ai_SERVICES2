@@ -21,7 +21,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,8 +46,12 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         LambdaQueryWrapper<ServiceItem> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ServiceItem::getClubConfigId, clubConfigId);
         wrapper.orderByAsc(ServiceItem::getSortOrder);
-        return serviceItemMapper.selectList(wrapper).stream()
-                .map(this::convertToVO)
+        List<ServiceItem> items = serviceItemMapper.selectList(wrapper);
+        if (items.isEmpty()) return Collections.emptyList();
+
+        Map<Long, GameConfig> gameConfigMap = batchQueryGameConfig(items);
+        return items.stream()
+                .map(item -> convertToVO(item, gameConfigMap))
                 .collect(Collectors.toList());
     }
 
@@ -53,8 +62,12 @@ public class ServiceItemServiceImpl implements ServiceItemService {
                 .or()
                 .isNull(ServiceItem::getGameConfigId);
         wrapper.orderByAsc(ServiceItem::getSortOrder);
-        return serviceItemMapper.selectList(wrapper).stream()
-                .map(this::convertToVO)
+        List<ServiceItem> items = serviceItemMapper.selectList(wrapper);
+        if (items.isEmpty()) return Collections.emptyList();
+
+        Map<Long, GameConfig> gameConfigMap = batchQueryGameConfig(items);
+        return items.stream()
+                .map(item -> convertToVO(item, gameConfigMap))
                 .collect(Collectors.toList());
     }
 
@@ -64,7 +77,8 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         if (item == null) {
             throw new BusinessException("服务项目不存在");
         }
-        ServiceItemVO vo = convertToVO(item);
+        Map<Long, GameConfig> gameConfigMap = batchQueryGameConfig(List.of(item));
+        ServiceItemVO vo = convertToVO(item, gameConfigMap);
         vo.setPriceRules(getPriceRules(id));
         return vo;
     }
@@ -107,8 +121,12 @@ public class ServiceItemServiceImpl implements ServiceItemService {
     public List<ServicePriceRuleVO> getPriceRules(Long serviceItemId) {
         LambdaQueryWrapper<ServicePriceRule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ServicePriceRule::getServiceItemId, serviceItemId);
-        return servicePriceRuleMapper.selectList(wrapper).stream()
-                .map(this::convertPriceRuleToVO)
+        List<ServicePriceRule> rules = servicePriceRuleMapper.selectList(wrapper);
+        if (rules.isEmpty()) return Collections.emptyList();
+
+        Map<Long, CompanionLevel> levelMap = batchQueryCompanionLevels(rules);
+        return rules.stream()
+                .map(rule -> convertPriceRuleToVO(rule, levelMap))
                 .collect(Collectors.toList());
     }
 
@@ -146,11 +164,50 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         servicePriceRuleMapper.deleteById(id);
     }
 
-    private ServiceItemVO convertToVO(ServiceItem item) {
+    /**
+     * 批量查询GameConfig，返回ID到实体的映射
+     *
+     * @param items 服务项目列表
+     * @return GameConfig ID到实体的映射
+     */
+    private Map<Long, GameConfig> batchQueryGameConfig(List<ServiceItem> items) {
+        Set<Long> gameConfigIds = items.stream()
+                .map(ServiceItem::getGameConfigId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (gameConfigIds.isEmpty()) return Collections.emptyMap();
+        return gameConfigMapper.selectBatchIds(gameConfigIds).stream()
+                .collect(Collectors.toMap(GameConfig::getId, Function.identity()));
+    }
+
+    /**
+     * 批量查询CompanionLevel，返回ID到实体的映射
+     *
+     * @param rules 价格规则列表
+     * @return CompanionLevel ID到实体的映射
+     */
+    private Map<Long, CompanionLevel> batchQueryCompanionLevels(List<ServicePriceRule> rules) {
+        Set<Long> levelIds = rules.stream()
+                .map(ServicePriceRule::getCompanionLevelId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (levelIds.isEmpty()) return Collections.emptyMap();
+        return companionLevelMapper.selectBatchIds(levelIds).stream()
+                .collect(Collectors.toMap(CompanionLevel::getId, Function.identity()));
+    }
+
+    /**
+     * 将ServiceItem实体转换为VO（使用预查询Map避免N+1查询）
+     *
+     * @param item          服务项目实体
+     * @param gameConfigMap GameConfig ID到实体的映射
+     * @return 服务项目VO
+     */
+    private ServiceItemVO convertToVO(ServiceItem item, Map<Long, GameConfig> gameConfigMap) {
         ServiceItemVO vo = new ServiceItemVO();
         BeanUtil.copyProperties(item, vo);
         if (item.getGameConfigId() != null) {
-            GameConfig game = gameConfigMapper.selectById(item.getGameConfigId());
+            GameConfig game = gameConfigMap.get(item.getGameConfigId());
             if (game != null) {
                 vo.setGameName(game.getGameName());
             }
@@ -158,11 +215,18 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         return vo;
     }
 
-    private ServicePriceRuleVO convertPriceRuleToVO(ServicePriceRule rule) {
+    /**
+     * 将ServicePriceRule实体转换为VO（使用预查询Map避免N+1查询）
+     *
+     * @param rule     价格规则实体
+     * @param levelMap CompanionLevel ID到实体的映射
+     * @return 价格规则VO
+     */
+    private ServicePriceRuleVO convertPriceRuleToVO(ServicePriceRule rule, Map<Long, CompanionLevel> levelMap) {
         ServicePriceRuleVO vo = new ServicePriceRuleVO();
         BeanUtil.copyProperties(rule, vo);
         if (rule.getCompanionLevelId() != null) {
-            CompanionLevel level = companionLevelMapper.selectById(rule.getCompanionLevelId());
+            CompanionLevel level = levelMap.get(rule.getCompanionLevelId());
             if (level != null) {
                 vo.setLevelName(level.getLevelName());
             }

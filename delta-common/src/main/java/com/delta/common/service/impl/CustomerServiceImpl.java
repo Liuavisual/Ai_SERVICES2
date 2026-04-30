@@ -2,6 +2,7 @@ package com.delta.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,11 +88,23 @@ public class CustomerServiceImpl implements CustomerService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<Long, Integer> messageCountMap = userIds.isEmpty() ? Map.of() :
-                messageMapper.selectList(new LambdaQueryWrapper<Message>()
-                                .in(Message::getUserId, userIds))
-                        .stream()
-                        .collect(Collectors.groupingBy(Message::getUserId, Collectors.collectingAndThen(Collectors.counting(), Long::intValue)));
+        // 使用SQL聚合查询替代selectList全量加载，仅统计消息数量
+        Map<Long, Integer> messageCountMap;
+        if (userIds.isEmpty()) {
+            messageCountMap = Map.of();
+        } else {
+            QueryWrapper<Message> msgWrapper = new QueryWrapper<>();
+            msgWrapper.select("user_id", "COUNT(*) as count");
+            msgWrapper.in("user_id", userIds);
+            msgWrapper.groupBy("user_id");
+            List<Map<String, Object>> msgCountResults = messageMapper.selectMaps(msgWrapper);
+            messageCountMap = new HashMap<>();
+            for (Map<String, Object> row : msgCountResults) {
+                Long userId = ((Number) row.get("user_id")).longValue();
+                Integer count = ((Number) row.get("count")).intValue();
+                messageCountMap.put(userId, count);
+            }
+        }
 
         Map<Long, SysUser> csUserMap = csUserIds.isEmpty() ? Map.of() :
                 sysUserMapper.selectByIds(csUserIds).stream()

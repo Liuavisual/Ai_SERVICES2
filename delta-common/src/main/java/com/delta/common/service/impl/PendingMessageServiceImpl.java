@@ -2,6 +2,7 @@ package com.delta.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.AiCustomerServiceConstants;
 import com.delta.common.constant.BusinessStatusConstants;
@@ -37,6 +38,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -346,6 +348,11 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         }
     }
 
+    /**
+     * 查找负载最低的客服（单次SQL分组统计替代N次循环查询）
+     *
+     * @return 负载最低客服的ID，无可用客服返回null
+     */
     private Long findLeastLoadedCsStaff() {
         try {
             LambdaQueryWrapper<SysUser> staffWrapper = new LambdaQueryWrapper<>();
@@ -356,13 +363,26 @@ public class PendingMessageServiceImpl implements PendingMessageService {
                 return null;
             }
 
+            // 单次SQL按客服分组统计负载，替代循环内逐个查询
+            List<Long> csUserIds = csStaffList.stream().map(SysUser::getId).collect(Collectors.toList());
+            QueryWrapper<PendingMessage> loadWrapper = new QueryWrapper<>();
+            loadWrapper.select("assigned_cs_user_id", "COUNT(*) as count");
+            loadWrapper.in("assigned_cs_user_id", csUserIds);
+            loadWrapper.in("status", BusinessStatusConstants.PENDING_STATUS_PENDING, BusinessStatusConstants.PENDING_STATUS_PROCESSING);
+            loadWrapper.groupBy("assigned_cs_user_id");
+            List<Map<String, Object>> loadResults = pendingMessageMapper.selectMaps(loadWrapper);
+
+            Map<Long, Long> loadMap = new HashMap<>();
+            for (Map<String, Object> row : loadResults) {
+                Long csUserId = ((Number) row.get("assigned_cs_user_id")).longValue();
+                Long count = ((Number) row.get("count")).longValue();
+                loadMap.put(csUserId, count);
+            }
+
             Long leastLoadedId = null;
             long minLoad = Long.MAX_VALUE;
             for (SysUser staff : csStaffList) {
-                LambdaQueryWrapper<PendingMessage> loadWrapper = new LambdaQueryWrapper<>();
-                loadWrapper.eq(PendingMessage::getAssignedCsUserId, staff.getId());
-                loadWrapper.in(PendingMessage::getStatus, BusinessStatusConstants.PENDING_STATUS_PENDING, BusinessStatusConstants.PENDING_STATUS_PROCESSING);
-                long load = pendingMessageMapper.selectCount(loadWrapper);
+                long load = loadMap.getOrDefault(staff.getId(), 0L);
                 if (load < minLoad) {
                     minLoad = load;
                     leastLoadedId = staff.getId();

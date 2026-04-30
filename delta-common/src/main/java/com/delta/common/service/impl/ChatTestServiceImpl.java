@@ -54,7 +54,6 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public ChatTestReplyVO sendMessage(ChatTestSendDTO sendDTO) {
         String content = sendDTO.getContent();
         String platform = sendDTO.getPlatform();
