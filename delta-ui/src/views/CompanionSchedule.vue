@@ -207,8 +207,6 @@ const props = defineProps<{
   companionId?: number | null
 }>()
 
-defineExpose({ refresh: fetchSchedules })
-
 const emit = defineEmits<{ refresh: [] }>()
 
 const companionList = ref<CompanionVO[]>([])
@@ -291,6 +289,8 @@ const fetchSchedules = async (): Promise<void> => {
     console.error('获取排班失败', error)
   }
 }
+
+defineExpose({ refresh: fetchSchedules })
 
 const onCompanionChange = (): void => {
   schedules.value = []
