@@ -39,7 +39,7 @@
             <el-input v-model="queryParams.keyword" placeholder="搜索..." clearable style="width:140px" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleQuery">查询</el-button>
+            <el-button type="primary" @click="debouncedQuery(0)">查询</el-button>
             <el-button @click="handleReset">重置</el-button>
           </el-form-item>
         </el-form>
@@ -63,8 +63,13 @@
         />
       </div>
 
+      <!-- 骨架屏：首次加载时显示 -->
+      <div v-if="loading && tableData.length === 0" class="skeleton-wrapper">
+        <el-skeleton :rows="8" animated />
+      </div>
+
       <!-- 普通表格模式 -->
-      <div v-show="!virtualMode">
+      <div v-show="!virtualMode && !(loading && tableData.length === 0)">
         <el-table :data="tableData" v-loading="loading" stripe>
           <el-table-column type="index" label="序号" width="70" />
           <el-table-column label="客户" width="140">
@@ -121,19 +126,15 @@
       </div>
 
       <!-- 虚拟滚动表格模式 -->
-      <div v-show="virtualMode" class="virtual-table-wrapper" v-loading="loading">
-        <el-auto-resizer>
-          <template #default="{ height, width }">
-            <el-table-v2
-              :columns="v2Columns"
-              :data="tableData"
-              :width="width"
-              :height="height"
-              :row-height="50"
-              fixed
-            />
-          </template>
-        </el-auto-resizer>
+      <div v-show="virtualMode && !(loading && tableData.length === 0)" class="virtual-table-wrapper" v-loading="loading">
+        <el-table-v2
+          :columns="v2Columns"
+          :data="tableData"
+          :width="v2Width"
+          :height="500"
+          :row-height="50"
+          fixed
+        />
       </div>
 
       <el-pagination
@@ -219,11 +220,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, h, onMounted, onUnmounted, inject } from 'vue'
+import { ref, reactive, computed, h, onMounted, onUnmounted, onActivated, onDeactivated, inject } from 'vue'
 import { ElMessage, ElTag, ElButton } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
 import { pendingMessageApi, customerApi, downloadExcel } from '@/api'
-import type { Result, PageResult, PendingMessageVO, PendingMessageStatus, CustomerVO } from '@/types'
+import type { Result, PageResult, PendingMessageVO, CustomerVO } from '@/types'
 
 const loading = ref<boolean>(false)
 const submitLoading = ref<boolean>(false)
@@ -233,6 +234,26 @@ const refreshPendingCount: (() => void) | undefined = inject('refreshPendingCoun
 const now = ref<number>(Date.now())
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 const virtualMode = ref<boolean>(false)
+const v2Width = ref<number>(1200)
+/** 页面是否处于激活状态（用于控制定时器） */
+const isActive = ref<boolean>(true)
+
+/** 防抖定时器 */
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * 防抖包装的查询函数
+ * @param delay - 防抖延迟时间（毫秒），默认300ms
+ */
+const debouncedQuery = (delay: number = 300): void => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+  debounceTimer = setTimeout(() => {
+    handleQuery()
+    debounceTimer = null
+  }, delay)
+}
 
 let userInfo: Record<string, any> = {}
 try {
@@ -243,15 +264,15 @@ const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role 
 const queryParams = reactive<{
   pageNum: number
   pageSize: number
-  status: PendingMessageStatus | null
+  status: string | null
   platform: string | null
   keyword: string
 }>({ pageNum: 1, pageSize: 20, status: null, platform: null, keyword: '' })
 const processDialogVisible = ref<boolean>(false)
 const processForm = reactive<{
   id: string | null
-  status: PendingMessageStatus | ''
-  currentStatus: PendingMessageStatus | ''
+  status: string | ''
+  currentStatus: string | ''
   remark: string
   contextSummary: string
   userNickname: string
@@ -276,9 +297,9 @@ const getRemaining = (row: PendingMessageVO): number => {
 const overdueCount = computed<number>(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) <= 0).length)
 const urgentCount = computed<number>(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) > 0 && getRemaining(r) < 120).length)
 
-const getStatusType = (s: PendingMessageStatus): string => ({ pending: 'warning', processing: 'primary', resolved: 'success' }[s] || 'info')
+const getStatusType = (s: string): string => ({ pending: 'warning', processing: 'primary', resolved: 'success' }[s] || 'info')
 
-const getStatusText = (s: PendingMessageStatus): string => ({ pending: '待处理', processing: '处理中', resolved: '已解决' }[s] || s)
+const getStatusText = (s: string): string => ({ pending: '待处理', processing: '处理中', resolved: '已解决' }[s] || s)
 
 const getPlatformText = (p: string): string => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
 
@@ -312,17 +333,23 @@ const v2Columns = computed(() => [
     dataKey: 'userNickname',
     title: '客户',
     width: 140,
-    cellRenderer: ({ row }: { row: PendingMessageVO }) => h('div', { style: 'display:flex;align-items:center;gap:4px' }, [
-      h('span', { class: 'customer-name' }, row.userNickname),
-      h(ElTag, { size: 'small', type: getPlatformType(row.platform), class: 'platform-tag' }, () => getPlatformText(row.platform))
-    ])
+    cellRenderer: ({ rowData }: { rowData: PendingMessageVO }) => {
+      if (!rowData) return h('span', {}, '—')
+      return h('div', { style: 'display:flex;align-items:center;gap:4px' }, [
+        h('span', { class: 'customer-name' }, rowData.userNickname || '—'),
+        h(ElTag, { size: 'small', type: getPlatformType(rowData.platform), class: 'platform-tag' }, () => getPlatformText(rowData.platform))
+      ])
+    }
   },
   {
     key: 'interventionType',
     dataKey: 'interventionType',
     title: '介入类型',
     width: 120,
-    cellRenderer: ({ row }: { row: PendingMessageVO }) => h(ElTag, { size: 'small', type: getInterventionTypeTag(row.interventionType) }, () => row.interventionTypeDesc || row.interventionType)
+    cellRenderer: ({ rowData }: { rowData: PendingMessageVO }) => {
+      if (!rowData) return h('span', {}, '—')
+      return h(ElTag, { size: 'small', type: getInterventionTypeTag(rowData.interventionType) }, () => rowData.interventionTypeDesc || rowData.interventionType || '—')
+    }
   },
   { key: 'messageContent', dataKey: 'messageContent', title: '原始消息', width: 180 },
   {
@@ -330,16 +357,17 @@ const v2Columns = computed(() => [
     dataKey: 'status',
     title: '状态',
     width: 110,
-    cellRenderer: ({ cellData }: { cellData: PendingMessageStatus }) => h(ElTag, { size: 'small', type: getStatusType(cellData), effect: 'light' }, () => getStatusText(cellData))
+    cellRenderer: ({ cellData }: { cellData: string }) => h(ElTag, { size: 'small', type: getStatusType(cellData), effect: 'light' }, () => getStatusText(cellData))
   },
   {
     key: 'deadline',
     dataKey: 'deadline',
     title: '剩余时间',
     width: 140,
-    cellRenderer: ({ row }: { row: PendingMessageVO }) => {
-      if (row.status === 'pending' || row.status === 'processing') {
-        return h('span', { class: getCountdownClass(row) }, formatCountdown(row))
+    cellRenderer: ({ rowData }: { rowData: PendingMessageVO }) => {
+      if (!rowData) return h('span', { class: 'muted-text' }, '—')
+      if (rowData.status === 'pending' || rowData.status === 'processing') {
+        return h('span', { class: getCountdownClass(rowData) }, formatCountdown(rowData))
       }
       return h('span', { class: 'muted-text' }, '—')
     }
@@ -369,15 +397,16 @@ const v2Columns = computed(() => [
     title: '操作',
     width: 200,
     fixed: 'right',
-    cellRenderer: ({ row }: { row: PendingMessageVO }) => {
+    cellRenderer: ({ rowData }: { rowData: PendingMessageVO }) => {
+      if (!rowData) return h('span', {}, '')
       const buttons = []
-      if (row.status === 'pending') {
-        buttons.push(h(ElButton, { link: true, type: 'primary', size: 'small', onClick: () => handleProcess(row, 'processing') }, () => '接手'))
-        buttons.push(h(ElButton, { link: true, type: 'success', size: 'small', onClick: () => handleProcess(row, 'resolved') }, () => '完成'))
-      } else if (row.status === 'processing') {
-        buttons.push(h(ElButton, { link: true, type: 'success', size: 'small', onClick: () => handleProcess(row, 'resolved') }, () => '完成'))
+      if (rowData.status === 'pending') {
+        buttons.push(h(ElButton, { link: true, type: 'primary', size: 'small', onClick: () => handleProcess(rowData, 'processing') }, () => '接手'))
+        buttons.push(h(ElButton, { link: true, type: 'success', size: 'small', onClick: () => handleProcess(rowData, 'resolved') }, () => '完成'))
+      } else if (rowData.status === 'processing') {
+        buttons.push(h(ElButton, { link: true, type: 'success', size: 'small', onClick: () => handleProcess(rowData, 'resolved') }, () => '完成'))
       }
-      buttons.push(h(ElButton, { link: true, size: 'small', onClick: () => handleViewCustomer(row) }, () => '查看'))
+      buttons.push(h(ElButton, { link: true, size: 'small', onClick: () => handleViewCustomer(rowData) }, () => '查看'))
       return h('div', buttons)
     }
   }
@@ -410,7 +439,7 @@ const handleReset = (): void => {
   handleQuery()
 }
 
-const handleProcess = (row: PendingMessageVO, status: PendingMessageStatus): void => {
+const handleProcess = (row: PendingMessageVO, status: string): void => {
   processForm.id = row.id
   processForm.status = status
   processForm.currentStatus = row.status
@@ -482,15 +511,54 @@ const handleExport = (): void => {
   downloadExcel('/pending-messages/export', params, '待办事项.xlsx')
 }
 
-onMounted(() => {
-  handleQuery()
+/**
+ * 启动倒计时定时器
+ */
+const startCountdownTimer = (): void => {
+  if (countdownTimer) return
   countdownTimer = setInterval(tickNow, 1000)
-})
+}
 
-onUnmounted(() => {
+/**
+ * 停止倒计时定时器
+ */
+const stopCountdownTimer = (): void => {
   if (countdownTimer) {
     clearInterval(countdownTimer)
     countdownTimer = null
+  }
+}
+
+onMounted(() => {
+  handleQuery()
+  startCountdownTimer()
+})
+
+onUnmounted(() => {
+  stopCountdownTimer()
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
+  }
+})
+
+/**
+ * 页面被 KeepAlive 激活时恢复定时器
+ */
+onActivated(() => {
+  isActive.value = true
+  startCountdownTimer()
+})
+
+/**
+ * 页面被 KeepAlive 停用时暂停定时器，避免后台资源浪费
+ */
+onDeactivated(() => {
+  isActive.value = false
+  stopCountdownTimer()
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+    debounceTimer = null
   }
 })
 </script>
@@ -530,5 +598,10 @@ onUnmounted(() => {
 /* 虚拟表格容器样式 */
 .virtual-table-wrapper {
   height: 500px;
+}
+
+/* 骨架屏样式 */
+.skeleton-wrapper {
+  padding: 20px 0;
 }
 </style>

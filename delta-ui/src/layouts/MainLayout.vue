@@ -79,10 +79,12 @@
         </div>
       </header>
 
-      <main class="content-main">
+      <main class="content-main" v-loading="routeLoading" element-loading-text="页面加载中..." element-loading-background="rgba(255,255,255,0.7)">
         <router-view v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
-            <component :is="Component" />
+            <keep-alive>
+              <component :is="Component" :key="$route.fullPath" />
+            </keep-alive>
           </transition>
         </router-view>
       </main>
@@ -92,7 +94,7 @@
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted, provide } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import { ElNotification } from 'element-plus'
 import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position, TrendCharts, Star } from '@element-plus/icons-vue'
 import { pendingMessageApi } from '@/api'
@@ -111,6 +113,22 @@ const pendingCount = ref(0)
 const userInfo = ref(null)
 let ws = null
 let refreshTimer = null
+
+/** 路由切换加载状态 */
+const routeLoading = ref(false)
+
+/** 路由切换前显示加载状态 */
+router.beforeEach((to, from, next) => {
+  if (to.path !== from.path) {
+    routeLoading.value = true
+  }
+  next()
+})
+
+/** 路由切换后隐藏加载状态 */
+router.afterEach(() => {
+  routeLoading.value = false
+})
 
 const pendingCountDisplay = computed(() => pendingCount.value > 99 ? '99+' : pendingCount.value)
 
@@ -546,6 +564,22 @@ onUnmounted(() => { disconnectWebSocket(); if (refreshTimer) clearInterval(refre
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  position: relative;
+  min-height: 0;
+}
+
+/* 路由切换过渡动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(12px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
 }
 
 @media (max-width: 768px) {

@@ -141,18 +141,14 @@
 
       <!-- 虚拟滚动表格模式 -->
       <div v-show="virtualMode" class="virtual-table-wrapper" v-loading="loading">
-        <el-auto-resizer>
-          <template #default="{ height, width }">
-            <el-table-v2
-              :columns="v2Columns"
-              :data="tableData"
-              :width="width"
-              :height="height"
-              :row-height="50"
-              fixed
-            />
-          </template>
-        </el-auto-resizer>
+        <el-table-v2
+          :columns="v2Columns"
+          :data="tableData"
+          :width="1200"
+          :height="500"
+          :row-height="50"
+          fixed
+        />
       </div>
 
       <el-pagination
@@ -161,7 +157,7 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleQuery"
+        @size-change="() => { queryParams.pageNum = 1; handleQuery() }"
         @current-change="handleQuery"
       />
       <!-- 数据量较大时的提示信息 -->
@@ -189,7 +185,6 @@ const loading = ref<boolean>(false)
 const tableData = ref<MessageVO[]>([])
 const total = ref<number>(0)
 const virtualMode = ref<boolean>(false)
-const virtualTableHeight = ref<number>(500)
 
 const queryParams = reactive<{
   pageNum: number
