@@ -159,8 +159,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download, Upload } from '@element-plus/icons-vue'
-import { serviceItemApi, gameConfigApi, clubConfigApi, companionLevelApi, downloadExcel, uploadExcel } from '@/api/index.js'
+import { Plus } from '@element-plus/icons-vue'
+import { serviceItemApi, gameConfigApi, clubConfigApi, companionLevelApi } from '@/api/index.js'
 import type { Result, ServiceItemVO } from '@/types'
 
 const loading = ref<boolean>(false)
@@ -278,26 +278,6 @@ const deletePriceRule = async (row: any): Promise<void> => {
     priceRules.value = res.data || []
   } catch (e: any) {
     if (e !== 'cancel' && e?.message !== 'cancel') ElMessage.error('删除失败')
-  }
-}
-
-const importRef = ref<HTMLInputElement | null>(null)
-
-const handleExport = (): void => {
-  downloadExcel('/service-items/export', { clubConfigId: clubConfigId.value }, '服务项目.xlsx')
-}
-
-const handleImport = async (event: Event): Promise<void> => {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  try {
-    const res: Result<any> = await uploadExcel('/service-items/import?clubConfigId=' + clubConfigId.value, file)
-    ElMessage.success(`导入完成：成功${res.data.success}条，失败${res.data.fail}条，共${res.data.total}条`)
-    loadData()
-  } catch (e) {
-    ElMessage.error('导入失败')
-  } finally {
-    (event.target as HTMLInputElement).value = ''
   }
 }
 

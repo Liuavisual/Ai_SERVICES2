@@ -16,11 +16,11 @@ import type {
   SysUserVO,
   MessageVO,
   PendingMessageVO,
-  PendingMessageStatus,
   CustomerVO,
   CustomerProfileVO,
   OrderVO,
   OrderStatus,
+  PaymentStatus,
   WorkOrderVO,
   WorkOrderStatus,
   WorkOrderPriority,
@@ -35,6 +35,7 @@ import type {
   FaqItemVO,
   GameConfigVO,
   ServiceItemVO,
+  ServicePriceRuleVO,
   ActivityPackageVO,
   StatsOverview,
   TrendData,
@@ -254,11 +255,13 @@ describe('完整类型测试', () => {
       expect(vo.status).toBe('pending')
       expect(vo.assignedCsUserId).toBeUndefined()
       expect(vo.deadline).toBeUndefined()
-    })
-
-    it('PendingMessageStatus 应只接受合法枚举值', () => {
-      const statuses: PendingMessageStatus[] = ['pending', 'processing', 'resolved']
-      expect(statuses).toHaveLength(3)
+      expect(vo.messageContent).toBeUndefined()
+      expect(vo.interventionTypeDesc).toBeUndefined()
+      expect(vo.statusDesc).toBeUndefined()
+      expect(vo.handledByName).toBeUndefined()
+      expect(vo.remainingSeconds).toBeUndefined()
+      expect(vo.overdue).toBeUndefined()
+      expect(vo.urgent).toBeUndefined()
     })
   })
 
@@ -285,18 +288,18 @@ describe('完整类型测试', () => {
         id: 'cp1',
         rowNum: 1,
         userId: 'u1',
-        userNickname: '用户A',
-        profileType: 'GAME',
-        profileData: '{}',
+        nickname: '用户A',
         totalMessages: 100,
         totalOrders: 5,
         totalSpent: 500,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01'
       }
-      expect(vo.profileType).toBe('GAME')
+      expect(vo.nickname).toBe('用户A')
       expect(vo.tags).toBeUndefined()
       expect(vo.lifecycleStage).toBeUndefined()
+      expect(vo.rfmRecencyScore).toBeUndefined()
+      expect(vo.memberLevel).toBeUndefined()
     })
   })
 
@@ -311,8 +314,8 @@ describe('完整类型测试', () => {
       const vo: OrderVO = {
         id: 'o1',
         rowNum: 1,
+        orderNo: 'ORD20240101001',
         userId: 'u1',
-        userNickname: '用户A',
         companionId: 'c1',
         companionName: '陪玩师A',
         serviceType: 'GAME',
@@ -321,8 +324,11 @@ describe('完整类型测试', () => {
         updatedAt: '2024-01-01'
       }
       expect(vo.orderStatus).toBe('PENDING')
+      expect(vo.orderNo).toBe('ORD20240101001')
       expect(vo.scheduledStart).toBeUndefined()
       expect(vo.totalAmount).toBeUndefined()
+      expect(vo.paymentStatus).toBeUndefined()
+      expect(vo.durationMinutes).toBeUndefined()
     })
   })
 
@@ -393,7 +399,7 @@ describe('完整类型测试', () => {
         levelId: 'l1',
         gameType: '王者荣耀',
         price: 100,
-        enabled: 1,
+        enabled: true,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01'
       }
@@ -401,6 +407,8 @@ describe('完整类型测试', () => {
       expect(vo.price).toBe(100)
       expect(vo.phone).toBeUndefined()
       expect(vo.avatar).toBeUndefined()
+      expect(vo.displayPrice).toBeUndefined()
+      expect(vo.levelBasePrice).toBeUndefined()
     })
 
     it('CompanionScheduleVO 应包含所有必填字段', () => {
@@ -422,17 +430,16 @@ describe('完整类型测试', () => {
       const vo: CompanionLevelVO = {
         id: 'l1',
         rowNum: 1,
-        name: '钻石',
-        minPrice: 50,
-        maxPrice: 200,
-        enabled: 1,
+        levelName: '钻石',
+        basePrice: 50,
+        enabled: true,
         sortOrder: 1,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01'
       }
-      expect(vo.name).toBe('钻石')
-      expect(vo.minPrice).toBe(50)
-      expect(vo.maxPrice).toBe(200)
+      expect(vo.levelName).toBe('钻石')
+      expect(vo.basePrice).toBe(50)
+      expect(vo.levelCode).toBeUndefined()
       expect(vo.description).toBeUndefined()
     })
   })
@@ -486,37 +493,51 @@ describe('完整类型测试', () => {
       const vo: GameConfigVO = {
         id: 'g1',
         rowNum: 1,
-        name: '王者荣耀',
+        gameName: '王者荣耀',
         enabled: 1,
         sortOrder: 1,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01'
       }
-      expect(vo.name).toBe('王者荣耀')
+      expect(vo.gameName).toBe('王者荣耀')
       expect(vo.gameType).toBeUndefined()
+      expect(vo.gameCode).toBeUndefined()
+      expect(vo.clubConfigId).toBeUndefined()
     })
 
     it('ServiceItemVO 应包含所有必填字段', () => {
       const vo: ServiceItemVO = {
         id: 'si1',
         rowNum: 1,
-        name: '陪玩1小时',
-        price: 100,
+        itemName: '陪玩1小时',
         enabled: 1,
         sortOrder: 1,
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01'
       }
-      expect(vo.name).toBe('陪玩1小时')
-      expect(vo.price).toBe(100)
-      expect(vo.durationMinutes).toBeUndefined()
+      expect(vo.itemName).toBe('陪玩1小时')
+      expect(vo.basePrice).toBeUndefined()
+      expect(vo.itemCode).toBeUndefined()
+      expect(vo.priceRules).toBeUndefined()
+    })
+
+    it('ServicePriceRuleVO 应包含所有必填字段', () => {
+      const vo: ServicePriceRuleVO = {
+        id: 'pr1',
+        rowNum: 1,
+        price: 80,
+        enabled: 1
+      }
+      expect(vo.price).toBe(80)
+      expect(vo.originalPrice).toBeUndefined()
+      expect(vo.levelName).toBeUndefined()
     })
 
     it('ActivityPackageVO 应包含所有必填字段', () => {
       const vo: ActivityPackageVO = {
         id: 'ap1',
         rowNum: 1,
-        name: '春节特惠',
+        title: '春节特惠',
         originalPrice: 200,
         packagePrice: 150,
         enabled: 1,
@@ -524,10 +545,11 @@ describe('完整类型测试', () => {
         createdAt: '2024-01-01',
         updatedAt: '2024-01-01'
       }
-      expect(vo.name).toBe('春节特惠')
+      expect(vo.title).toBe('春节特惠')
       expect(vo.originalPrice).toBe(200)
       expect(vo.packagePrice).toBe(150)
       expect(vo.startTime).toBeUndefined()
+      expect(vo.activityType).toBeUndefined()
     })
   })
 

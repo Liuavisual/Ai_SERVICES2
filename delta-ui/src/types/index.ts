@@ -145,14 +145,22 @@ export interface PendingMessageVO {
   userId: string
   /** 用户昵称 */
   userNickname: string
+  /** 用户平台 */
+  userPlatform?: string
   /** 平台标识 */
   platform: string
+  /** 消息内容 */
+  messageContent?: string
   /** 触发关键词 */
   keyword: string
   /** 介入类型 */
   interventionType: string
+  /** 介入类型描述 */
+  interventionTypeDesc?: string
   /** 处理状态 */
-  status: PendingMessageStatus
+  status: string
+  /** 状态描述 */
+  statusDesc?: string
   /** 处理截止时间 */
   deadline?: string
   /** 升级级别 */
@@ -163,22 +171,27 @@ export interface PendingMessageVO {
   assignedCsUserName?: string
   /** 提醒次数 */
   reminderCount: number
-  /** 处理人 */
+  /** 处理人ID */
   handledBy?: string
+  /** 处理人名称 */
+  handledByName?: string
   /** 处理时间 */
   handledAt?: string
   /** 备注 */
   remark?: string
   /** 上下文摘要 */
   contextSummary?: string
+  /** 剩余秒数（计算属性） */
+  remainingSeconds?: number
+  /** 是否超时（计算属性） */
+  overdue?: boolean
+  /** 是否紧急（计算属性） */
+  urgent?: boolean
   /** 创建时间 */
   createdAt: string
   /** 更新时间 */
   updatedAt: string
 }
-
-/** 待处理消息状态枚举 */
-export type PendingMessageStatus = 'pending' | 'processing' | 'resolved'
 
 // ============ 客户相关 ============
 
@@ -192,20 +205,30 @@ export interface CustomerVO {
   platformUserId?: string
   /** 昵称 */
   nickname: string
+  /** 头像URL */
+  avatar?: string
   /** 平台标识 */
   platform: string
   /** 客户状态 */
   status: string
+  /** 是否启用AI回复 */
+  aiEnabled?: boolean
+  /** 分配的客服ID */
+  assignedCsUserId?: string
+  /** 分配的客服名称 */
+  assignedCsUserName?: string
   /** 首次消息时间 */
   firstMessageAt?: string
   /** 最后消息时间 */
-  lastMessageAt?: string
+  lastActiveAt?: string
   /** 消息总数 */
   messageCount: number
   /** 标签 */
   tags?: string
   /** 生命周期阶段 */
   lifecycleStage?: string
+  /** 会员等级（来自画像关联） */
+  memberLevel?: string
   /** 创建时间 */
   createdAt: string
   /** 更新时间 */
@@ -220,24 +243,104 @@ export interface CustomerProfileVO {
   rowNum: number
   /** 用户ID */
   userId: string
-  /** 用户昵称 */
-  userNickname: string
-  /** 画像类型 */
-  profileType: string
-  /** 画像数据 */
-  profileData: string
-  /** 标签 */
-  tags?: string
-  /** 生命周期阶段 */
-  lifecycleStage?: string
-  /** 消息总数 */
-  totalMessages: number
-  /** 订单总数 */
+  /** 昵称 */
+  nickname: string
+  /** 头像URL */
+  avatar?: string
+  /** 平台标识 */
+  platform?: string
+  /** RFM最近消费评分 */
+  rfmRecencyScore?: number
+  /** RFM消费频率评分 */
+  rfmFrequencyScore?: number
+  /** RFM消费金额评分 */
+  rfmMonetaryScore?: number
+  /** RFM综合评分 */
+  rfmTotalScore?: number
+  /** RFM客户分群 */
+  rfmSegment?: string
+  /** 总订单数 */
   totalOrders: number
-  /** 消费总额 */
+  /** 总消费金额 */
   totalSpent: number
+  /** 平均订单金额 */
+  avgOrderAmount?: number
+  /** 最大订单金额 */
+  maxOrderAmount?: number
+  /** 消费趋势 */
+  spendingTrend?: string
+  /** 复购率 */
+  repurchaseRate?: number
+  /** 预估生命周期价值 */
+  estimatedLtv?: number
+  /** 平均服务时长（小时） */
+  avgServiceDuration?: number
+  /** 最近下单时间 */
+  lastOrderAt?: string
+  /** 最喜爱的陪玩师ID */
+  favoriteCompanionId?: string
+  /** 最喜爱的陪玩师名称 */
+  favoriteCompanionName?: string
+  /** 最喜爱的游戏类型 */
+  favoriteGameType?: string
+  /** 偏好时间段 */
+  preferredTimeSlot?: string
+  /** 偏好陪玩师等级 */
+  preferredCompanionLevel?: string
+  /** 偏好订单类型 */
+  preferredOrderType?: string
+  /** 陪玩师多样性 */
+  companionDiversity?: number
+  /** 首次联系时间 */
+  firstContactAt?: string
   /** 最后活跃时间 */
   lastActiveAt?: string
+  /** 活跃天数 */
+  activeDays?: number
+  /** 总消息数 */
+  totalMessages: number
+  /** AI交互次数 */
+  aiInteractionCount?: number
+  /** 人工交互次数 */
+  manualInteractionCount?: number
+  /** AI交互占比 */
+  aiRatio?: number
+  /** 转人工次数 */
+  humanHandoffCount?: number
+  /** 主要转人工原因 */
+  topHandoffReason?: string
+  /** 情绪触发次数 */
+  emotionTriggerCount?: number
+  /** 下单意向次数 */
+  orderIntentCount?: number
+  /** 满意度评分 */
+  satisfactionScore?: number
+  /** 满意度趋势 */
+  satisfactionTrend?: string
+  /** 投诉次数 */
+  complaintCount?: number
+  /** 退款次数 */
+  refundCount?: number
+  /** 平均评分 */
+  avgRating?: number
+  /** 生命周期阶段 */
+  lifecycleStage?: string
+  /** 会员等级 */
+  memberLevel?: string
+  /** 风险等级 */
+  riskLevel?: string
+  /** 流失风险评分 */
+  churnRiskScore?: number
+  /** 主要需求类型 */
+  primaryNeedType?: string
+  /** 需求标签 */
+  needTags?: string
+  /** 标签 */
+  tags?: string
+  /** 备注 */
+  remark?: string
+  /** 分配的客服名称 */
+  assignedCsUserName?: string
   /** 创建时间 */
   createdAt: string
   /** 更新时间 */
@@ -249,24 +352,35 @@ export interface CustomerProfileVO {
 /** 订单状态枚举 */
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 
+/** 支付状态枚举 */
+export type PaymentStatus = 'UNPAID' | 'PAID' | 'REFUNDED' | 'PARTIAL_REFUND'
+
 /** 订单视图对象 */
 export interface OrderVO {
   /** 订单ID */
   id: string
   /** 行号 */
   rowNum: number
+  /** 订单编号 */
+  orderNo: string
   /** 用户ID */
   userId: string
-  /** 用户昵称 */
-  userNickname: string
   /** 陪玩师ID */
   companionId: string
   /** 陪玩师名称 */
   companionName: string
+  /** 陪玩师头像 */
+  companionAvatar?: string
   /** 服务类型 */
   serviceType: string
   /** 订单状态 */
-  orderStatus: OrderStatus
+  orderStatus: string
+  /** 订单状态文本 */
+  orderStatusText?: string
+  /** 支付状态 */
+  paymentStatus?: string
+  /** 支付状态文本 */
+  paymentStatusText?: string
   /** 预约开始时间 */
   scheduledStart?: string
   /** 预约结束时间 */
@@ -275,8 +389,12 @@ export interface OrderVO {
   actualStart?: string
   /** 实际结束时间 */
   actualEnd?: string
+  /** 服务时长（分钟） */
+  durationMinutes?: number
   /** 总金额 */
   totalAmount?: number
+  /** 实付金额 */
+  paidAmount?: number
   /** 游戏类型 */
   gameType?: string
   /** 备注 */
@@ -411,30 +529,20 @@ export interface CompanionVO {
   levelId: string
   /** 等级名称 */
   levelName?: string
+  /** 等级基础价格 */
+  levelBasePrice?: number
   /** 头像URL */
   avatar?: string
   /** 游戏类型 */
   gameType: string
   /** 个人简介 */
   description?: string
-  /** 价格 */
+  /** 价格（元/小时） */
   price: number
-  /** 是否启用（0否1是） */
-  enabled: number
-  /** 服务标签 */
-  serviceTags?: string
-  /** 支持的游戏 */
-  supportedGames?: string
-  /** KDA比率 */
-  kdRatio?: number
-  /** 段位等级 */
-  rankLevel?: string
-  /** 语音样本URL */
-  voiceSampleUrl?: string
-  /** 平均评分 */
-  ratingAvg?: number
-  /** 订单数量 */
-  orderCount?: number
+  /** 展示价格 */
+  displayPrice?: number
+  /** 是否启用 */
+  enabled: boolean
   /** 创建时间 */
   createdAt: string
   /** 更新时间 */
@@ -472,15 +580,15 @@ export interface CompanionLevelVO {
   /** 行号 */
   rowNum: number
   /** 等级名称 */
-  name: string
+  levelName: string
+  /** 等级编码 */
+  levelCode?: string
   /** 等级描述 */
   description?: string
-  /** 最低价格 */
-  minPrice: number
-  /** 最高价格 */
-  maxPrice: number
-  /** 是否启用（0否1是） */
-  enabled: number
+  /** 基础价格（元/小时） */
+  basePrice: number
+  /** 是否启用 */
+  enabled: boolean
   /** 排序序号 */
   sortOrder: number
   /** 创建时间 */
@@ -561,12 +669,20 @@ export interface GameConfigVO {
   id: string
   /** 行号 */
   rowNum: number
+  /** 俱乐部ID */
+  clubConfigId?: string
   /** 游戏名称 */
-  name: string
+  gameName: string
+  /** 游戏编码 */
+  gameCode?: string
   /** 游戏类型 */
   gameType?: string
+  /** 图标URL */
+  iconUrl?: string
   /** 游戏描述 */
   description?: string
+  /** 自定义设置（JSON格式） */
+  customSettings?: string
   /** 是否启用（0否1是） */
   enabled: number
   /** 排序序号 */
@@ -575,6 +691,28 @@ export interface GameConfigVO {
   createdAt: string
   /** 更新时间 */
   updatedAt: string
+}
+
+/** 服务定价规则视图对象 */
+export interface ServicePriceRuleVO {
+  /** 价格规则ID */
+  id: string
+  /** 行号 */
+  rowNum: number
+  /** 服务项目ID */
+  serviceItemId?: string
+  /** 陪玩师等级ID */
+  companionLevelId?: string
+  /** 等级名称 */
+  levelName?: string
+  /** 价格 */
+  price: number
+  /** 原价 */
+  originalPrice?: number
+  /** 价格单位 */
+  priceUnit?: string
+  /** 是否启用（0否1是） */
+  enabled: number
 }
 
 /** 服务项目视图对象 */
@@ -583,14 +721,30 @@ export interface ServiceItemVO {
   id: string
   /** 行号 */
   rowNum: number
+  /** 俱乐部ID */
+  clubConfigId?: string
+  /** 游戏配置ID */
+  gameConfigId?: string
+  /** 游戏名称 */
+  gameName?: string
   /** 项目名称 */
-  name: string
+  itemName: string
+  /** 项目编码 */
+  itemCode?: string
+  /** 分类 */
+  category?: string
   /** 项目描述 */
   description?: string
-  /** 价格 */
-  price: number
-  /** 时长（分钟） */
-  durationMinutes?: number
+  /** 基础价格 */
+  basePrice?: number
+  /** 价格单位 */
+  priceUnit?: string
+  /** 最小时长 */
+  minDuration?: number
+  /** 保障说明 */
+  guaranteeText?: string
+  /** 退款政策 */
+  refundPolicy?: string
   /** 是否启用（0否1是） */
   enabled: number
   /** 排序序号 */
@@ -599,6 +753,8 @@ export interface ServiceItemVO {
   createdAt: string
   /** 更新时间 */
   updatedAt: string
+  /** 价格规则列表 */
+  priceRules?: ServicePriceRuleVO[]
 }
 
 /** 活动套餐视图对象 */
@@ -607,22 +763,40 @@ export interface ActivityPackageVO {
   id: string
   /** 行号 */
   rowNum: number
-  /** 套餐名称 */
-  name: string
-  /** 套餐描述 */
+  /** 俱乐部ID */
+  clubConfigId?: string
+  /** 游戏配置ID */
+  gameConfigId?: string
+  /** 游戏名称 */
+  gameName?: string
+  /** 活动标题 */
+  title: string
+  /** 活动描述 */
   description?: string
+  /** 活动类型 */
+  activityType?: string
+  /** 包含服务项目ID列表（逗号分隔） */
+  serviceItemIds?: string
+  /** 包含服务项目名称（逗号分隔） */
+  serviceItemNames?: string
+  /** 套餐价格 */
+  packagePrice: number
   /** 原价 */
   originalPrice: number
-  /** 套餐价 */
-  packagePrice: number
-  /** 是否启用（0否1是） */
-  enabled: number
-  /** 排序序号 */
-  sortOrder: number
   /** 活动开始时间 */
   startTime?: string
   /** 活动结束时间 */
   endTime?: string
+  /** 横幅图片URL */
+  bannerUrl?: string
+  /** 条款说明 */
+  terms?: string
+  /** 是否启用（0否1是） */
+  enabled: number
+  /** 活动状态 */
+  status?: string
+  /** 排序序号 */
+  sortOrder: number
   /** 创建时间 */
   createdAt: string
   /** 更新时间 */

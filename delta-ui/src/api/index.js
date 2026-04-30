@@ -4,6 +4,12 @@
  * 按业务模块组织所有HTTP请求，统一使用request实例发送。
  * 每个API对象对应一个后端Controller，方法名与后端接口一一对应。
  *
+ * 【params/data使用规范】
+ * - GET请求：使用 params（URL查询参数），对应后端 @RequestParam / @PathVariable
+ * - POST/PUT请求 + 后端@RequestBody：使用 data（请求体）
+ * - POST/PUT请求 + 后端@RequestParam：使用 params（URL查询参数）
+ * - 混合参数：同时使用 params（查询参数）+ data（请求体）
+ *
  * 模块清单：
  * - authApi: 认证（登录/注册/刷新Token/登出）
  * - keywordApi: 关键词管理
@@ -270,7 +276,7 @@ export const companionScheduleApi = {
   getByDate: (params) => request({ url: '/companion-schedules/by-date', method: 'get', params }),
   getById: (id) => request({ url: `/companion-schedules/${id}`, method: 'get' }),
   create: (data) => request({ url: '/companion-schedules', method: 'post', data }),
-  /** 批量创建排班 */
+  /** 批量创建排班（后端@RequestParam + @RequestBody混合） */
   createBatch: (params, data) => request({
     url: '/companion-schedules/batch',
     method: 'post',
@@ -350,7 +356,7 @@ export const orderApi = {
   confirm: (id) => request({ url: `/orders/${id}/confirm`, method: 'put' }),
   startService: (id) => request({ url: `/orders/${id}/start`, method: 'put' }),
   completeOrder: (id) => request({ url: `/orders/${id}/complete`, method: 'put' }),
-  cancelOrder: (id, params) => request({ url: `/orders/${id}/cancel`, method: 'put', params }),
+  cancelOrder: (id, reason) => request({ url: `/orders/${id}/cancel`, method: 'put', params: { reason } }),
   getActiveByUser: (userId) => request({ url: `/orders/active/user/${userId}`, method: 'get' }),
   getByCompanion: (companionId) => request({ url: `/orders/companion/${companionId}`, method: 'get' }),
   queryOrders: (params) => request({ url: '/orders/query', method: 'get', params })
@@ -384,15 +390,15 @@ export const workOrderApi = {
 export const serviceTrackApi = {
   /** 根据ID查询服务追踪 */
   getById: (id) => request({ url: `/service-tracks/${id}`, method: 'get' }),
-  /** 创建咨询 */
+  /** 创建咨询（后端@RequestParam，非@RequestBody） */
   create: (params) => request({ url: '/service-tracks', method: 'post', params }),
-  /** 预约服务 */
+  /** 预约服务（后端@RequestParam + @RequestBody混合） */
   book: (id, userId, data) => request({ url: `/service-tracks/${id}/book`, method: 'put', params: { userId }, data }),
-  /** 开始服务 */
+  /** 开始服务（后端@RequestParam，非@RequestBody） */
   start: (id, companionId, companionName) => request({ url: `/service-tracks/${id}/start`, method: 'put', params: { companionId, companionName } }),
-  /** 结束服务 */
+  /** 结束服务（后端@RequestBody） */
   end: (id, data) => request({ url: `/service-tracks/${id}/end`, method: 'put', data }),
-  /** 提交评价 */
+  /** 提交评价（后端@RequestParam，非@RequestBody） */
   rating: (id, rating, feedback) => request({ url: `/service-tracks/${id}/rating`, method: 'put', params: { rating, feedback } }),
   /** 按用户ID查询服务追踪 */
   listByUser: (userId) => request({ url: `/service-tracks/user/${userId}`, method: 'get' }),

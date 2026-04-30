@@ -353,12 +353,11 @@ describe('API模块测试', () => {
     })
 
     it('cancelOrder 应发送PUT请求到 /orders/:id/cancel', () => {
-      const params = { reason: '不想要了' }
-      orderApi.cancelOrder('o1', params)
+      orderApi.cancelOrder('o1', '不想要了')
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/orders/o1/cancel',
         method: 'put',
-        params
+        params: { reason: '不想要了' }
       })
     })
 
@@ -452,7 +451,7 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/work-orders/w1/close',
         method: 'put',
-        params: { closeReason: '已解决' }
+        data: { closeReason: '已解决' }
       })
     })
 
@@ -461,7 +460,7 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/work-orders/w1/cancel',
         method: 'put',
-        params: { cancelReason: '误操作' }
+        data: { cancelReason: '误操作' }
       })
     })
 
@@ -470,7 +469,7 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/work-orders/w1/reopen',
         method: 'put',
-        params: { reopenReason: '需重新处理' }
+        data: { reopenReason: '需重新处理' }
       })
     })
 
@@ -671,12 +670,12 @@ describe('API模块测试', () => {
     })
 
     it('updateStatus 应发送PUT请求到 /companion-schedules/status', () => {
-      const params = { id: 's1', status: 'BOOKED' }
-      companionScheduleApi.updateStatus(params)
+      const data = { id: 's1', status: 'BOOKED' }
+      companionScheduleApi.updateStatus(data)
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/status',
         method: 'put',
-        params
+        data
       })
     })
 
@@ -691,22 +690,22 @@ describe('API模块测试', () => {
     })
 
     it('createTimeRange 应发送POST请求到 /companion-schedules/time-range', () => {
-      const params = { companionId: 'c1', startTime: '09:00', endTime: '12:00' }
-      companionScheduleApi.createTimeRange(params)
+      const data = { companionId: 'c1', startTime: '09:00', endTime: '12:00' }
+      companionScheduleApi.createTimeRange(data)
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/time-range',
         method: 'post',
-        params
+        data
       })
     })
 
     it('createTimeRangeBatch 应发送POST请求到 /companion-schedules/time-range-batch', () => {
-      const params = { companionId: 'c1', dates: '2024-01-01,2024-01-02' }
-      companionScheduleApi.createTimeRangeBatch(params)
+      const data = { companionId: 'c1', dates: '2024-01-01,2024-01-02' }
+      companionScheduleApi.createTimeRangeBatch(data)
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/time-range-batch',
         method: 'post',
-        params
+        data
       })
     })
   })
