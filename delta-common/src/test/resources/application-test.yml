@@ -45,7 +45,7 @@ jwt:
 
 deepseek:
   api-key: test-api-key
-  base-url: https://api.deepseek.com
+  api-url: https://api.deepseek.com
   enabled: false
 
 wx:
@@ -54,4 +54,4 @@ wx:
 
 logging:
   level:
-    com.delta: DEBUG
+    "[com.delta]": DEBUG

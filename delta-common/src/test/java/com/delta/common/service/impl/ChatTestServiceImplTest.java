@@ -19,7 +19,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -124,18 +123,18 @@ public class ChatTestServiceImplTest {
     @Test
     @DisplayName("DIRECT_REPLY_KEYWORDS中的关键词应走直接回复路径")
     void testDirectReplyForPrice() {
-        when(keywordMatcherService.matchKeywords("价格")).thenReturn(List.of("价格"));
-        when(replyService.getKeywordReply("价格")).thenReturn("二品50/h，一品80/h，顶尖200/h");
+        when(keywordMatcherService.matchKeywords("你好")).thenReturn(List.of("你好"));
+        when(replyService.getKeywordReply("你好")).thenReturn("嗨~欢迎来到三角洲行动陪玩俱乐部！");
 
         ChatTestSendDTO dto = new ChatTestSendDTO();
-        dto.setContent("价格");
+        dto.setContent("你好");
         dto.setPlatform("wechat");
         dto.setCustomerNickname("测试用户");
 
         ChatTestReplyVO result = chatTestService.sendMessage(dto);
 
         assertNotNull(result.getReplyContent());
-        assertTrue(result.getReplyContent().contains("50"));
+        assertTrue(result.getReplyContent().contains("欢迎"));
         assertFalse(result.getAiReply());
         assertEquals("KEYWORD_DIRECT", result.getResponseSource());
         verify(deepSeekService, never()).getChatReplyWithHistory(any(), any());

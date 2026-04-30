@@ -5,10 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.dto.PendingMessageHandleDTO;
-import com.delta.common.entity.CsUserCustomer;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.PendingMessage;
-import com.delta.common.entity.SysUser;
 import com.delta.common.entity.User;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CsUserCustomerMapper;
@@ -30,12 +28,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings({"unchecked", "null"})
 @ExtendWith(MockitoExtension.class)
 class PendingMessageServiceImplTest {
 

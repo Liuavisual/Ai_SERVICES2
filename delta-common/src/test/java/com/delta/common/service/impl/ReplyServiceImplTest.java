@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.ReplyDTO;
 import com.delta.common.entity.Reply;
-import com.delta.common.enums.ReplyTriggerTypeEnum;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.ReplyMapper;
 import com.delta.common.service.RedisService;
@@ -23,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
 class ReplyServiceImplTest {
 

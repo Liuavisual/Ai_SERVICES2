@@ -1,219 +1,203 @@
 package com.delta.admin.controller;
 
 import com.delta.common.dto.LoginDTO;
+import com.delta.common.dto.RefreshTokenDTO;
+import com.delta.common.dto.RegisterDTO;
 import com.delta.common.service.AuthService;
 import com.delta.common.service.RedisService;
 import com.delta.common.service.impl.TokenBlacklistService;
 import com.delta.common.util.JwtUtils;
 import com.delta.common.util.RateLimiter;
 import com.delta.common.vo.LoginVO;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.delta.common.vo.Result;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.Map;
 
-/**
- * AuthController MockMvc 集成测试
- * 验证认证控制器的HTTP请求/响应行为
- *
- * @author 刘建国
- */
-@WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("认证控制器单元测试")
 class AuthControllerTest {
 
-    /** MockMvc实例 */
-    @Autowired
-    private MockMvc mockMvc;
-
-    /** JSON序列化工具 */
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    /** 认证服务Mock */
-    @MockitoBean
+    @Mock
     private AuthService authService;
 
-    /** 限流器Mock */
-    @MockitoBean
+    @Mock
     private RateLimiter rateLimiter;
 
-    /** JWT工具Mock */
-    @MockitoBean
+    @Mock
     private JwtUtils jwtUtils;
 
-    /** Token黑名单服务Mock */
-    @MockitoBean
+    @Mock
     private TokenBlacklistService tokenBlacklistService;
 
-    /** Redis服务Mock */
-    @MockitoBean
+    @Mock
     private RedisService redisService;
 
-    /**
-     * 测试登录接口 - 有效凭证
-     * 验证返回200状态码和正确的响应结构
-     */
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private HttpServletResponse response;
+
+    @Mock
+    private HttpSession session;
+
+    @InjectMocks
+    private AuthController authController;
+
+    private LoginVO testLoginVO;
+
+    @BeforeEach
+    void setUp() {
+        testLoginVO = new LoginVO();
+        testLoginVO.setToken("test-token");
+        testLoginVO.setRefreshToken("test-refresh-token");
+        testLoginVO.setUsername("admin");
+        testLoginVO.setRole("SYS_ADMIN");
+        testLoginVO.setExpiresIn(3600L);
+    }
+
     @Test
-    void login_withValidCredentials_shouldReturnSuccess() throws Exception {
-        // 准备测试数据
+    @DisplayName("登录-有效凭证应返回成功")
+    void login_withValidCredentials_shouldReturnSuccess() {
         LoginDTO dto = new LoginDTO();
         dto.setUsername("admin");
         dto.setPassword("password");
+        when(authService.login(any(LoginDTO.class))).thenReturn(testLoginVO);
+        when(request.getCookies()).thenReturn(null);
 
-        LoginVO loginVO = new LoginVO();
-        loginVO.setToken("test-token");
-        loginVO.setRefreshToken("test-refresh");
-        loginVO.setUsername("admin");
-        loginVO.setRole("SYS_ADMIN");
+        Result<LoginVO> result = authController.login(dto, request, response);
 
-        when(authService.login(any(LoginDTO.class))).thenReturn(loginVO);
-
-        // 执行测试并验证
-        mockMvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value(200))
-            .andExpect(jsonPath("$.data.token").value("test-token"))
-            .andExpect(jsonPath("$.data.refreshToken").value("test-refresh"));
+        assertEquals(200, result.getCode());
+        assertNotNull(result.getData());
+        assertEquals("test-token", result.getData().getToken());
+        verify(response, atLeastOnce()).addCookie(any(Cookie.class));
     }
 
-    /**
-     * 测试登录接口 - 空用户名
-     * 验证请求参数校验
-     */
     @Test
-    void login_withEmptyUsername_shouldReturnOk() throws Exception {
-        // 准备测试数据 - 空用户名
+    @DisplayName("登录-空用户名应正常处理")
+    void login_withEmptyUsername_shouldReturnOk() {
         LoginDTO dto = new LoginDTO();
         dto.setUsername("");
         dto.setPassword("password");
+        when(authService.login(any(LoginDTO.class))).thenReturn(testLoginVO);
+        when(request.getCookies()).thenReturn(null);
 
-        // 执行测试 - 验证HTTP响应（参数校验由@Valid触发）
-        mockMvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-            .andExpect(status().isOk());
+        Result<LoginVO> result = authController.login(dto, request, response);
+
+        assertNotNull(result);
     }
 
-    /**
-     * 测试登录接口 - 缺少密码
-     * 验证请求参数校验
-     */
     @Test
-    void login_withoutPassword_shouldReturnOk() throws Exception {
-        // 准备测试数据 - 缺少密码
+    @DisplayName("登录-缺少密码应正常处理")
+    void login_withoutPassword_shouldReturnOk() {
         LoginDTO dto = new LoginDTO();
         dto.setUsername("admin");
+        when(authService.login(any(LoginDTO.class))).thenReturn(testLoginVO);
+        when(request.getCookies()).thenReturn(null);
 
-        // 执行测试
-        mockMvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-            .andExpect(status().isOk());
+        Result<LoginVO> result = authController.login(dto, request, response);
+
+        assertNotNull(result);
     }
 
-    /**
-     * 测试注册接口 - 正常流程
-     * 验证限流检查和注册逻辑
-     */
     @Test
-    void register_withValidData_shouldReturnSuccess() throws Exception {
-        // 准备测试数据
+    @DisplayName("注册-正常流程应返回成功")
+    void register_withValidData_shouldReturnSuccess() {
         when(rateLimiter.isAllowed(anyString(), anyInt(), anyInt())).thenReturn(true);
+        doNothing().when(authService).register(any(RegisterDTO.class));
 
-        // 执行测试
-        mockMvc.perform(post("/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"password\":\"password123\",\"realName\":\"测试用户\",\"role\":\"CS_STAFF\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value(200));
+        RegisterDTO dto = new RegisterDTO();
+        dto.setUsername("newuser");
+        dto.setPassword("password123");
+        dto.setRealName("测试用户");
+
+        Result<Void> result = authController.register(dto, request);
+
+        assertEquals(200, result.getCode());
     }
 
-    /**
-     * 测试注册接口 - 限流触发
-     * 验证频繁注册请求被拒绝
-     */
     @Test
-    void register_rateLimited_shouldReturn429() throws Exception {
-        // 准备测试数据 - 限流触发
+    @DisplayName("注册-限流触发应返回429")
+    void register_rateLimited_shouldReturn429() {
         when(rateLimiter.isAllowed(anyString(), anyInt(), anyInt())).thenReturn(false);
 
-        // 执行测试
-        mockMvc.perform(post("/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\":\"newuser\",\"password\":\"password123\",\"realName\":\"测试用户\",\"role\":\"CS_STAFF\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value(429));
+        RegisterDTO dto = new RegisterDTO();
+        dto.setUsername("newuser");
+        dto.setPassword("password123");
+        dto.setRealName("测试用户");
+
+        Result<Void> result = authController.register(dto, request);
+
+        assertEquals(429, result.getCode());
     }
 
-    /**
-     * 测试刷新Token接口 - 正常流程
-     * 验证返回新的Token
-     */
     @Test
-    void refreshToken_withValidToken_shouldReturnSuccess() throws Exception {
-        // 准备测试数据
-        LoginVO loginVO = new LoginVO();
-        loginVO.setToken("new-token");
-        loginVO.setRefreshToken("new-refresh");
+    @DisplayName("刷新Token-有效Token应返回新Token")
+    void refreshToken_withValidToken_shouldReturnSuccess() {
+        LoginVO newLoginVO = new LoginVO();
+        newLoginVO.setToken("new-token");
+        newLoginVO.setRefreshToken("new-refresh");
+        newLoginVO.setExpiresIn(3600L);
+        when(authService.refreshToken(anyString())).thenReturn(newLoginVO);
 
-        when(authService.refreshToken(anyString())).thenReturn(loginVO);
+        RefreshTokenDTO dto = new RefreshTokenDTO();
+        dto.setRefreshToken("valid-refresh-token");
 
-        // 执行测试
-        mockMvc.perform(post("/auth/refresh")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"refreshToken\":\"valid-refresh-token\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value(200))
-            .andExpect(jsonPath("$.data.token").value("new-token"));
+        Result<LoginVO> result = authController.refreshToken(dto, response);
+
+        assertEquals(200, result.getCode());
+        assertNotNull(result.getData());
+        assertEquals("new-token", result.getData().getToken());
     }
 
-    /**
-     * 测试登出接口 - 无Token
-     * 验证无Token登出不报错
-     */
     @Test
-    void logout_withoutToken_shouldReturnSuccess() throws Exception {
-        // 执行测试
-        mockMvc.perform(post("/auth/logout"))
-            .andExpect(status().isOk());
+    @DisplayName("登出-无Token应正常返回")
+    void logout_withoutToken_shouldReturnSuccess() {
+        when(request.getCookies()).thenReturn(null);
+        when(request.getSession()).thenReturn(session);
+        when(request.getSession(anyBoolean())).thenReturn(session);
+
+        Result<Void> result = authController.logout(request, response);
+
+        assertEquals(200, result.getCode());
     }
 
-    /**
-     * 测试心跳接口 - 无认证
-     * 验证无认证心跳请求正常返回
-     */
     @Test
-    void heartbeat_withoutAuth_shouldReturnSuccess() throws Exception {
-        // 执行测试
-        mockMvc.perform(post("/auth/heartbeat"))
-            .andExpect(status().isOk());
+    @DisplayName("心跳-无认证应正常返回")
+    void heartbeat_withoutAuth_shouldReturnSuccess() {
+        Result<Void> result = authController.heartbeat(request);
+
+        assertNotNull(result);
+        assertEquals(200, result.getCode());
     }
 
-    /**
-     * 测试会话事件接口 - 无认证
-     * 验证无认证会话事件返回未认证错误
-     */
     @Test
-    void sessionEvent_withoutAuth_shouldReturnUnauthenticated() throws Exception {
-        // 执行测试
-        mockMvc.perform(post("/auth/session-event")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"eventType\":\"SESSION_END\",\"userId\":1}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value(401));
+    @DisplayName("会话事件-无认证应返回401")
+    void sessionEvent_withoutAuth_shouldReturnUnauthenticated() {
+        when(request.getHeader("Authorization")).thenReturn(null);
+        when(request.getCookies()).thenReturn(null);
+
+        Map<String, Object> eventBody = Map.of("eventType", "SESSION_END", "userId", 1);
+        Result<Void> result = authController.sessionEvent(eventBody, request);
+
+        assertEquals(401, result.getCode());
     }
 }

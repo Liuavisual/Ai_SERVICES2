@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
  *
  * @author 刘建国
  */
+@SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
 class WorkOrderServiceImplTest {
 

@@ -62,7 +62,7 @@ server:
 logging:
   level:
     root: INFO
-    com.delta: DEBUG
+    "[com.delta]": DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
   logback:
@@ -79,12 +79,12 @@ wx:
     aes-key: ${WX_MP_AES_KEY:}
 
 deepseek:
-  enabled: false
-  api-key: ${DEEPSEEK_API_KEY:}
+  enabled: true
+  api-key: ${DEEPSEEK_API_KEY:sk-996af61bd272438bb4e8fe9f696eaf24}
   api-url: https://api.deepseek.com/v1/chat/completions
   model: deepseek-chat
   system-prompt: 你是三角洲行动陪玩俱乐部的AI客服助手。你的任务是友好地回答用户关于陪玩服务的问题。如果用户询问预约、价格、陪玩师等关键问题，请引导他们联系人工客服。
-  max-tokens: 1000
+  max-tokens: 500
   temperature: 0.7
   timeout: 30000
 
