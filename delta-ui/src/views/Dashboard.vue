@@ -143,7 +143,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { statsApi } from '@/api'
 import { useAuthStore } from '@/stores/auth'
-import { ChatDotRound, User, Clock, Bell, ChatLineRound, Money, TrendCharts, DataAnalysis } from '@element-plus/icons-vue'
+import { ChatDotRound, User, Clock, Bell, ChatLineRound, Money } from '@element-plus/icons-vue'
 import type { StatsVO, UserRole, OverviewCard } from '@/types'
 
 /** 加载状态 */

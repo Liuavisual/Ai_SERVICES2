@@ -1,5 +1,6 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -9,18 +10,26 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * 活动套餐数据传输对象
+ *
+ * @author 刘建国
+ */
 @Data
 @Schema(description = "活动套餐数据传输对象")
 public class ActivityPackageDTO {
 
-    @Schema(description = "活动套餐ID", example = "1")
+    @Schema(description = "活动套餐ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long id;
 
-    @Schema(description = "俱乐部ID", example = "1001")
+    @Schema(description = "俱乐部ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
     @NotNull(message = "俱乐部ID不能为空")
+    @ObfuscatedId
     private Long clubConfigId;
 
-    @Schema(description = "游戏配置ID", example = "2001")
+    @Schema(description = "游戏配置ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long gameConfigId;
 
     @Schema(description = "活动标题", example = "春节特惠陪玩套餐")

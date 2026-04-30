@@ -1,23 +1,32 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * 服务价格规则数据传输对象
+ *
+ * @author 刘建国
+ */
 @Data
 @Schema(description = "服务价格规则数据传输对象")
 public class ServicePriceRuleDTO {
 
-    @Schema(description = "价格规则ID", example = "1")
+    @Schema(description = "价格规则ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long id;
 
-    @Schema(description = "服务项目ID", example = "1001")
+    @Schema(description = "服务项目ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
     @NotNull(message = "服务项目ID不能为空")
+    @ObfuscatedId
     private Long serviceItemId;
 
-    @Schema(description = "陪玩师等级ID", example = "2001")
+    @Schema(description = "陪玩师等级ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long companionLevelId;
 
     @Schema(description = "价格", example = "88.00")

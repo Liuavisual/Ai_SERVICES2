@@ -101,51 +101,53 @@
       </div>
 
       <!-- 普通表格模式 -->
-      <el-table v-if="!virtualMode" :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="userNickname" label="用户昵称" width="150" />
-        <el-table-column prop="userPlatform" label="平台" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getPlatformTagType(row.userPlatform)">{{ getPlatformText(row.userPlatform) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="direction" label="方向" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.direction === 'in' ? 'primary' : 'success'">
-              {{ row.direction === 'in' ? '接收' : '发送' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="content" label="消息内容" show-overflow-tooltip min-width="200" />
-        <el-table-column prop="ai" label="AI发送" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.ai ? 'primary' : 'info'">{{ row.ai ? 'AI' : '人工' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="keywordTriggered" label="触发关键词" width="120">
-          <template #default="{ row }">
-            <el-tag :type="row.keywordTriggered ? 'warning' : 'info'">
-              {{ row.keywordTriggered ? '是' : '否' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="handleViewCustomer(row.userId)">查看客户</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-show="!virtualMode">
+        <el-table :data="tableData" v-loading="loading" stripe>
+          <el-table-column type="index" label="序号" width="80" />
+          <el-table-column prop="userNickname" label="用户昵称" width="150" />
+          <el-table-column prop="userPlatform" label="平台" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getPlatformTagType(row.userPlatform)">{{ getPlatformText(row.userPlatform) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="direction" label="方向" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.direction === 'in' ? 'primary' : 'success'">
+                {{ row.direction === 'in' ? '接收' : '发送' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="content" label="消息内容" show-overflow-tooltip min-width="200" />
+          <el-table-column prop="ai" label="AI发送" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.ai ? 'primary' : 'info'">{{ row.ai ? 'AI' : '人工' }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="keywordTriggered" label="触发关键词" width="120">
+            <template #default="{ row }">
+              <el-tag :type="row.keywordTriggered ? 'warning' : 'info'">
+                {{ row.keywordTriggered ? '是' : '否' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="时间" width="180" />
+          <el-table-column label="操作" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button link type="primary" size="small" @click="handleViewCustomer(row.userId)">查看客户</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <!-- 虚拟滚动表格模式 -->
-      <div v-else class="virtual-table-wrapper" v-loading="loading">
+      <div v-show="virtualMode" class="virtual-table-wrapper" v-loading="loading">
         <el-auto-resizer>
           <template #default="{ height, width }">
             <el-table-v2
               :columns="v2Columns"
               :data="tableData"
               :width="width"
-              :height="virtualTableHeight"
+              :height="height"
               :row-height="50"
               fixed
             />

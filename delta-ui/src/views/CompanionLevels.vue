@@ -22,7 +22,7 @@
         </div>
       </template>
       <el-table :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="index" label="序号" width="70" />
         <el-table-column prop="levelName" label="等级名称" min-width="120" />
         <el-table-column prop="levelCode" label="等级代码" min-width="130" />
         <el-table-column prop="sortOrder" label="排序" width="80" />
@@ -54,7 +54,7 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchData"
+        @size-change="() => { queryParams.pageNum = 1; fetchData() }"
         @current-change="fetchData"
       />
     </el-card>
@@ -149,7 +149,7 @@ const dialogVisible = ref<boolean>(false)
 const isEdit = ref<boolean>(false)
 const formRef = ref<FormInstance>()
 const formData = reactive<{
-  id: number | null
+  id: string | null
   levelName: string
   levelCode: string
   sortOrder: number
@@ -215,7 +215,8 @@ const handleEdit = (row: CompanionLevelVO): void => {
 
 const handleSubmit = async (): Promise<void> => {
   try {
-    await formRef.value!.validate()
+    if (!formRef.value) return
+    await formRef.value.validate()
     if (isEdit.value) {
       await companionLevelApi.update(formData)
       ElMessage.success('更新成功')

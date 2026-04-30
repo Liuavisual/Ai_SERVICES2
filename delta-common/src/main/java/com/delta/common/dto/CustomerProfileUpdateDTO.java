@@ -1,18 +1,20 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
  * 客户画像更新DTO（仅允许修改部分字段）
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @Schema(description = "客户画像更新数据传输对象")
 public class CustomerProfileUpdateDTO {
 
-    @Schema(description = "用户ID", example = "1001")
+    @Schema(description = "用户ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long userId;
 
     @Schema(description = "标签", example = "高价值用户,VIP")

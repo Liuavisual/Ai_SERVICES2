@@ -1,14 +1,22 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * 订单查询数据传输对象
+ *
+ * @author 刘建国
+ */
 @Schema(description = "订单查询数据传输对象")
 public class OrderQueryDTO {
 
-    @Schema(description = "用户ID", example = "1001")
+    @Schema(description = "用户ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long userId;
 
-    @Schema(description = "陪玩师ID", example = "2001")
+    @Schema(description = "陪玩师ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long companionId;
 
     @Schema(description = "订单状态", example = "COMPLETED", allowableValues = {"PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"})

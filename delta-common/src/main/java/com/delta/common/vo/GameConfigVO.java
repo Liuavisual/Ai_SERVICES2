@@ -1,7 +1,6 @@
 package com.delta.common.vo;
 
 import com.delta.common.annotation.ObfuscatedId;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -18,7 +17,8 @@ public class GameConfigVO extends BaseVO {
     @ObfuscatedId
     private Long id;
 
-    @JsonIgnore
+    @Schema(description = "俱乐部ID", example = "d_xxxxx")
+    @ObfuscatedId
     private Long clubConfigId;
 
     @Schema(description = "游戏名称", example = "王者荣耀")

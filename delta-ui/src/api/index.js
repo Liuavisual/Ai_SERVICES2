@@ -279,14 +279,13 @@ export const companionScheduleApi = {
   }),
   update: (data) => request({ url: '/companion-schedules', method: 'put', data }),
   /** 更新排班状态（可预约/已预约/不可用） */
-  updateStatus: (params) => request({ url: '/companion-schedules/status', method: 'put', params }),
+  updateStatus: (data) => request({ url: '/companion-schedules/status', method: 'put', data }),
   delete: (id) => request({ url: `/companion-schedules/${id}`, method: 'delete' }),
   /** 按陪玩师+日期删除排班 */
   deleteByCompanionDate: (params) => request({ url: '/companion-schedules/by-companion-date', method: 'delete', params }),
   /** 创建自由时间段(单日) */
-  createTimeRange: (params) => request({ url: '/companion-schedules/time-range', method: 'post', params }),
-  /** 批量创建自由时间段(多日) */
-  createTimeRangeBatch: (params) => request({ url: '/companion-schedules/time-range-batch', method: 'post', params })
+  createTimeRange: (data) => request({ url: '/companion-schedules/time-range', method: 'post', data }),
+  createTimeRangeBatch: (data) => request({ url: '/companion-schedules/time-range-batch', method: 'post', data })
 }
 
 /** 俱乐部配置API */
@@ -372,11 +371,11 @@ export const workOrderApi = {
   /** 确认完成工单 */
   confirm: (id, data) => request({ url: `/work-orders/${id}/confirm`, method: 'put', data }),
   /** 关闭工单 */
-  close: (id, closeReason) => request({ url: `/work-orders/${id}/close`, method: 'put', params: { closeReason } }),
+  close: (id, closeReason) => request({ url: `/work-orders/${id}/close`, method: 'put', data: { closeReason } }),
   /** 取消工单 */
-  cancel: (id, cancelReason) => request({ url: `/work-orders/${id}/cancel`, method: 'put', params: { cancelReason } }),
+  cancel: (id, cancelReason) => request({ url: `/work-orders/${id}/cancel`, method: 'put', data: { cancelReason } }),
   /** 重新打开工单（仅SYS_ADMIN） */
-  reopen: (id, reopenReason) => request({ url: `/work-orders/${id}/reopen`, method: 'put', params: { reopenReason } }),
+  reopen: (id, reopenReason) => request({ url: `/work-orders/${id}/reopen`, method: 'put', data: { reopenReason } }),
   /** 获取待处理工单数量 */
   getCount: () => request({ url: '/work-orders/count', method: 'get' })
 }

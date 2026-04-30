@@ -64,69 +64,71 @@
       </div>
 
       <!-- 普通表格模式 -->
-      <el-table v-if="!virtualMode" :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="编号" width="70" />
-        <el-table-column label="客户" width="140">
-          <template #default="{ row }">
-            <span class="customer-name">{{ row.userNickname }}</span>
-            <el-tag size="small" :type="getPlatformType(row.platform)" class="platform-tag">{{ getPlatformText(row.platform) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="介入类型" width="120">
-          <template #default="{ row }">
-            <el-tag size="small" :type="getInterventionTypeTag(row.interventionType)">{{ row.interventionTypeDesc || row.interventionType }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="messageContent" label="原始消息" show-overflow-tooltip min-width="180" />
-        <el-table-column label="状态" width="110">
-          <template #default="{ row }">
-            <el-tag size="small" :type="getStatusType(row.status)" effect="light">{{ getStatusText(row.status) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="剩余时间" width="140">
-          <template #default="{ row }">
-            <template v-if="row.status === 'pending' || row.status === 'processing'">
-              <span :class="getCountdownClass(row)">{{ formatCountdown(row) }}</span>
+      <div v-show="!virtualMode">
+        <el-table :data="tableData" v-loading="loading" stripe>
+          <el-table-column type="index" label="序号" width="70" />
+          <el-table-column label="客户" width="140">
+            <template #default="{ row }">
+              <span class="customer-name">{{ row.userNickname }}</span>
+              <el-tag size="small" :type="getPlatformType(row.platform)" class="platform-tag">{{ getPlatformText(row.platform) }}</el-tag>
             </template>
-            <span v-else class="muted-text">—</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="升级" width="80">
-          <template #default="{ row }">
-            <span v-if="row.escalationLevel >= 2" class="escalate-badge escalate-high">上报</span>
-            <span v-else-if="row.escalationLevel >= 1" class="escalate-badge escalate-warn">警告</span>
-            <span v-else class="muted-text">—</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="指派客服" width="100">
-          <template #default="{ row }">
-            <span>{{ row.assignedCsUserName || '—' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="160" />
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <template v-if="row.status === 'pending'">
-              <el-button link type="primary" size="small" @click="handleProcess(row, 'processing')">接手</el-button>
-              <el-button link type="success" size="small" @click="handleProcess(row, 'resolved')">完成</el-button>
+          </el-table-column>
+          <el-table-column label="介入类型" width="120">
+            <template #default="{ row }">
+              <el-tag size="small" :type="getInterventionTypeTag(row.interventionType)">{{ row.interventionTypeDesc || row.interventionType }}</el-tag>
             </template>
-            <template v-else-if="row.status === 'processing'">
-              <el-button link type="success" size="small" @click="handleProcess(row, 'resolved')">完成</el-button>
+          </el-table-column>
+          <el-table-column prop="messageContent" label="原始消息" show-overflow-tooltip min-width="180" />
+          <el-table-column label="状态" width="110">
+            <template #default="{ row }">
+              <el-tag size="small" :type="getStatusType(row.status)" effect="light">{{ getStatusText(row.status) }}</el-tag>
             </template>
-            <el-button link size="small" @click="handleViewCustomer(row)">查看</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          </el-table-column>
+          <el-table-column label="剩余时间" width="140">
+            <template #default="{ row }">
+              <template v-if="row.status === 'pending' || row.status === 'processing'">
+                <span :class="getCountdownClass(row)">{{ formatCountdown(row) }}</span>
+              </template>
+              <span v-else class="muted-text">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="升级" width="80">
+            <template #default="{ row }">
+              <span v-if="row.escalationLevel >= 2" class="escalate-badge escalate-high">上报</span>
+              <span v-else-if="row.escalationLevel >= 1" class="escalate-badge escalate-warn">警告</span>
+              <span v-else class="muted-text">—</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="指派客服" width="100">
+            <template #default="{ row }">
+              <span>{{ row.assignedCsUserName || '—' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="创建时间" width="160" />
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <template v-if="row.status === 'pending'">
+                <el-button link type="primary" size="small" @click="handleProcess(row, 'processing')">接手</el-button>
+                <el-button link type="success" size="small" @click="handleProcess(row, 'resolved')">完成</el-button>
+              </template>
+              <template v-else-if="row.status === 'processing'">
+                <el-button link type="success" size="small" @click="handleProcess(row, 'resolved')">完成</el-button>
+              </template>
+              <el-button link size="small" @click="handleViewCustomer(row)">查看</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <!-- 虚拟滚动表格模式 -->
-      <div v-else class="virtual-table-wrapper" v-loading="loading">
+      <div v-show="virtualMode" class="virtual-table-wrapper" v-loading="loading">
         <el-auto-resizer>
           <template #default="{ height, width }">
             <el-table-v2
               :columns="v2Columns"
               :data="tableData"
               :width="width"
-              :height="virtualTableHeight"
+              :height="height"
               :row-height="50"
               fixed
             />
@@ -231,7 +233,6 @@ const refreshPendingCount: (() => void) | undefined = inject('refreshPendingCoun
 const now = ref<number>(Date.now())
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 const virtualMode = ref<boolean>(false)
-const virtualTableHeight = ref<number>(500)
 
 let userInfo: Record<string, any> = {}
 try {
@@ -305,7 +306,7 @@ const getCountdownClass = (row: PendingMessageVO): string => {
 }
 
 const v2Columns = computed(() => [
-  { key: 'id', dataKey: 'id', title: '编号', width: 70 },
+  { key: 'index', dataKey: 'index', title: '序号', width: 70, cellRenderer: ({ rowIndex }: { rowIndex: number }) => h('span', {}, String(rowIndex + 1)) },
   {
     key: 'userNickname',
     dataKey: 'userNickname',
@@ -424,6 +425,10 @@ const submitProcess = async (): Promise<void> => {
     ElMessage.warning('完成处理时请填写处理结果')
     return
   }
+  if (!processForm.id) {
+    ElMessage.error('待办事项ID缺失，请刷新页面后重试')
+    return
+  }
   submitLoading.value = true
   try {
     const res: Result<null> = await pendingMessageApi.handle({
@@ -437,8 +442,10 @@ const submitProcess = async (): Promise<void> => {
       handleQuery()
       if (refreshPendingCount) refreshPendingCount()
     }
-  } catch (e) {
-    ElMessage.error('操作失败')
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '操作失败'
+    ElMessage.error(msg)
+    console.error('待办处理失败', e)
   } finally {
     submitLoading.value = false
   }

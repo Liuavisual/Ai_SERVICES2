@@ -30,7 +30,7 @@
       </el-form>
       
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="csUserName" label="客服" width="150" />
         <el-table-column prop="customerUserName" label="客户" width="150" />
         <el-table-column prop="assignTypeDesc" label="分配方式" width="100">
@@ -63,7 +63,7 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchData"
+        @size-change="() => { pageNum = 1; fetchData() }"
         @current-change="fetchData"
         style="justify-content: flex-end"
       />
@@ -191,7 +191,7 @@ const searchForm = reactive<{ status: string }>({
 })
 
 const form = reactive<{
-  id: number | null
+  id: string | null
   csUserId: string | null
   customerUserId: string | null
   assignType: string

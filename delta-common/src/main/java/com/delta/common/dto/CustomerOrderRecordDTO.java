@@ -1,5 +1,6 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -10,17 +11,19 @@ import java.time.LocalDateTime;
 /**
  * 客户消费记录DTO
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @Schema(description = "客户消费记录数据传输对象")
 public class CustomerOrderRecordDTO {
 
-    @Schema(description = "客户ID", example = "1001")
+    @Schema(description = "客户ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
     @NotNull(message = "客户ID不能为空")
+    @ObfuscatedId
     private Long userId;
 
-    @Schema(description = "陪玩师ID", example = "2001")
+    @Schema(description = "陪玩师ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long companionId;
 
     @Schema(description = "订单类型", example = "陪玩", allowableValues = {"陪玩", "语音", "视频"})

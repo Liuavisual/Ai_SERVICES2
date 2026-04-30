@@ -10,7 +10,7 @@
         <span>平台配置</span>
       </template>
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="platform" label="平台" width="120">
           <template #default="{ row }">
             <el-tag :type="getPlatformTagType(row.platform)">{{ getPlatformText(row.platform) }}</el-tag>
@@ -106,7 +106,7 @@ const platformHints: Record<string, string> = {
 }
 
 const formData = ref<{
-  id: number | null
+  id: string | null
   platform: string
   enabled: boolean
   config: Record<string, any>

@@ -1,15 +1,22 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * FAQ项数据传输对象
+ *
+ * @author 刘建国
+ */
 @Data
 @Schema(description = "FAQ项数据传输对象")
 public class FaqItemDTO {
 
-    @Schema(description = "FAQ项ID", example = "1")
+    @Schema(description = "FAQ项ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long id;
 
     @Schema(description = "问题分类", example = "服务相关")

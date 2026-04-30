@@ -23,7 +23,7 @@
       </template>
 
       <el-table :data="packageList" border stripe v-loading="loading" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="index" label="序号" width="70" />
         <el-table-column prop="title" label="活动标题" min-width="160" />
         <el-table-column prop="activityType" label="类型" width="100">
           <template #default="{ row }">

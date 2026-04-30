@@ -45,7 +45,7 @@
         </div>
       </template>
       <el-table :data="tableData" stripe style="width: 100%" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="index" label="序号" width="70" />
         <el-table-column prop="orderNo" label="订单号" min-width="180">
           <template #default="{ row }">
             <span style="font-family: monospace; font-size: 12px;">{{ row.orderNo }}</span>

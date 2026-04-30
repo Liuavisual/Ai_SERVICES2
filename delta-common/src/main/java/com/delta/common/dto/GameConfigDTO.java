@@ -1,19 +1,27 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * 游戏配置数据传输对象
+ *
+ * @author 刘建国
+ */
 @Data
 @Schema(description = "游戏配置数据传输对象")
 public class GameConfigDTO {
 
-    @Schema(description = "游戏配置ID", example = "1")
+    @Schema(description = "游戏配置ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long id;
 
-    @Schema(description = "俱乐部ID", example = "1001")
+    @Schema(description = "俱乐部ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
     @NotNull(message = "俱乐部ID不能为空")
+    @ObfuscatedId
     private Long clubConfigId;
 
     @Schema(description = "游戏名称", example = "王者荣耀")

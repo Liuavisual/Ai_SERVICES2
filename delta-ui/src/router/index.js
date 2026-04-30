@@ -257,7 +257,7 @@ router.beforeEach(async (to, from, next) => {
     isRouteRefreshing = true
 
     try {
-      const res = await axios.post('/api/auth/refresh', { refreshToken }, { timeout: 10000 })
+      const res = await axios.post('/api/v1/auth/refresh', { refreshToken }, { timeout: 10000 })
       const data = res.data?.data || res.data
       if (data && data.token) {
         localStorage.setItem('token', data.token)

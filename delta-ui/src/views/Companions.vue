@@ -36,7 +36,7 @@
         </div>
       </template>
       <el-table :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="nickname" label="昵称" min-width="140" />
         <el-table-column prop="realName" label="真实姓名" width="120" />
         <el-table-column prop="levelName" label="等级" width="120">
@@ -233,7 +233,7 @@ const scheduleRef = ref<any>(null)
 const currentCompanion = ref<CompanionVO | null>(null)
 
 const formData = reactive<{
-  id: number | null
+  id: string | null
   realName: string
   nickname: string
   phone: string
@@ -342,7 +342,8 @@ const handleEdit = (row: CompanionVO): void => {
 
 const handleSubmit = async (): Promise<void> => {
   try {
-    await formRef.value!.validate()
+    if (!formRef.value) return
+    await formRef.value.validate()
     if (isEdit.value) {
       await companionApi.update(formData)
       ElMessage.success('更新成功')

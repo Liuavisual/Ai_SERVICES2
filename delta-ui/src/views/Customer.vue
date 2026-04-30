@@ -32,7 +32,7 @@
 
     <el-card class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column label="头像" width="80">
           <template #default="{ row }">
             <el-avatar :size="40" :src="row.avatar">{{ row.nickname?.charAt(0) }}</el-avatar>
@@ -89,7 +89,7 @@
     <el-dialog v-model="detailDialogVisible" title="客户详情" width="600px">
       <div v-if="currentCustomer" class="detail-content">
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="ID">{{ currentCustomer.id }}</el-descriptions-item>
+          <el-descriptions-item label="会员等级">{{ currentCustomer.memberLevel || '普通用户' }}</el-descriptions-item>
           <el-descriptions-item label="昵称">{{ currentCustomer.nickname }}</el-descriptions-item>
           <el-descriptions-item label="平台">{{ getPlatformLabel(currentCustomer.platform) }}</el-descriptions-item>
           <el-descriptions-item label="AI状态">

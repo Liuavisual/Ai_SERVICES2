@@ -57,7 +57,7 @@
 
     <el-card class="table-card">
       <el-table :data="tableData" v-loading="loading" stripe>
-        <el-table-column prop="userId" label="ID" width="60" />
+        <el-table-column type="index" label="序号" width="60" />
         <el-table-column label="客户" min-width="140">
           <template #default="{ row }">
             <div style="display:flex;align-items:center;gap:6px">

@@ -33,7 +33,7 @@
       </el-form>
 
       <el-table :data="tableData" border style="width: 100%" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="category" label="分类" width="120">
           <template #default="{ row }">
             <el-tag :type="getCategoryType(row.category)">{{ row.category }}</el-tag>
@@ -63,7 +63,7 @@
         :total="pagination.total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadData"
+        @size-change="() => { pagination.page = 1; loadData() }"
         @current-change="loadData"
         style="justify-content: flex-end"
       />
@@ -141,7 +141,7 @@ const pagination = reactive<{
 })
 
 const form = reactive<{
-  id: number | null
+  id: string | null
   category: string
   question: string
   answer: string

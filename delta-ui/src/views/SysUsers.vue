@@ -38,7 +38,7 @@
       </el-form>
       
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="username" label="用户名" width="150" />
         <el-table-column prop="realName" label="真实姓名" width="120" />
         <el-table-column prop="phone" label="手机号" width="130">
@@ -223,7 +223,7 @@ const searchForm = reactive<{
 })
 
 const form = reactive<{
-  id: number | null
+  id: string | null
   username: string
   password: string
   realName: string

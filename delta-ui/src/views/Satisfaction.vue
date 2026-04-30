@@ -108,7 +108,7 @@
           <template #default="{ row }">
             <template v-if="row.tags">
               <el-tag
-                v-for="tag in row.tags.split(',')"
+                v-for="tag in (row.tags ? row.tags.split(',').filter(Boolean) : [])"
                 :key="tag"
                 size="small"
                 type="primary"

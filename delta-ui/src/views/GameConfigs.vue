@@ -12,7 +12,7 @@
       </template>
 
       <el-table :data="gameList" border stripe v-loading="loading" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="index" label="序号" width="70" />
         <el-table-column prop="gameName" label="游戏名称" min-width="130" />
         <el-table-column prop="gameCode" label="游戏编码" width="140" />
         <el-table-column prop="gameType" label="游戏类型" width="110">

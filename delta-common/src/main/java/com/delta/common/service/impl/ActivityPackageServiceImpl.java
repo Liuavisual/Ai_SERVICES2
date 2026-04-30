@@ -13,6 +13,7 @@ import com.delta.common.mapper.GameConfigMapper;
 import com.delta.common.mapper.ServiceItemMapper;
 import com.delta.common.service.ActivityPackageService;
 import com.delta.common.vo.ActivityPackageVO;
+import com.delta.common.util.IdObfuscateUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,7 +110,9 @@ public class ActivityPackageServiceImpl implements ActivityPackageService {
         if (pkg.getServiceItemIds() != null && !pkg.getServiceItemIds().isEmpty()) {
             List<String> names = Arrays.stream(pkg.getServiceItemIds().split(","))
                     .filter(s -> !s.trim().isEmpty())
-                    .map(Long::parseLong)
+                    .map(String::trim)
+                    .map(IdObfuscateUtils::decode)
+                    .filter(sid -> sid != null)
                     .map(sid -> {
                         ServiceItem item = serviceItemMapper.selectById(sid);
                         return item != null ? item.getItemName() : "";

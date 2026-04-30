@@ -12,7 +12,7 @@
       </template>
 
       <el-table :data="serviceList" border stripe v-loading="loading" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="70" />
+        <el-table-column type="index" label="序号" width="70" />
         <el-table-column prop="itemName" label="项目名称" width="120" />
         <el-table-column prop="itemCode" label="项目编码" width="120" />
         <el-table-column prop="category" label="分类" width="100">

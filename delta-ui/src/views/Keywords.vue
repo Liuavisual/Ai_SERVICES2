@@ -37,7 +37,7 @@
       </template>
 
       <el-table :data="tableData" stripe v-loading="loading" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="keyword" label="关键词" min-width="150" />
         <el-table-column prop="category" label="分类" width="140">
           <template #default="{ row }">
@@ -67,7 +67,7 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchData"
+        @size-change="() => { currentPage = 1; fetchData() }"
         @current-change="fetchData"
       />
     </el-card>
@@ -123,7 +123,7 @@ const formRef = ref<FormInstance>()
 const isEdit = ref<boolean>(false)
 
 const form = ref<{
-  id: number | null
+  id: string | null
   keyword: string
   category: string
   priority: number
@@ -181,7 +181,7 @@ const handleAdd = (): void => {
 const handleEdit = (row: KeywordVO): void => {
   isEdit.value = true
   dialogTitle.value = '编辑关键词'
-  form.value = { ...row }
+  form.value = { ...row, enabled: Boolean(row.enabled) }
   dialogVisible.value = true
 }
 

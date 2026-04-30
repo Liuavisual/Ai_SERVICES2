@@ -1,10 +1,16 @@
 package com.delta.common.dto;
 
+import com.delta.common.annotation.ObfuscatedId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * 工单创建数据传输对象
+ *
+ * @author 刘建国
+ */
 @Data
 @Schema(description = "工单创建数据传输对象")
 public class WorkOrderCreateDTO {
@@ -21,8 +27,9 @@ public class WorkOrderCreateDTO {
     @NotBlank(message = "来源平台不能为空")
     private String platform;
 
-    @Schema(description = "客户ID", example = "1001")
+    @Schema(description = "客户ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
     @NotNull(message = "客户ID不能为空")
+    @ObfuscatedId
     private Long userId;
 
     @Schema(description = "服务类型", example = "陪玩")
@@ -40,9 +47,11 @@ public class WorkOrderCreateDTO {
     @Schema(description = "上下文摘要", example = "用户对上次服务不满意，要求退款")
     private String contextSummary;
 
-    @Schema(description = "关联陪玩师ID", example = "2001")
+    @Schema(description = "关联陪玩师ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long relatedCompanionId;
 
-    @Schema(description = "分配的客服ID", example = "3001")
+    @Schema(description = "分配的客服ID（支持混淆格式如d_xxxxx）", example = "d_xxxxx")
+    @ObfuscatedId
     private Long assignedCsUserId;
 }

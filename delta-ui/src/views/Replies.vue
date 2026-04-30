@@ -27,7 +27,7 @@
         </div>
       </template>
       <el-table :data="tableData" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="triggerType" label="触发类型" width="120">
           <template #default="{ row }">
             <el-tag>{{ getTriggerTypeText(row.triggerType) }}</el-tag>
@@ -56,7 +56,7 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="fetchData"
+        @size-change="() => { queryParams.pageNum = 1; fetchData() }"
         @current-change="fetchData"
       />
     </el-card>
@@ -143,7 +143,7 @@ const dialogVisible = ref<boolean>(false)
 const isEdit = ref<boolean>(false)
 const formRef = ref<FormInstance>()
 const formData = reactive<{
-  id: number | null
+  id: string | null
   triggerType: string
   triggerKey: string
   content: string
@@ -210,7 +210,8 @@ const handleTriggerTypeChange = (): void => {
 
 const handleSubmit = async (): Promise<void> => {
   try {
-    await formRef.value!.validate()
+    if (!formRef.value) return
+    await formRef.value.validate()
     if (isEdit.value) {
       await replyApi.update(formData)
       ElMessage.success('更新成功')
