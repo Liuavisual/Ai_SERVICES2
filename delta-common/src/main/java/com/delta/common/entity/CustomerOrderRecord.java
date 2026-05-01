@@ -1,63 +1,82 @@
 package com.delta.common.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Index;
-import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.ibatis.type.JdbcType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * 客户消费记录实体，记录每笔消费详情
- *
- * @author delta
- */
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @TableName("customer_order_record")
-@Table(name = "customer_order_record", indexes = {
-    @Index(name = "idx_cor_user_id", columnList = "user_id"),
-    @Index(name = "idx_cor_companion_id", columnList = "companion_id"),
-    @Index(name = "idx_cor_status", columnList = "status"),
-    @Index(name = "idx_cor_order_time", columnList = "order_time")
-})
 public class CustomerOrderRecord extends BaseEntity {
 
+    private static final long serialVersionUID = 1L;
+
+    private Long customerId;
+
+    private Long orderId;
+
+    private String recordType;
+
+    @TableField(value = "content", jdbcType = JdbcType.LONGVARCHAR)
+    private String content;
+
+    private Long operatorId;
+
+    private String operatorName;
+
+    @TableField(exist = false)
     private Long userId;
 
+    @TableField(exist = false)
     private Long companionId;
 
+    @TableField(exist = false)
     private String orderType;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @TableField(exist = false)
     private LocalDateTime orderTime;
 
+    @TableField(exist = false)
     private BigDecimal durationHours;
 
+    @TableField(exist = false)
     private BigDecimal amount;
 
+    @TableField(exist = false)
     private String gameType;
 
+    @TableField(exist = false)
     private String companionLevel;
 
+    @TableField(exist = false)
     private String timeSlot;
 
+    @TableField(exist = false)
     private Integer rating;
 
+    @TableField(exist = false)
     private String reviewContent;
 
+    @TableField(exist = false)
     private String status;
 
+    @TableField(exist = false)
     private String remark;
 
+    @TableField(exist = false)
     private Long serviceItemId;
 
+    @TableField(exist = false)
     private Long gameConfigId;
 
+    @TableField(exist = false)
     private Long activityPackageId;
 
+    @TableField(exist = false)
     private String guaranteeResult;
 }

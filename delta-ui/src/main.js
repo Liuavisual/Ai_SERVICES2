@@ -21,6 +21,21 @@ import App from './App.vue'
 import router from './router'
 import { registerIcons } from './plugins/icons'
 
+const passiveEvents = ['wheel', 'mousewheel', 'touchstart', 'touchmove']
+const origAdd = EventTarget.prototype.addEventListener
+EventTarget.prototype.addEventListener = function (type, listener, options) {
+  if (passiveEvents.includes(type) && typeof listener === 'function') {
+    if (typeof options === 'boolean') {
+      options = { capture: options, passive: true }
+    } else if (options && typeof options === 'object') {
+      options = { ...options, passive: options.passive !== false }
+    } else {
+      options = { passive: true }
+    }
+  }
+  return origAdd.call(this, type, listener, options)
+}
+
 const app = createApp(App)
 
 // 通过插件注册Element Plus图标组件（模板中通过动态名称引用图标，需要全量注册）

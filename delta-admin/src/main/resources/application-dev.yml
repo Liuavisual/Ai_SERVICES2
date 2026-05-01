@@ -21,7 +21,11 @@ spring:
       remove-abandoned: true
       remove-abandoned-timeout: 300
       log-abandoned: true
-      filters: stat,wall
+      filter:
+        stat:
+          enabled: true
+        wall:
+          enabled: true
   data:
     redis:
       host: localhost
@@ -63,8 +67,9 @@ server:
   servlet:
     context-path: /api
   tomcat:
-    max-threads: 300
-    min-spare-threads: 20
+    threads:
+      max: 300
+      min-spare: 20
     accept-count: 200
     connection-timeout: 20000
 

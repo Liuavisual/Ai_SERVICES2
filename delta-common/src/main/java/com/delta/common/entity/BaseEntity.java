@@ -26,4 +26,8 @@ public class BaseEntity implements Serializable {
     @TableLogic
     @TableField("deleted")
     private Integer deleted;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @TableField("deleted_at")
+    private LocalDateTime deletedAt;
 }

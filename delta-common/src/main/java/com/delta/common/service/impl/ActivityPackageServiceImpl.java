@@ -130,7 +130,7 @@ public class ActivityPackageServiceImpl implements ActivityPackageService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         if (gameConfigIds.isEmpty()) return Collections.emptyMap();
-        return gameConfigMapper.selectBatchIds(gameConfigIds).stream()
+        return gameConfigMapper.selectByIds(gameConfigIds).stream()
                 .collect(Collectors.toMap(GameConfig::getId, Function.identity()));
     }
 
@@ -151,7 +151,7 @@ public class ActivityPackageServiceImpl implements ActivityPackageService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         if (serviceItemIds.isEmpty()) return Collections.emptyMap();
-        return serviceItemMapper.selectBatchIds(serviceItemIds).stream()
+        return serviceItemMapper.selectByIds(serviceItemIds).stream()
                 .collect(Collectors.toMap(ServiceItem::getId, Function.identity()));
     }
 

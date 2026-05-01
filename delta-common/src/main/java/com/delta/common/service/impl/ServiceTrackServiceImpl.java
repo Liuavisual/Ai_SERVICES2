@@ -1,17 +1,15 @@
 package com.delta.common.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.delta.common.constant.WorkOrderConstants;
-import com.delta.common.dto.ServiceTrackBookDTO;
-import com.delta.common.dto.ServiceTrackEndDTO;
 import com.delta.common.entity.ServiceTrack;
 import com.delta.common.entity.User;
-import com.delta.common.enums.ServiceTrackStatusEnum;
-import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.ServiceTrackMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.ServiceTrackService;
 import com.delta.common.vo.ServiceTrackVO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +31,8 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
     private final ServiceTrackMapper serviceTrackMapper;
 
     private final UserMapper userMapper;
+
+    private final ObjectMapper objectMapper;
 
     @Override
     public ServiceTrackVO getById(Long id) {
@@ -45,83 +47,105 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
         validateUserExists(userId);
 
         ServiceTrack track = new ServiceTrack();
-        track.setWorkOrderId(workOrderId);
         track.setUserId(userId);
-        track.setTrackStatus(WorkOrderConstants.TRACK_STATUS_CONSULTING);
-        track.setConsultStartedAt(LocalDateTime.now());
-        track.setConsultContent(consultContent);
-        serviceTrackMapper.insert(track);
+        track.setTrackType("CONSULT");
+        track.setRelatedId(workOrderId);
+        track.setTrackStatus("STARTED");
+        track.setStartedAt(LocalDateTime.now());
+        track.setCurrentStep("CONSULTING");
 
-        log.info("创建服务追踪(咨询): trackId={}, userId={}, workOrderId={}", track.getId(), userId, workOrderId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("consultContent", consultContent);
+        data.put("workOrderId", workOrderId);
+        track.setTrackData(toJson(data));
+
+        serviceTrackMapper.insert(track);
+        log.info("创建服务追踪(咨询): trackId={}, userId={}", track.getId(), userId);
         return convertToVO(track);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void bookService(Long trackId, Long userId, ServiceTrackBookDTO bookDTO) {
-        ServiceTrack track = getAndValidateTransition(trackId, WorkOrderConstants.TRACK_STATUS_CONSULTING,
-                WorkOrderConstants.TRACK_STATUS_BOOKED);
+    public void bookService(Long trackId, Long userId, Object bookDTO) {
+        ServiceTrack track = getAndValidateTrack(trackId);
 
-        track.setBookedAt(LocalDateTime.now());
-        track.setBookedCompanionId(bookDTO.getBookedCompanionId());
-        track.setBookedCompanionName(bookDTO.getBookedCompanionName());
-        track.setBookedServiceType(bookDTO.getBookedServiceType());
-        track.setBookedTimeSlot(bookDTO.getBookedTimeSlot());
-        track.setRelatedOrderId(bookDTO.getRelatedOrderId());
-        track.setTrackStatus(WorkOrderConstants.TRACK_STATUS_BOOKED);
+        Map<String, Object> data = parseJson(track.getTrackData());
+        if (data == null) data = new HashMap<>();
+        data.put("bookedAt", LocalDateTime.now().toString());
+        if (bookDTO != null) {
+            Map<String, Object> bookMap = objectMapper.convertValue(bookDTO, new TypeReference<Map<String, Object>>() {});
+            data.putAll(bookMap);
+        }
+
+        track.setCurrentStep("BOOKED");
+        track.setTrackStatus("IN_PROGRESS");
+        track.setTrackData(toJson(data));
         serviceTrackMapper.updateById(track);
-
-        log.info("服务追踪-预约: trackId={}, companionId={}", trackId, bookDTO.getBookedCompanionId());
+        log.info("服务追踪-预约: trackId={}", trackId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void startService(Long trackId, Long serviceCompanionId, String serviceCompanionName) {
-        ServiceTrack track = getAndValidateTransition(trackId, WorkOrderConstants.TRACK_STATUS_BOOKED,
-                WorkOrderConstants.TRACK_STATUS_SERVICING);
+        ServiceTrack track = getAndValidateTrack(trackId);
 
-        track.setServiceStartedAt(LocalDateTime.now());
-        track.setServiceCompanionId(serviceCompanionId);
-        track.setServiceCompanionName(serviceCompanionName);
-        track.setTrackStatus(WorkOrderConstants.TRACK_STATUS_SERVICING);
+        Map<String, Object> data = parseJson(track.getTrackData());
+        if (data == null) data = new HashMap<>();
+        data.put("serviceStartedAt", LocalDateTime.now().toString());
+        data.put("serviceCompanionId", serviceCompanionId);
+        data.put("serviceCompanionName", serviceCompanionName);
+
+        track.setCurrentStep("SERVICING");
+        track.setTrackStatus("IN_PROGRESS");
+        track.setTrackData(toJson(data));
         serviceTrackMapper.updateById(track);
-
         log.info("服务追踪-开始服务: trackId={}, companionId={}", trackId, serviceCompanionId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void endService(Long trackId, ServiceTrackEndDTO endDTO) {
-        ServiceTrack track = getAndValidateTransition(trackId, WorkOrderConstants.TRACK_STATUS_SERVICING,
-                WorkOrderConstants.TRACK_STATUS_SERVICE_DONE);
+    public void endService(Long trackId, Object endDTO) {
+        ServiceTrack track = getAndValidateTrack(trackId);
 
-        track.setServiceEndedAt(LocalDateTime.now());
-        track.setServiceCompanionId(endDTO.getServiceCompanionId() != null ? endDTO.getServiceCompanionId() : track.getServiceCompanionId());
-        track.setServiceCompanionName(endDTO.getServiceCompanionName() != null ? endDTO.getServiceCompanionName() : track.getServiceCompanionName());
-        track.setServiceDuration(endDTO.getServiceDuration());
-        track.setServiceResult(endDTO.getServiceResult());
-        track.setTrackStatus(WorkOrderConstants.TRACK_STATUS_SERVICE_DONE);
+        Map<String, Object> data = parseJson(track.getTrackData());
+        if (data == null) data = new HashMap<>();
+        data.put("serviceEndedAt", LocalDateTime.now().toString());
+        if (endDTO != null) {
+            Map<String, Object> endMap = objectMapper.convertValue(endDTO, new TypeReference<Map<String, Object>>() {});
+            data.putAll(endMap);
+        }
+
+        track.setCurrentStep("SERVICE_DONE");
+        track.setTrackStatus("COMPLETED");
+        track.setCompletedAt(LocalDateTime.now());
+        if (data.containsKey("serviceDuration")) {
+            track.setDurationSeconds(Integer.parseInt(data.get("serviceDuration").toString()) * 60);
+        }
+        track.setResult("SUCCESS");
+        track.setTrackData(toJson(data));
         serviceTrackMapper.updateById(track);
-
-        log.info("服务追踪-结束服务: trackId={}, duration={}min", trackId, endDTO.getServiceDuration());
+        log.info("服务追踪-结束服务: trackId={}", trackId);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void submitRating(Long trackId, Integer customerRating, String customerFeedback) {
-        ServiceTrack track = getAndValidateTransition(trackId, WorkOrderConstants.TRACK_STATUS_SERVICE_DONE,
-                WorkOrderConstants.TRACK_STATUS_CONFIRMED);
+        ServiceTrack track = getAndValidateTrack(trackId);
 
         if (customerRating != null && (customerRating < 1 || customerRating > 5)) {
-            throw new BusinessException("评分必须在1-5之间");
+            throw new RuntimeException("评分必须在1-5之间");
         }
 
-        track.setConfirmedAt(LocalDateTime.now());
-        track.setCustomerRating(customerRating);
-        track.setCustomerFeedback(customerFeedback);
-        track.setTrackStatus(WorkOrderConstants.TRACK_STATUS_CONFIRMED);
-        serviceTrackMapper.updateById(track);
+        Map<String, Object> data = parseJson(track.getTrackData());
+        if (data == null) data = new HashMap<>();
+        data.put("confirmedAt", LocalDateTime.now().toString());
+        data.put("customerRating", customerRating);
+        data.put("customerFeedback", customerFeedback);
 
+        track.setCurrentStep("CONFIRMED");
+        track.setTrackStatus("COMPLETED");
+        track.setTrackData(toJson(data));
+        serviceTrackMapper.updateById(track);
         log.info("服务追踪-评价确认: trackId={}, rating={}/5", trackId, customerRating);
     }
 
@@ -139,7 +163,8 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
     public List<ServiceTrackVO> listByOrderId(Long orderId) {
         if (orderId == null) return new ArrayList<>();
         LambdaQueryWrapper<ServiceTrack> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(ServiceTrack::getRelatedOrderId, orderId);
+        wrapper.eq(ServiceTrack::getRelatedId, orderId);
+        wrapper.eq(ServiceTrack::getTrackType, "CONSULT");
         wrapper.orderByDesc(ServiceTrack::getCreatedAt);
         List<ServiceTrack> tracks = serviceTrackMapper.selectList(wrapper);
         return convertList(tracks);
@@ -147,24 +172,21 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
 
     private void validateUserExists(Long userId) {
         if (userId == null) {
-            throw new BusinessException("用户ID不能为空");
+            throw new RuntimeException("用户ID不能为空");
         }
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException("用户不存在: " + userId);
+            throw new RuntimeException("用户不存在: " + userId);
         }
     }
 
-    private ServiceTrack getAndValidateTransition(Long trackId, String expectedStatus, String targetStatus) {
+    private ServiceTrack getAndValidateTrack(Long trackId) {
         if (trackId == null) {
-            throw new BusinessException("追踪ID不能为空");
+            throw new RuntimeException("追踪ID不能为空");
         }
         ServiceTrack track = serviceTrackMapper.selectById(trackId);
         if (track == null) {
-            throw new BusinessException("服务追踪记录不存在: " + trackId);
-        }
-        if (!expectedStatus.equals(track.getTrackStatus())) {
-            throw new BusinessException("当前状态为" + (track.getTrackStatus()) + "，无法执行此操作。期望状态: " + expectedStatus);
+            throw new RuntimeException("服务追踪记录不存在: " + trackId);
         }
         return track;
     }
@@ -173,27 +195,8 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
         if (track == null) return null;
         ServiceTrackVO vo = new ServiceTrackVO();
         vo.setId(track.getId());
-        vo.setWorkOrderId(track.getWorkOrderId());
         vo.setUserId(track.getUserId());
         vo.setTrackStatus(track.getTrackStatus());
-        vo.setTrackStatusDesc(ServiceTrackStatusEnum.fromCode(track.getTrackStatus()).getDesc());
-        vo.setConsultStartedAt(track.getConsultStartedAt());
-        vo.setConsultContent(track.getConsultContent());
-        vo.setBookedAt(track.getBookedAt());
-        vo.setBookedCompanionId(track.getBookedCompanionId());
-        vo.setBookedCompanionName(track.getBookedCompanionName());
-        vo.setBookedServiceType(track.getBookedServiceType());
-        vo.setBookedTimeSlot(track.getBookedTimeSlot());
-        vo.setRelatedOrderId(track.getRelatedOrderId());
-        vo.setServiceStartedAt(track.getServiceStartedAt());
-        vo.setServiceCompanionId(track.getServiceCompanionId());
-        vo.setServiceCompanionName(track.getServiceCompanionName());
-        vo.setServiceDuration(track.getServiceDuration());
-        vo.setServiceEndedAt(track.getServiceEndedAt());
-        vo.setServiceResult(track.getServiceResult());
-        vo.setConfirmedAt(track.getConfirmedAt());
-        vo.setCustomerRating(track.getCustomerRating());
-        vo.setCustomerFeedback(track.getCustomerFeedback());
         return vo;
     }
 
@@ -203,5 +206,24 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
             result.add(convertToVO(track));
         }
         return result;
+    }
+
+    private String toJson(Map<String, Object> data) {
+        try {
+            return objectMapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            log.error("JSON序列化失败", e);
+            return "{}";
+        }
+    }
+
+    private Map<String, Object> parseJson(String json) {
+        if (json == null || json.isEmpty()) return new HashMap<>();
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        } catch (JsonProcessingException e) {
+            log.error("JSON反序列化失败", e);
+            return new HashMap<>();
+        }
     }
 }

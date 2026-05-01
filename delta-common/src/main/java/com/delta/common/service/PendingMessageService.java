@@ -4,11 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.PendingMessageHandleDTO;
 import com.delta.common.vo.PendingMessageVO;
 
-/**
- * PendingMessageService
- *
- * @author delta
- */
 public interface PendingMessageService {
 
     Page<PendingMessageVO> getPendingMessagePage(Integer page, Integer size, String status, String platform, String keyword);

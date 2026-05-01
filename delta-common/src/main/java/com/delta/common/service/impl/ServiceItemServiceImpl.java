@@ -176,7 +176,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         if (gameConfigIds.isEmpty()) return Collections.emptyMap();
-        return gameConfigMapper.selectBatchIds(gameConfigIds).stream()
+        return gameConfigMapper.selectByIds(gameConfigIds).stream()
                 .collect(Collectors.toMap(GameConfig::getId, Function.identity()));
     }
 
@@ -192,7 +192,7 @@ public class ServiceItemServiceImpl implements ServiceItemService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         if (levelIds.isEmpty()) return Collections.emptyMap();
-        return companionLevelMapper.selectBatchIds(levelIds).stream()
+        return companionLevelMapper.selectByIds(levelIds).stream()
                 .collect(Collectors.toMap(CompanionLevel::getId, Function.identity()));
     }
 
