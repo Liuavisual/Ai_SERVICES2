@@ -6,6 +6,7 @@ import com.delta.common.entity.User;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.*;
 import com.delta.common.service.ChatTestService;
+import com.delta.common.service.ContentSafetyService;
 import com.delta.common.service.CustomerProfileService;
 import com.delta.common.service.DeepSeekService;
 import com.delta.common.service.OrderService;
@@ -42,11 +43,12 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
             ServicePriceRuleMapper servicePriceRuleMapper,
             CompanionMapper companionMapper,
             @Nullable OrderService orderService,
+            ContentSafetyService contentSafetyService,
             UserMapper userMapper) {
         super(messageMapper, pendingMessageMapper, pendingMessageService,
                 keywordMatcherService, replyService, redisService, customerProfileService,
                 clubConfigMapper, serviceItemMapper, activityPackageMapper, companionLevelMapper,
-                servicePriceRuleMapper, companionMapper);
+                servicePriceRuleMapper, companionMapper, contentSafetyService);
         this.deepSeekService = deepSeekService;
         this.orderService = orderService;
         this.userMapper = userMapper;
@@ -65,6 +67,18 @@ public class ChatTestServiceImpl extends BaseMessageProcessService implements Ch
 
         try {
             User user = getOrCreateUser(platform, customerNickname, csUserId);
+
+            // === 内容安全检查入口 ===
+            String safetyBlock = checkContentSafety(content, String.valueOf(user.getId()));
+            if (safetyBlock != null) {
+                saveIncomingMessage(user.getId(), content);
+                saveOutgoingMessage(user.getId(), safetyBlock, false);
+                replyVO.setReplyContent(safetyBlock);
+                replyVO.setAiReply(false);
+                replyVO.setResponseSource("SAFETY_BLOCK");
+                return replyVO;
+            }
+
             Message inMessage = saveIncomingMessage(user.getId(), content);
 
             if (detectServiceCompletion(user.getId(), content)) {

@@ -8,6 +8,7 @@ import com.delta.common.entity.User;
 import com.delta.common.mapper.MessageMapper;
 import com.delta.common.mapper.PendingMessageMapper;
 import com.delta.common.mapper.UserMapper;
+import com.delta.common.service.ContentSafetyService;
 import com.delta.common.service.DeepSeekService;
 import com.delta.common.service.PendingMessageService;
 import com.delta.common.service.RedisService;
@@ -77,6 +78,9 @@ public class TokenConsumptionStressTest {
     @Mock
     private RedisService redisService;
 
+    @Mock
+    private ContentSafetyService contentSafetyService;
+
     @InjectMocks
     private ChatTestServiceImpl chatTestService;
 
@@ -142,6 +146,12 @@ public class TokenConsumptionStressTest {
         when(redisService.get(anyString())).thenReturn(null);
         when(redisService.increment(anyString())).thenReturn(1L);
         when(pendingMessageService.createPendingMessage(any(), any(), any(), any(), any(), any())).thenReturn(true);
+
+        // Mock内容安全检查：默认返回安全通过
+        when(contentSafetyService.checkContent(anyString(), anyString()))
+                .thenReturn(new ContentSafetyService.ContentSafetyResult(
+                        true, null, Collections.emptyList(),
+                        ContentSafetyService.SafetyLevel.SAFE, "安全"));
     }
 
     /**

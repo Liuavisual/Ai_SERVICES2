@@ -8,6 +8,7 @@ import com.delta.common.dto.WeWorkCallbackDTO;
 import com.delta.common.entity.Message;
 import com.delta.common.entity.User;
 import com.delta.common.mapper.UserMapper;
+import com.delta.common.service.ContentSafetyService;
 import com.delta.common.service.DeepSeekService;
 import com.delta.common.service.OrderService;
 import com.delta.common.service.impl.BaseMessageProcessService;
@@ -47,12 +48,13 @@ public class WeWorkMessageServiceImpl extends BaseMessageProcessService implemen
             com.delta.common.mapper.ServicePriceRuleMapper servicePriceRuleMapper,
             com.delta.common.mapper.CompanionMapper companionMapper,
             @Nullable OrderService orderService,
+            ContentSafetyService contentSafetyService,
             UserMapper userMapper,
             WeWorkApiService weWorkApiService) {
         super(messageMapper, pendingMessageMapper, pendingMessageService,
                 keywordMatcherService, replyService, redisService, customerProfileService,
                 clubConfigMapper, serviceItemMapper, activityPackageMapper, companionLevelMapper,
-                servicePriceRuleMapper, companionMapper);
+                servicePriceRuleMapper, companionMapper, contentSafetyService);
         this.deepSeekService = deepSeekService;
         this.orderService = orderService;
         this.userMapper = userMapper;

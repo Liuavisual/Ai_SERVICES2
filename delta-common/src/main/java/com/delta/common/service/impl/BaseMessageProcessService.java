@@ -23,6 +23,7 @@ import com.delta.common.mapper.ActivityPackageMapper;
 import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.mapper.ServicePriceRuleMapper;
 import com.delta.common.mapper.CompanionMapper;
+import com.delta.common.service.ContentSafetyService;
 import com.delta.common.service.CustomerProfileService;
 import com.delta.common.service.DeepSeekService;
 import com.delta.common.service.OrderService;
@@ -94,6 +95,31 @@ public abstract class BaseMessageProcessService {
 
     @Nullable
     protected OrderService orderService;
+
+    /** 内容安全过滤服务，在消息处理入口进行内容审核 */
+    protected final ContentSafetyService contentSafetyService;
+
+    /**
+     * 内容安全检查入口
+     * <p>
+     * 在消息处理入口调用，对用户输入内容进行安全审核。
+     * 如果内容被BLOCK拦截，返回固定的安全提示文本；
+     * 如果内容安全通过，返回null继续正常处理流程。
+     * </p>
+     *
+     * @param text   用户输入文本
+     * @param userId 用户ID
+     * @return 如果被拦截返回安全提示文本，否则返回null
+     */
+    protected String checkContentSafety(String text, String userId) {
+        ContentSafetyService.ContentSafetyResult result = contentSafetyService.checkContent(text, userId);
+        if (result.getLevel() == ContentSafetyService.SafetyLevel.BLOCK) {
+            log.warn("【内容安全拦截】消息被拦截 | userId={} | level={} | matchedWords={}",
+                    userId, result.getLevel(), result.getMatchedWords());
+            return "您的消息包含敏感内容，已被系统安全机制拦截。请遵守平台规范，发送合规内容。如有疑问请联系人工客服。";
+        }
+        return null;
+    }
 
     /**
      * 获取用户当前转人工状态

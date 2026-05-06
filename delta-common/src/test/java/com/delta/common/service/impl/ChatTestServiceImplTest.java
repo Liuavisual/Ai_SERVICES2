@@ -7,6 +7,8 @@ import com.delta.common.entity.Message;
 import com.delta.common.entity.PendingMessage;
 import com.delta.common.entity.User;
 import com.delta.common.mapper.*;
+import com.delta.common.service.ChatTestService;
+import com.delta.common.service.ContentSafetyService;
 import com.delta.common.service.DeepSeekService;
 import com.delta.common.service.OrderService;
 import com.delta.common.service.PendingMessageService;
@@ -84,6 +86,9 @@ public class ChatTestServiceImplTest {
     @Mock
     private OrderService orderService;
 
+    @Mock
+    private ContentSafetyService contentSafetyService;
+
     private ChatTestServiceImpl chatTestService;
 
     private User testUser;
@@ -96,7 +101,7 @@ public class ChatTestServiceImplTest {
                 deepSeekService, keywordMatcherService, replyService, redisService,
                 customerProfileService, clubConfigMapper, serviceItemMapper,
                 activityPackageMapper, companionLevelMapper, servicePriceRuleMapper,
-                companionMapper, orderService, userMapper);
+                companionMapper, orderService, contentSafetyService, userMapper);
 
         testUser = new User();
         testUser.setId(1L);
@@ -118,6 +123,12 @@ public class ChatTestServiceImplTest {
 
         when(redisService.get(anyString())).thenReturn(null);
         when(redisService.increment(anyString())).thenReturn(1L);
+
+        // Mock内容安全检查：默认返回安全通过
+        when(contentSafetyService.checkContent(anyString(), anyString()))
+                .thenReturn(new ContentSafetyService.ContentSafetyResult(
+                        true, null, Collections.emptyList(),
+                        ContentSafetyService.SafetyLevel.SAFE, "安全"));
     }
 
     @Test

@@ -12,6 +12,7 @@ import com.delta.common.entity.FaqItem;
 import com.delta.common.service.AiConfigService;
 import com.delta.common.service.CacheService;
 import com.delta.common.service.DeepSeekService;
+import com.delta.common.service.GameKnowledgeService;
 import com.delta.common.service.RedisService;
 import com.delta.common.vo.CompanionLevelVO;
 import com.delta.common.vo.ServiceItemVO;
@@ -70,6 +71,9 @@ public class DeepSeekServiceImpl implements DeepSeekService {
     private final AiConfigService aiConfigService;
 
     private final RedisService redisService;
+
+    /** 游戏知识库服务，用于注入游戏相关知识到AI提示词 */
+    private final GameKnowledgeService gameKnowledgeService;
 
     @Override
     public String getChatReply(String userMessage) {
@@ -341,8 +345,14 @@ public class DeepSeekServiceImpl implements DeepSeekService {
             dynamicPrompt += "\n\n## 相关FAQ（仅参考）\n" + relevantFaq;
         }
 
-        log.debug("【DeepSeek】系统提示词构建完成 | 长度={}字符 | 含价格数据={} | 含FAQ={}",
-                dynamicPrompt.length(), isPriceRelated, relevantFaq != null);
+        // 注入游戏知识库内容（最多3条，控制在500 tokens内）
+        String gameKnowledge = gameKnowledgeService.injectKnowledgeToPrompt(userMessage);
+        if (gameKnowledge != null && !gameKnowledge.isEmpty()) {
+            dynamicPrompt += "\n\n" + gameKnowledge;
+        }
+
+        log.debug("【DeepSeek】系统提示词构建完成 | 长度={}字符 | 含价格数据={} | 含FAQ={} | 含知识库={}",
+                dynamicPrompt.length(), isPriceRelated, relevantFaq != null, gameKnowledge != null && !gameKnowledge.isEmpty());
 
         return dynamicPrompt;
     }
