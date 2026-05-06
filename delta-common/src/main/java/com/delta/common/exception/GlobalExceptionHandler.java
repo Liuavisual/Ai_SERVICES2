@@ -45,6 +45,13 @@ public class GlobalExceptionHandler {
         return Result.error(400, errorMessage);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("非法参数: {}", e.getMessage());
+        return Result.error(400, e.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         log.error("系统异常", e);

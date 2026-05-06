@@ -779,7 +779,7 @@ public abstract class BaseMessageProcessService {
 
             StringBuilder sb = new StringBuilder();
             for (ServiceItem item : items) {
-                sb.append("- ").append(item.getItemName());
+                sb.append("- ").append(item.getServiceName());
                 if (item.getBasePrice() != null) {
                     String unit = formatPriceUnit(item.getPriceUnit());
                     sb.append(" ¥").append(item.getBasePrice()).append(unit);
@@ -823,7 +823,7 @@ public abstract class BaseMessageProcessService {
             Map<Long, String> serviceItemNameMap = new HashMap<>();
             if (!serviceItemIds.isEmpty()) {
                 serviceItemMapper.selectByIds(serviceItemIds).forEach(
-                        item -> serviceItemNameMap.put(item.getId(), item.getItemName()));
+                        item -> serviceItemNameMap.put(item.getId(), item.getServiceName()));
             }
 
             StringBuilder sb = new StringBuilder();

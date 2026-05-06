@@ -41,6 +41,10 @@ public class AuthController {
 
     private static final int REGISTER_WINDOW_SECONDS = 3600;
 
+    private static final int LOGIN_MAX_REQUESTS = 10;
+
+    private static final int LOGIN_WINDOW_SECONDS = 300;
+
     private final AuthService authService;
 
     private final RateLimiter rateLimiter;
@@ -64,8 +68,15 @@ public class AuthController {
     @PostMapping("/login")
     @AuditLog(module = "认证", action = "用户登录")
     public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletRequest request, HttpServletResponse response) {
+        // 登录接口限流保护，防止暴力破解
+        String clientIp = getClientIp(request);
+        String loginRateLimitKey = "login:" + clientIp;
+        if (!rateLimiter.isAllowed(loginRateLimitKey, LOGIN_MAX_REQUESTS, LOGIN_WINDOW_SECONDS)) {
+            log.warn("登录请求过于频繁, IP={}", clientIp);
+            return Result.error(429, "登录请求过于频繁，请5分钟后再试");
+        }
         // 设置客户端IP
-        loginDTO.setClientIp(getClientIp(request));
+        loginDTO.setClientIp(clientIp);
         // 执行登录逻辑
         LoginVO loginVO = authService.login(loginDTO);
         // 将Token设置到httpOnly Cookie中，防止XSS攻击窃取

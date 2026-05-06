@@ -184,7 +184,7 @@ public class ActivityPackageServiceImpl implements ActivityPackageService {
                     .filter(sid -> sid != null)
                     .map(sid -> {
                         ServiceItem item = serviceItemMap.get(sid);
-                        return item != null ? item.getItemName() : "";
+                        return item != null ? item.getServiceName() : "";
                     })
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toList());

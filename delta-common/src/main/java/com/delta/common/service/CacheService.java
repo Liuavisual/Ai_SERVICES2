@@ -14,7 +14,11 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 缓存服务接口，提供业务数据缓存能力
+ * 缓存服务，使用双重检查锁定（Double-Checked Locking）保证线程安全
+ * <p>
+ * 采用 volatile 字段 + synchronized 双重检查的模式，
+ * 确保多线程环境下的缓存可见性和单次加载。
+ * </p>
  *
  * @author delta
  */
@@ -33,6 +37,11 @@ public class CacheService {
     private final CompanionLevelService companionLevelService;
 
     private final ServiceItemService serviceItemService;
+
+    private final Object clubConfigLock = new Object();
+    private final Object faqItemsLock = new Object();
+    private final Object companionLevelsLock = new Object();
+    private final Object serviceItemsLock = new Object();
 
     private volatile ClubConfig cachedClubConfig = null;
     private volatile List<FaqItem> cachedFaqItems = null;
@@ -58,19 +67,25 @@ public class CacheService {
 
     public void reloadClubConfig() {
         log.info("刷新俱乐部配置缓存...");
-        cachedClubConfig = clubConfigService.getClubConfig();
+        synchronized (clubConfigLock) {
+            cachedClubConfig = clubConfigService.getClubConfig();
+        }
         log.info("俱乐部配置缓存刷新完成");
     }
 
     public void reloadFaqItems() {
         log.info("刷新FAQ知识库缓存...");
-        cachedFaqItems = faqItemService.getEnabledFaqItems();
+        synchronized (faqItemsLock) {
+            cachedFaqItems = faqItemService.getEnabledFaqItems();
+        }
         log.info("FAQ知识库缓存刷新完成，共 {} 条", cachedFaqItems != null ? cachedFaqItems.size() : 0);
     }
 
     public void reloadCompanionLevels() {
         log.info("刷新陪玩等级缓存...");
-        cachedCompanionLevels = companionLevelService.getAllEnabled();
+        synchronized (companionLevelsLock) {
+            cachedCompanionLevels = companionLevelService.getAllEnabled();
+        }
         log.info("陪玩等级缓存刷新完成，共 {} 个等级", cachedCompanionLevels != null ? cachedCompanionLevels.size() : 0);
     }
 
@@ -78,35 +93,56 @@ public class CacheService {
         log.info("刷新服务项目缓存...");
         ClubConfig clubConfig = getClubConfig();
         if (clubConfig != null) {
-            cachedServiceItems = serviceItemService.getByClubId(clubConfig.getId());
+            synchronized (serviceItemsLock) {
+                cachedServiceItems = serviceItemService.getByClubId(clubConfig.getId());
+            }
         }
         log.info("服务项目缓存刷新完成，共 {} 个项目", cachedServiceItems != null ? cachedServiceItems.size() : 0);
     }
 
     public ClubConfig getClubConfig() {
         if (cachedClubConfig == null) {
-            reloadClubConfig();
+            synchronized (clubConfigLock) {
+                if (cachedClubConfig == null) {
+                    cachedClubConfig = clubConfigService.getClubConfig();
+                }
+            }
         }
         return cachedClubConfig;
     }
 
     public List<FaqItem> getFaqItems() {
         if (cachedFaqItems == null) {
-            reloadFaqItems();
+            synchronized (faqItemsLock) {
+                if (cachedFaqItems == null) {
+                    cachedFaqItems = faqItemService.getEnabledFaqItems();
+                }
+            }
         }
         return cachedFaqItems;
     }
 
     public List<CompanionLevelVO> getCompanionLevels() {
         if (cachedCompanionLevels == null) {
-            reloadCompanionLevels();
+            synchronized (companionLevelsLock) {
+                if (cachedCompanionLevels == null) {
+                    cachedCompanionLevels = companionLevelService.getAllEnabled();
+                }
+            }
         }
         return cachedCompanionLevels;
     }
 
     public List<ServiceItemVO> getServiceItems() {
         if (cachedServiceItems == null) {
-            reloadServiceItems();
+            synchronized (serviceItemsLock) {
+                if (cachedServiceItems == null) {
+                    ClubConfig clubConfig = getClubConfig();
+                    if (clubConfig != null) {
+                        cachedServiceItems = serviceItemService.getByClubId(clubConfig.getId());
+                    }
+                }
+            }
         }
         return cachedServiceItems;
     }

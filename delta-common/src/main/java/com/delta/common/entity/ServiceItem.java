@@ -7,6 +7,11 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 
+/**
+ * 服务项目实体类
+ *
+ * @author 刘建国
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("service_item")
@@ -20,19 +25,19 @@ public class ServiceItem extends BaseEntity {
 
     /** 项目名称 */
     @TableField("service_name")
-    private String itemName;
+    private String serviceName;
 
     /** 项目编码 */
     @TableField("service_code")
-    private String itemCode;
+    private String serviceCode;
 
     /** 描述 */
     @TableField("service_desc")
-    private String description;
+    private String serviceDesc;
 
     /** 图标 */
     @TableField("service_icon")
-    private String iconUrl;
+    private String serviceIcon;
 
     /** 分类 */
     private String category;
