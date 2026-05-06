@@ -76,7 +76,6 @@ public class ProtectionAspect {
      */
     @Around("@annotation(protectedLogic)")
     public Object around(ProceedingJoinPoint joinPoint, ProtectedLogic protectedLogic) throws Throwable {
-        // 获取方法签名
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String className = signature.getDeclaringTypeName();
         String methodName = signature.getName();

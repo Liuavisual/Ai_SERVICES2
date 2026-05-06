@@ -56,20 +56,15 @@ public class AuditLogAspect {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
-            // 获取客户端真实IP
-            ip = getClientIp(request);
-            // 获取HTTP方法
+            ip = request.getRemoteAddr();
             method = request.getMethod();
-            // 获取请求URI
             uri = request.getRequestURI();
-            // 从请求属性中获取已认证的用户ID
             Object userIdAttr = request.getAttribute("userId");
             if (userIdAttr != null) {
                 username = userIdAttr.toString();
             }
         }
 
-        // 获取目标方法签名信息
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String className = signature.getDeclaringTypeName();
         String methodName = signature.getName();
@@ -84,7 +79,6 @@ public class AuditLogAspect {
             action = methodName;
         }
 
-        // 执行目标方法
         Object result = null;
         Throwable error = null;
         try {
@@ -94,14 +88,10 @@ public class AuditLogAspect {
             error = t;
             throw t;
         } finally {
-            // 计算方法执行耗时
             long duration = System.currentTimeMillis() - startTime;
-            // 判断执行状态
             String status = error == null ? "SUCCESS" : "FAIL";
-            // 获取错误信息
             String errorMsg = error != null ? error.getMessage() : "";
 
-            // 构建审计日志消息
             StringBuilder logMsg = new StringBuilder();
             logMsg.append("[").append(module).append("] ");
             logMsg.append(action).append(" | ");
@@ -111,11 +101,9 @@ public class AuditLogAspect {
             logMsg.append("uri=").append(uri).append(" | ");
             logMsg.append("status=").append(status).append(" | ");
             logMsg.append("duration=").append(duration).append("ms");
-            // 如果需要保存返回结果
             if (auditLog.saveResult() && result != null) {
                 logMsg.append(" | result=").append(result);
             }
-            // 追加错误信息
             if (!errorMsg.isEmpty()) {
                 logMsg.append(" | error=").append(errorMsg);
             }

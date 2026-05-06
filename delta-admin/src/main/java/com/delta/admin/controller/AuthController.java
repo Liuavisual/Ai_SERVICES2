@@ -75,9 +75,7 @@ public class AuthController {
             log.warn("登录请求过于频繁, IP={}", clientIp);
             return Result.error(429, "登录请求过于频繁，请5分钟后再试");
         }
-        // 设置客户端IP
         loginDTO.setClientIp(clientIp);
-        // 执行登录逻辑
         LoginVO loginVO = authService.login(loginDTO);
         // 将Token设置到httpOnly Cookie中，防止XSS攻击窃取
         setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
@@ -281,7 +279,6 @@ public class AuthController {
     private void setTokenCookie(HttpServletResponse response, String token, String refreshToken, Long expiresIn) {
         int maxAge = expiresIn != null ? expiresIn.intValue() : 7200;
 
-        // 设置访问令牌Cookie
         Cookie tokenCookie = new Cookie("access_token", token);
         tokenCookie.setHttpOnly(true);
         tokenCookie.setSecure(true);

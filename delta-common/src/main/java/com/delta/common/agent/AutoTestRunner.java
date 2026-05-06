@@ -142,12 +142,10 @@ public class AutoTestRunner {
         try {
             String loginUrl = serverUrl + loginPath;
 
-            // 构建登录请求体
             Map<String, String> loginBody = new HashMap<>();
             loginBody.put("username", testUsername);
             loginBody.put("password", testPassword);
 
-            // 设置请求头
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -213,21 +211,17 @@ public class AutoTestRunner {
                 sendBody.put("csUserId", 1);
                 sendBody.put("content", testCase.getInput());
 
-                // 设置请求头（携带JWT令牌）
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 headers.setBearerAuth(jwtToken);
 
                 HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(sendBody, headers);
 
-                // 记录开始时间
                 long startTime = System.currentTimeMillis();
 
-                // 发送HTTP请求
                 ResponseEntity<Map> response = restTemplate.exchange(
                         sendUrl, HttpMethod.POST, requestEntity, Map.class);
 
-                // 计算响应时间
                 long responseTime = System.currentTimeMillis() - startTime;
                 result.setActualResponseMs(responseTime);
 
@@ -238,7 +232,6 @@ public class AutoTestRunner {
                     Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
 
                     if (data != null) {
-                        // 获取实际回复内容
                         Object replyContent = data.get("replyContent");
                         String actualResponse = replyContent != null ? replyContent.toString() : "";
                         result.setActualResponse(actualResponse);
@@ -255,7 +248,6 @@ public class AutoTestRunner {
                         }
                         result.setMatchedSensitiveWords(sensitiveWords);
 
-                        // 判断测试是否通过
                         boolean passed = evaluateTestCase(testCase, result);
                         result.setPassed(passed);
 

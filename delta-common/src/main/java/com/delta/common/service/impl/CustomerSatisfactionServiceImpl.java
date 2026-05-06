@@ -160,7 +160,6 @@ public class CustomerSatisfactionServiceImpl implements CustomerSatisfactionServ
         }).collect(Collectors.toList());
         voPage.setRecords(voList);
 
-        // 设置行号
         VoUtils.setRowNumbers(voPage);
         return voPage;
     }

@@ -111,6 +111,12 @@
             <artifactId>poi-ooxml</artifactId>
         </dependency>
 
+        <!-- 开源敏感词库：基于DFA算法的高性能敏感词过滤，内置6万+词库 -->
+        <dependency>
+            <groupId>com.github.houbb</groupId>
+            <artifactId>sensitive-word</artifactId>
+        </dependency>
+
         <!-- 测试依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

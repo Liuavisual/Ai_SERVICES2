@@ -37,6 +37,8 @@
         <redisson.version>3.25.2</redisson.version>
         <poi.version>5.2.5</poi.version>
         <mockito.version>5.7.0</mockito.version>
+        <!-- 开源敏感词库 -->
+        <sensitive-word.version>0.24.0</sensitive-word.version>
     </properties>
 
     <dependencyManagement>
@@ -125,6 +127,13 @@
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
                 <version>${poi.version}</version>
+            </dependency>
+
+            <!-- 开源敏感词库：基于DFA算法的高性能敏感词过滤 -->
+            <dependency>
+                <groupId>com.github.houbb</groupId>
+                <artifactId>sensitive-word</artifactId>
+                <version>${sensitive-word.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
