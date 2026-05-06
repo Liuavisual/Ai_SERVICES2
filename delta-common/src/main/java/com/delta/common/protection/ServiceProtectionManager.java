@@ -11,11 +11,9 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -78,9 +76,6 @@ public class ServiceProtectionManager {
 
     /** AES密钥算法 */
     private static final String KEY_ALGORITHM = "AES";
-
-    /** Base64密钥长度对应的AES位数 */
-    private static final int AES_KEY_SIZE = 256;
 
     /** 初始化向量(IV)长度（字节） */
     private static final int IV_LENGTH = 16;
@@ -544,39 +539,6 @@ public class ServiceProtectionManager {
             return "D"; // 标准：纯AI处理
         }
     }
-
-    /**
-     * 计算客户价值评分（私有算法）
-     * <p>
-     * 综合VIP等级、历史消费、活跃天数、满意度均值等多个因子。
-     * 不同因子的加权系数经过长期数据分析确定。
-     * </p>
-     *
-     * @param vipLevel        VIP等级（0-5）
-     * @param totalSpent      累计消费金额
-     * @param activeDays      活跃天数
-     * @param avgSatisfaction 平均满意度（1-5）
-     * @return 客户价值评分（0-100）
-     */
-    private double computeCustomerValueScore(int vipLevel, double totalSpent, int activeDays, double avgSatisfaction) {
-        // VIP等级加权（指数级增长，体现VIP客户的高价值）
-        double vipScore = Math.pow(vipLevel, 1.5) * 10;
-
-        // 消费金额加权（对数级增长，避免极端值影响）
-        double spentScore = Math.log1p(totalSpent) * 8;
-
-        // 活跃天数加权（线性，上限1000天）
-        double activeScore = Math.min(activeDays / 10.0, 100) * 0.3;
-
-        // 满意度加权
-        double satisfactionScore = avgSatisfaction * 8;
-
-        return clamp(vipScore * 0.35 + spentScore * 0.25 + activeScore * 0.15 + satisfactionScore * 0.25, 0, 100);
-    }
-
-    // ============================================================
-    // 加密配置管理
-    // ============================================================
 
     /**
      * 加密关键决策参数

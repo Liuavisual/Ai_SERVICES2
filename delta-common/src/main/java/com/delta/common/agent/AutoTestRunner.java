@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -152,8 +153,9 @@ public class AutoTestRunner {
             HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(loginBody, headers);
 
             // 发送登录请求
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    loginUrl, HttpMethod.POST, requestEntity, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    loginUrl, HttpMethod.POST, requestEntity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {});
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
@@ -219,8 +221,9 @@ public class AutoTestRunner {
 
                 long startTime = System.currentTimeMillis();
 
-                ResponseEntity<Map> response = restTemplate.exchange(
-                        sendUrl, HttpMethod.POST, requestEntity, Map.class);
+                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                        sendUrl, HttpMethod.POST, requestEntity,
+                        new ParameterizedTypeReference<Map<String, Object>>() {});
 
                 long responseTime = System.currentTimeMillis() - startTime;
                 result.setActualResponseMs(responseTime);

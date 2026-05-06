@@ -56,7 +56,7 @@ public class AuditLogAspect {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
-            ip = request.getRemoteAddr();
+            ip = getClientIp(request);
             method = request.getMethod();
             uri = request.getRequestURI();
             Object userIdAttr = request.getAttribute("userId");

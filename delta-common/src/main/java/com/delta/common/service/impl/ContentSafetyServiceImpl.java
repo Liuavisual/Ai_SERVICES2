@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -57,11 +56,7 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
     /** Redis键后缀：分时段统计（Hash） */
     private static final String KEY_HOURLY = ":hourly";
 
-    /** 日期格式化器：yyyyMMdd */
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
-
-    /** 敏感词替换为的掩码字符串 */
-    private static final String MASK_REPLACEMENT = "***";
 
     /** 手机号正则：匹配中国大陆手机号 */
     private static final Pattern PHONE_PATTERN = Pattern.compile("1[3-9]\\d{9}");

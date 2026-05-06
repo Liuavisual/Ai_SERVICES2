@@ -6,7 +6,6 @@ import com.delta.common.mapper.KeywordMapper;
 import com.delta.common.service.ContentSafetyService.SafetyCategory;
 import com.github.houbb.sensitive.word.api.IWordAllow;
 import com.github.houbb.sensitive.word.api.IWordDeny;
-import com.github.houbb.sensitive.word.api.IWordTag;
 import com.github.houbb.sensitive.word.bs.SensitiveWordBs;
 import com.github.houbb.sensitive.word.support.allow.WordAllows;
 import com.github.houbb.sensitive.word.support.deny.WordDenys;
