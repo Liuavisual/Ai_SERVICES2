@@ -36,7 +36,7 @@ public class AiConfigController {
 
     @Operation(summary = "获取所有AI配置")
     @GetMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<List<AiConfigVO>> getAllConfigs() {
         List<AiConfigVO> configs = aiConfigService.getAllConfigs();
         return Result.success(configs);

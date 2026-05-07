@@ -1,9 +1,7 @@
 package com.delta.common.vo;
 
 import com.delta.common.annotation.ObfuscatedId;
-import com.delta.common.util.DesensitizeUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,17 +34,5 @@ public class AiConfigVO extends BaseVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    @JsonIgnore
-    private String configValueRaw;
-
-    public String getConfigValue() {
-        if (configValueRaw != null && DesensitizeUtils.isSensitiveKey(configKey)) {
-            return DesensitizeUtils.maskSecret(configValueRaw);
-        }
-        return configValueRaw;
-    }
-
-    public void setConfigValue(String configValue) {
-        this.configValueRaw = configValue;
-    }
+    private String configValue;
 }

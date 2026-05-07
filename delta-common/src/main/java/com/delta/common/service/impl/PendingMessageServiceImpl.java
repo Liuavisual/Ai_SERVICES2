@@ -41,6 +41,10 @@ public class PendingMessageServiceImpl implements PendingMessageService {
         Page<PendingMessage> pendingPage = new Page<>(page, size);
         LambdaQueryWrapper<PendingMessage> wrapper = new LambdaQueryWrapper<>();
 
+        if (status != null && !status.trim().isEmpty()) {
+            wrapper.eq(PendingMessage::getStatus, status);
+        }
+
         if (platform != null && !platform.trim().isEmpty()) {
             wrapper.eq(PendingMessage::getPlatform, platform);
         }

@@ -1,5 +1,6 @@
 package com.delta.common.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.GameConfigDTO;
 import com.delta.common.vo.GameConfigVO;
 
@@ -16,4 +17,6 @@ public interface GameConfigService {
     void update(GameConfigDTO dto);
 
     void delete(Long id);
+
+    Page<GameConfigVO> getPage(Integer page, Integer size, Long clubConfigId);
 }

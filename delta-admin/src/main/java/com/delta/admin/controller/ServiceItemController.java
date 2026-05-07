@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.constant.ApiVersionConstants;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.ServiceItemDTO;
 import com.delta.common.dto.ServicePriceRuleDTO;
 import com.delta.common.service.ServiceItemService;
@@ -23,6 +24,20 @@ import java.util.List;
 public class ServiceItemController extends BaseController {
 
     private final ServiceItemService serviceItemService;
+
+    @Operation(summary = "分页查询服务项目")
+    @GetMapping("/page")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<Page<ServiceItemVO>> getPage(
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
+            @RequestParam(name = "clubConfigId", required = false) String clubConfigId,
+            @RequestParam(name = "gameConfigId", required = false) String gameConfigId) {
+        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
+        Long decodedGameConfigId = gameConfigId != null ? decodeId(gameConfigId) : null;
+        Page<ServiceItemVO> pageResult = serviceItemService.getPage(page, size, decodedClubConfigId, decodedGameConfigId);
+        return Result.success(pageResult);
+    }
 
     @Operation(summary = "获取俱乐部的服务项目")
     @GetMapping("/club/{clubConfigId}")

@@ -37,19 +37,14 @@ public class PendingMessage extends BaseEntity {
     @TableField(exist = false)
     private String interventionType;
 
-    @TableField(exist = false)
     private String status;
 
-    @TableField(exist = false)
     private LocalDateTime deadline;
 
-    @TableField(exist = false)
     private Integer escalationLevel;
 
-    @TableField(exist = false)
     private Long assignedCsUserId;
 
-    @TableField(exist = false)
     private Integer reminderCount;
 
     @TableField(exist = false)

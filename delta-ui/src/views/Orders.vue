@@ -115,8 +115,8 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="() => { queryParams.pageNum = 1; handleQuery() }"
-        @current-change="handleQuery"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
         style="margin-top: 16px; justify-content: flex-end"
       />
     </el-card>
@@ -244,10 +244,10 @@ function formatDateTime(val: string): string {
 async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const res: Result<PageResult<OrderVO>> = await orderApi.queryOrders(queryParams)
+    const res: Result<PageResult<OrderVO>> = await orderApi.getPage(queryParams)
     if (res.code === 200) {
-      tableData.value = res.data?.records || res.data || []
-      total.value = res.data?.total || (Array.isArray(res.data) ? res.data.length : 0)
+      tableData.value = res.data?.records || []
+      total.value = res.data?.total || 0
     }
   } catch (e) {
     console.error('查询订单失败', e)
@@ -258,6 +258,16 @@ async function fetchData(): Promise<void> {
 
 function handleQuery(): void {
   queryParams.pageNum = 1
+  fetchData()
+}
+
+function handleSizeChange(): void {
+  queryParams.pageNum = 1
+  fetchData()
+}
+
+function handlePageChange(page: number): void {
+  queryParams.pageNum = page
   fetchData()
 }
 

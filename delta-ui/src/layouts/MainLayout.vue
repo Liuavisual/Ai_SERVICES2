@@ -1,591 +1,322 @@
+<!--
+  主布局组件
+
+  核心优化：
+  - 使用 <Suspense> 包裹路由视图，监听 @pending/@resolve 精确追踪异步组件加载
+  - 顶部 PageProgress 进度条提供视觉反馈，消除白屏感知
+  - SkeletonBox 作为异步组件加载时的占位内容
+  - 菜单项 hover 时预加载对应路由 chunk
+  - 侧边栏菜单按角色过滤
+
+  @author 刘建国
+-->
 <template>
-  <el-container class="app-container">
-    <el-aside :width="sidebarWidth">
-      <div class="sidebar">
-        <div class="sidebar-header">
-          <div class="logo-icon">
-            <svg viewBox="0 0 28 28" fill="none" width="24" height="24">
-              <rect x="2" y="2" width="24" height="24" rx="6" fill="#6366F1"/>
-              <path d="M10 14h8M14 10v8" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <transition name="fade">
-            <div v-show="!collapsed" class="logo-text">
-              <span class="logo-name">Delta</span>
-              <span class="logo-badge">Companion</span>
-            </div>
-          </transition>
+  <el-container class="main-layout">
+    <el-header class="main-header">
+      <div class="header-left">
+        <h1 class="app-title">Delta AI 客服管理系统</h1>
+      </div>
+      <div class="header-right">
+        <span class="user-info" v-if="userInfo">
+          <el-icon><UserFilled /></el-icon>
+          {{ userInfo.username }}
+          <el-tag :type="userInfo.role === 'SYS_ADMIN' ? 'danger' : 'info'" size="small" class="role-tag">
+            {{ roleLabel }}
+          </el-tag>
+        </span>
+        <el-button type="danger" plain size="small" @click="handleLogout" :loading="logoutLoading">
+          退出登录
+        </el-button>
+      </div>
+    </el-header>
+    <el-container class="main-body">
+      <el-aside class="main-aside" :class="{ 'is-collapsed': sidebarCollapsed }">
+        <div class="sidebar-toggle" @click="sidebarCollapsed = !sidebarCollapsed">
+          <el-icon><Fold v-if="!sidebarCollapsed" /><Expand v-else /></el-icon>
         </div>
-        <nav class="sidebar-nav">
-          <template v-for="(menu, idx) in menuItems" :key="menu.path || idx">
-            <div v-if="menu.divider" class="nav-divider">
-              <span v-show="!collapsed" class="nav-divider-label">{{ menu.label }}</span>
-            </div>
-            <div
+        <el-menu
+          :default-active="activeMenu"
+          :collapse="sidebarCollapsed"
+          :router="true"
+          class="sidebar-menu"
+          background-color="#304156"
+          text-color="#bfcbd9"
+          active-text-color="#409eff"
+        >
+          <template v-for="item in menuItems" :key="item.path">
+            <el-divider v-if="item.divider" class="menu-divider" />
+            <el-menu-item
               v-else
-              :class="['nav-item', { active: activeMenu === menu.path }]"
-              @click="navigateTo(menu.path)"
-              :title="collapsed ? menu.title : ''"
+              :index="item.path"
+              :key="item.path"
+              @mouseenter="preloadRoute(item.path)"
             >
-              <div class="nav-icon-wrap">
-                <el-icon :size="18"><component :is="menu.icon" /></el-icon>
-              </div>
-              <span class="nav-label" v-show="!collapsed">{{ menu.title }}</span>
-              <el-badge
-                v-if="menu.path === '/pending-messages' && !collapsed"
-                :value="pendingCountDisplay"
-                :hidden="pendingCount === 0"
-                class="nav-badge"
-              />
-              <div v-if="activeMenu === menu.path" class="nav-active-indicator"></div>
+              <el-icon><component :is="item.icon" /></el-icon>
+              <template #title>{{ item.title }}</template>
+            </el-menu-item>
+          </template>
+        </el-menu>
+      </el-aside>
+      <el-main class="content-main">
+        <PageProgress ref="progressBar" />
+        <Suspense @pending="onRouteLoading" @resolve="onRouteLoaded">
+          <template #default>
+            <router-view v-slot="{ Component }">
+              <transition name="fade-slide" mode="out-in">
+                <keep-alive :include="cachedViews">
+                  <component :is="Component" :key="$route.fullPath" />
+                </keep-alive>
+              </transition>
+            </router-view>
+          </template>
+          <template #fallback>
+            <div class="route-loading-container">
+              <SkeletonBox type="table" :rows="8" :columns="5" />
             </div>
           </template>
-        </nav>
-        <div class="sidebar-footer" v-show="!collapsed">
-          <div class="sidebar-version">v1.0.0</div>
-        </div>
-      </div>
-    </el-aside>
-
-    <el-container class="main-area">
-      <header class="top-bar">
-        <div class="top-left">
-          <button class="icon-btn" @click="toggleCollapse" :title="collapsed ? '展开菜单' : '收起菜单'">
-            <el-icon :size="18"><Fold v-if="!collapsed" /><Expand v-else /></el-icon>
-          </button>
-          <div class="breadcrumb">
-            <span class="breadcrumb-current">{{ currentTitle }}</span>
-          </div>
-        </div>
-        <div class="top-right">
-          <div :class="['ws-status', wsConnected ? 'connected' : 'disconnected']" :title="wsConnected ? 'WebSocket 已连接' : 'WebSocket 未连接'">
-            <span class="ws-dot"></span>
-            <span class="ws-text" v-show="wsConnected">Live</span>
-          </div>
-          <button class="icon-btn ws-toggle" @click="toggleWebSocket" title="切换WebSocket">
-            <el-icon :size="16"><Connection /></el-icon>
-          </button>
-          <div class="user-chip" v-if="userInfo">
-            <div class="user-avatar">{{ (userInfo.realName || '?')[0] }}</div>
-            <div class="user-detail">
-              <span class="user-name">{{ userInfo.realName }}</span>
-              <span class="user-role">{{ userInfo.roleDesc || userInfo.role }}</span>
-            </div>
-          </div>
-          <button class="logout-btn" @click="handleLogout">
-            <el-icon :size="14"><SwitchButton /></el-icon>
-            <span>退出</span>
-          </button>
-        </div>
-      </header>
-
-      <main class="content-main" v-loading="routeLoading" element-loading-text="页面加载中..." element-loading-background="rgba(255,255,255,0.7)">
-        <router-view v-slot="{ Component }">
-          <transition name="fade-slide" mode="out-in">
-            <keep-alive>
-              <component :is="Component" :key="$route.fullPath" />
-            </keep-alive>
-          </transition>
-        </router-view>
-      </main>
+        </Suspense>
+      </el-main>
     </el-container>
   </el-container>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted, provide } from 'vue'
-import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { ElNotification } from 'element-plus'
-import { DataLine, Key, ChatDotRound, ChatLineRound, Message, Bell, Setting, Tools, User, UserFilled, Connection, Trophy, Timer, Guide, Shop, Fold, Expand, Avatar, Monitor, List, Present, Calendar, SwitchButton, Tickets, Position, TrendCharts, Star } from '@element-plus/icons-vue'
-import { pendingMessageApi } from '@/api'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { Fold, Expand, UserFilled } from '@element-plus/icons-vue'
+import { useAuthStore } from '@/stores/auth'
+import PageProgress from '@/components/PageProgress.vue'
+import SkeletonBox from '@/components/SkeletonBox.vue'
 
-const route = useRoute()
 const router = useRouter()
-const activeMenu = computed(() => route.path)
-const collapsed = ref(false)
-const sidebarWidth = computed(() => collapsed.value ? '72px' : '240px')
-const currentTitle = computed(() => {
-  const m = allMenus.find(item => item.path === route.path)
-  return m?.title || '数据总览'
+const route = useRoute()
+const authStore = useAuthStore()
+
+const sidebarCollapsed = ref(false)
+const logoutLoading = ref(false)
+const progressBar = ref(null)
+const preloadedRoutes = new Set()
+
+const userInfo = computed(() => authStore.userInfo)
+const cachedViews = ref([])
+
+const roleLabel = computed(() => userInfo.value?.role === 'SYS_ADMIN' ? '超级管理员' : userInfo.value?.role === 'CS_LEADER' ? '客服主管' : '客服人员')
+
+const activeMenu = computed(() => {
+  const { meta, path } = route
+  if (meta.activeMenu) return meta.activeMenu
+  return path
 })
-const wsConnected = ref(false)
-const pendingCount = ref(0)
-const userInfo = ref(null)
-let ws = null
-let refreshTimer = null
-
-/** 路由切换加载状态 */
-const routeLoading = ref(false)
-
-/** 路由切换前显示加载状态 */
-router.beforeEach((to, from, next) => {
-  if (to.path !== from.path) {
-    routeLoading.value = true
-  }
-  next()
-})
-
-/** 路由切换后隐藏加载状态 */
-router.afterEach(() => {
-  routeLoading.value = false
-})
-
-const pendingCountDisplay = computed(() => pendingCount.value > 99 ? '99+' : pendingCount.value)
-
-const refreshPendingCount = async () => {
-  try {
-    const res = await pendingMessageApi.getCount()
-    if (res.code === 200) pendingCount.value = res.data || 0
-  } catch (e) {}
-}
-provide('refreshPendingCount', refreshPendingCount)
 
 const allMenus = [
-  { path: '/dashboard', title: '数据总览', icon: 'DataLine', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: 'd1', title: '', icon: '', roles: [], divider: true, label: '客户管理' },
-  { path: '/customers', title: '客户名录', icon: 'User', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/customer-profiles', title: '客户画像', icon: 'Avatar', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/game-configs', title: '游戏配置', icon: 'Monitor', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/service-items', title: '服务项目', icon: 'List', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/activity-packages', title: '活动套餐', icon: 'Present', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/chat-test', title: '对话试炼', icon: 'ChatDotRound', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: 'd2', title: '', icon: '', roles: [], divider: true, label: '客服中心' },
-  { path: '/club-config', title: '堂口配置', icon: 'Shop', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/faq-items', title: '知识库', icon: 'Guide', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/keywords', title: '关键词', icon: 'Key', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/replies', title: '回复话术', icon: 'ChatLineRound', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/messages', title: '消息记录', icon: 'Message', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/pending-messages', title: '待办事项', icon: 'Bell', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: 'd3', title: '', icon: '', roles: [], divider: true, label: '团队管理' },
-  { path: '/sys-users', title: '人员管理', icon: 'User', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/cs-user-customer', title: '客户分配', icon: 'UserFilled', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: 'd4', title: '', icon: '', roles: [], divider: true, label: '陪玩服务' },
-  { path: '/companion-levels', title: '陪玩等级', icon: 'Trophy', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/companions', title: '陪玩师', icon: 'Timer', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/companion-schedule', title: '排班管理', icon: 'Calendar', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/orders', title: '订单管理', icon: 'Shop', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/work-orders', title: '工单管理', icon: 'Tickets', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/service-tracks', title: '服务追踪', icon: 'Position', roles: ['SYS_ADMIN','CS_LEADER','CS_STAFF'] },
-  { path: '/customer-lifecycle', title: '客户生命周期', icon: 'TrendCharts', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: '/satisfaction', title: '满意度评价', icon: 'Star', roles: ['SYS_ADMIN','CS_LEADER'] },
-  { path: 'd5', title: '', icon: '', roles: [], divider: true, label: '系统设置' },
-  { path: '/ai-config', title: 'AI配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
-  { path: '/platform-configs', title: '平台配置', icon: 'Tools', roles: ['SYS_ADMIN'] }
+  { path: '/dashboard', title: '工作台', icon: 'Monitor' },
+  { path: '/users', title: '用户管理', icon: 'User' },
+  { path: '/companions', title: '陪玩管理', icon: 'Avatar' },
+  { divider: true },
+  { path: '/orders', title: '订单管理', icon: 'Tickets' },
+  { path: '/work-orders', title: '工单管理', icon: 'Document' },
+  { path: '/pending-messages', title: '待办消息', icon: 'Bell' },
+  { divider: true },
+  { path: '/faq-items', title: '知识库', icon: 'Guide', roles: ['SYS_ADMIN'] },
+  { path: '/keywords', title: '关键词', icon: 'Key', roles: ['SYS_ADMIN'] },
+  { path: '/replies', title: '回复话术', icon: 'ChatLineRound', roles: ['SYS_ADMIN'] },
+  { path: '/platform-configs', title: '平台配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
+  { path: '/ai-config', title: 'AI配置', icon: 'Cpu', roles: ['SYS_ADMIN'] },
+  { path: '/club-config', title: '俱乐部配置', icon: 'HomeFilled' },
+  { path: '/game-config', title: '游戏配置', icon: 'VideoGame' },
+  { path: '/service-items', title: '服务项目', icon: 'Service' }
 ]
 
 const menuItems = computed(() => {
   if (!userInfo.value) return []
-  return allMenus.filter(m => m.divider || m.roles.includes(userInfo.value.role))
+  return allMenus.filter(m => m.divider || !m.roles || m.roles.includes(userInfo.value.role))
 })
 
-const toggleCollapse = () => { collapsed.value = !collapsed.value }
-const navigateTo = (path) => router.push(path)
-
-const getUserInfo = () => {
-  const info = localStorage.getItem('userInfo')
-  if (info) userInfo.value = JSON.parse(info)
+/**
+ * 路由异步加载开始时触发
+ * 启动顶部进度条动画
+ */
+function onRouteLoading() {
+  progressBar.value?.start()
 }
-const handleLogout = async () => {
+
+/**
+ * 路由异步加载完成时触发
+ * 停止进度条动画
+ */
+function onRouteLoaded() {
+  progressBar.value?.done()
+}
+
+/**
+ * 预加载路由的异步chunk
+ * 鼠标悬停菜单时提前加载，减少点击后等待时间
+ */
+function preloadRoute(path) {
+  if (preloadedRoutes.has(path)) return
+  preloadedRoutes.add(path)
+
+  const matched = router.resolve(path)
+  if (!matched?.matched?.length) return
+
+  matched.matched.forEach(record => {
+    const comp = record.components?.default
+    if (typeof comp === 'function') {
+      try { comp() } catch (e) { /* 预加载失败不影响主流程 */ }
+    }
+  })
+}
+
+/**
+ * 退出登录
+ */
+async function handleLogout() {
   try {
-    const { authApi } = await import('@/api')
-    await authApi.logout()
-  } catch (e) {}
-  localStorage.removeItem('token')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('expiresIn')
-  localStorage.removeItem('tokenExpiry')
-  localStorage.removeItem('userInfo')
-  disconnectWebSocket()
-  router.push('/login')
-}
-
-const getWsUrl = () => {
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.hostname
-  const port = import.meta.env.DEV ? '8080' : window.location.port
-  return `${proto}//${host}:${port}/api/v1/ws/notify`
-}
-
-const connectWebSocket = () => {
-  const token = localStorage.getItem('token')
-  if (!token) return
-  ws = new WebSocket(getWsUrl(), [`Bearer-${token}`])
-  ws.onopen = () => { wsConnected.value = true; ElNotification({ title: '连接成功', type: 'success', duration: 2000 }) }
-  ws.onmessage = (event) => {
-    try {
-      const n = JSON.parse(event.data)
-      if (n.type === 'pending_message') { pendingCount.value++; ElNotification({ title: '新待办', message: `${n.userNickname} 需要人工介入`, type: 'warning', duration: 0 }) }
-    } catch (e) {}
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    logoutLoading.value = true
+    await authStore.logout()
+    router.push('/login')
+  } catch {
+    // 用户取消
+  } finally {
+    logoutLoading.value = false
   }
-  ws.onclose = () => { wsConnected.value = false }
-  ws.onerror = () => { wsConnected.value = false; ElNotification({ title: '连接失败', type: 'error', duration: 2000 }) }
 }
 
-const disconnectWebSocket = () => { if (ws) { ws.close(); ws = null }; wsConnected.value = false }
-const toggleWebSocket = () => wsConnected.value ? disconnectWebSocket() : connectWebSocket()
+/**
+ * 从路由配置中收集需要缓存的组件名称
+ */
+function collectCachedViews() {
+  const views = []
+  router.getRoutes().forEach(record => {
+    if (record.meta?.keepAlive && record.name) {
+      views.push(record.name)
+    }
+  })
+  cachedViews.value = views
+}
 
-onMounted(() => { getUserInfo(); refreshPendingCount(); refreshTimer = setInterval(refreshPendingCount, 30000) })
-onUnmounted(() => { disconnectWebSocket(); if (refreshTimer) clearInterval(refreshTimer) })
+onMounted(() => {
+  collectCachedViews()
+})
 </script>
 
 <style scoped>
-.app-container { height: 100vh; background: var(--gu-bg); }
-
-.el-aside {
-  background: var(--gu-bg-sidebar);
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.main-layout {
+  height: 100vh;
   overflow: hidden;
-  border-right: none;
+  background: #f0f2f5;
 }
 
-.sidebar {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  height: 64px;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 12px;
-  border-bottom: 1px solid var(--gu-border-sidebar);
-  flex-shrink: 0;
-}
-
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.logo-text {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.logo-name {
-  font-family: var(--gu-font-heading);
-  font-size: 18px;
-  font-weight: 700;
-  color: #FFFFFF;
-  letter-spacing: -0.02em;
-}
-
-.logo-badge {
-  font-family: var(--gu-font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--gu-primary);
-  background: rgba(99, 102, 241, 0.15);
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-
-.sidebar-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 0;
-}
-
-.sidebar-nav::-webkit-scrollbar { width: 4px; }
-.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
-
-.nav-divider {
-  padding: 16px 20px 6px;
-  display: flex;
-  align-items: center;
-}
-
-.nav-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--gu-border-sidebar);
-  margin-left: 8px;
-}
-
-.nav-divider-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--gu-text-sidebar-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  padding: 9px 12px;
-  margin: 2px 10px;
-  border-radius: var(--gu-radius-lg);
-  cursor: pointer;
-  color: var(--gu-text-sidebar);
-  transition: all 0.2s ease;
-  gap: 12px;
-  position: relative;
-}
-
-.nav-item:hover {
-  background: var(--gu-bg-sidebar-hover);
-  color: #FFFFFF;
-}
-
-.nav-item.active {
-  background: var(--gu-bg-sidebar-active);
-  color: #FFFFFF;
-  font-weight: 500;
-}
-
-.nav-active-indicator {
-  position: absolute;
-  left: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  background: var(--gu-primary);
-  border-radius: 0 3px 3px 0;
-}
-
-.nav-icon-wrap {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.nav-label {
-  font-size: 13px;
-  white-space: nowrap;
-  flex: 1;
-  line-height: 1;
-}
-
-.nav-badge { margin-left: auto; }
-
-.sidebar-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--gu-border-sidebar);
-}
-
-.sidebar-version {
-  font-size: 11px;
-  color: var(--gu-text-sidebar-muted);
-  font-family: var(--gu-font-mono);
-}
-
-.main-area {
-  display: flex;
-  flex-direction: column;
-  background: var(--gu-bg);
-}
-
-.top-bar {
-  height: 64px;
-  background: var(--gu-bg-card);
-  border-bottom: 1px solid var(--gu-border);
+.main-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  background: #304156;
+  color: #fff;
+  height: 60px;
+  padding: 0 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
   flex-shrink: 0;
-  box-shadow: var(--gu-shadow-sm);
 }
 
-.top-left {
+.app-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--gu-border);
-  border-radius: var(--gu-radius);
-  color: var(--gu-text-secondary);
-  cursor: pointer;
-  transition: all var(--gu-transition);
-}
-
-.icon-btn:hover {
-  background: var(--gu-primary-light);
-  color: var(--gu-primary);
-  border-color: var(--gu-primary);
-}
-
-.breadcrumb-current {
-  font-family: var(--gu-font-heading);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--gu-text-primary);
-}
-
-.top-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.ws-status {
+.user-info {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--gu-radius-full);
-  font-size: 11px;
-  font-weight: 600;
-  transition: all var(--gu-transition);
+  font-size: 14px;
+  color: #e0e0e0;
 }
 
-.ws-status.connected {
-  background: var(--gu-success-light);
-  color: var(--gu-success);
+.role-tag {
+  margin-left: 6px;
 }
 
-.ws-status.disconnected {
-  background: var(--gu-bg-secondary);
-  color: var(--gu-text-muted);
+.main-body {
+  flex: 1;
+  overflow: hidden;
 }
 
-.ws-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  transition: all 0.3s;
+.main-aside {
+  background: #304156;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.3s ease;
+  width: 220px;
+  flex-shrink: 0;
 }
 
-.ws-status.connected .ws-dot {
-  background: var(--gu-success);
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
-  animation: pulse 2s infinite;
+.main-aside.is-collapsed {
+  width: 64px;
 }
 
-.ws-status.disconnected .ws-dot {
-  background: var(--gu-text-muted);
-}
-
-.ws-text {
-  font-family: var(--gu-font-heading);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.ws-toggle {
-  width: 32px;
-  height: 32px;
-}
-
-.user-chip {
+.sidebar-toggle {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 12px 4px 4px;
-  background: var(--gu-bg-stripe);
-  border-radius: var(--gu-radius-full);
-  border: 1px solid var(--gu-border);
-}
-
-.user-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--gu-primary), var(--gu-secondary));
-  color: white;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--gu-font-heading);
-}
-
-.user-detail {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.user-name {
-  font-size: 13px;
-  color: var(--gu-text-primary);
-  font-weight: 500;
-}
-
-.user-role {
-  font-size: 10px;
-  color: var(--gu-text-muted);
-  font-weight: 500;
-}
-
-.logout-btn {
-  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
-  background: transparent;
-  border: 1px solid var(--gu-border);
-  border-radius: var(--gu-radius);
-  color: var(--gu-text-secondary);
-  font-size: 12px;
+  height: 44px;
+  color: #bfcbd9;
   cursor: pointer;
-  transition: all var(--gu-transition);
-  font-weight: 500;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: color 0.3s;
 }
 
-.logout-btn:hover {
-  background: var(--gu-danger-light);
-  border-color: var(--gu-danger);
-  color: var(--gu-danger);
+.sidebar-toggle:hover {
+  color: #409eff;
+}
+
+.sidebar-menu {
+  border-right: none;
+}
+
+.menu-divider {
+  margin: 12px 0;
+  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 .content-main {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  overflow-x: hidden;
+  padding: 20px;
+  background: #f0f2f5;
   position: relative;
-  min-height: 0;
 }
 
-/* 路由切换过渡动画 */
+.route-loading-container {
+  padding: 20px;
+  min-height: 400px;
+}
+
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
+
 .fade-slide-enter-from {
   opacity: 0;
-  transform: translateX(12px);
-}
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(-12px);
+  transform: translateY(12px);
 }
 
-@media (max-width: 768px) {
-  .content-main { padding: 12px !important; }
-  .user-detail { display: none; }
-  .ws-text { display: none; }
-  .logout-btn span { display: none; }
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

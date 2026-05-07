@@ -351,6 +351,7 @@ export const activityPackageApi = {
 
 /** 订单管理API */
 export const orderApi = {
+  getPage: (params) => request({ url: '/orders/page', method: 'get', params }),
   getById: (id) => request({ url: `/orders/${id}`, method: 'get' }),
   create: (data) => request({ url: '/orders', method: 'post', data }),
   confirm: (id) => request({ url: `/orders/${id}/confirm`, method: 'put' }),

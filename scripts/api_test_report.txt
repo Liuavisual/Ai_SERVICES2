@@ -1,0 +1,38 @@
+﻿Delta AI - API Test Report
+===========================
+Time: 2026-05-07 00:08:39
+URL: http://localhost:8080/api/v1
+Result: 47 tests, 16 passed, 31 failed (34%)
+Perf: Avg=32.5ms Max=190ms P95=188ms
+Fails:
+[FAIL] login-empty => HTTP_400
+[FAIL] users-page => code=500 msg=系统异常，请联系管理员
+[FAIL] users-cs-list => code=500 msg=无效的ID参数
+[FAIL] users-profile => code=500 msg=无效的ID参数
+[FAIL] users-add => HTTP_400
+[FAIL] kw-page => code=500 msg=系统异常，请联系管理员
+[FAIL] kw-add => HTTP_400
+[FAIL] kw-update => HTTP_400
+[FAIL] comp-page => code=500 msg=系统异常，请联系管理员
+[FAIL] comp-add => HTTP_400
+[FAIL] lev-all => code=500 msg=系统异常，请联系管理员
+[FAIL] lev-enabled => code=500 msg=无效的ID参数
+[FAIL] lev-add => HTTP_400
+[FAIL] cust-page => code=500 msg=系统异常，请联系管理员
+[FAIL] cust-platform => code=500 msg=系统异常，请联系管理员
+[FAIL] ord-page => code=500 msg=系统异常，请联系管理员
+[FAIL] wo-page => code=500 msg=系统异常，请联系管理员
+[FAIL] wo-get-1 => code=500 msg=系统异常，请联系管理员
+[FAIL] wo-stats => code=500 msg=无效的ID参数
+[FAIL] gc-page => code=500 msg=系统异常，请联系管理员
+[FAIL] si-page => code=500 msg=系统异常，请联系管理员
+[FAIL] club-get => code=500 msg=系统异常，请联系管理员
+[FAIL] club-upd => code=500 msg=系统异常，请联系管理员
+[FAIL] ai-get => code=500 msg=系统异常，请联系管理员
+[FAIL] faq-page => code=500 msg=系统异常，请联系管理员
+[FAIL] faq-get-1 => code=500 msg=系统异常，请联系管理员
+[FAIL] faq-add => code=500 msg=系统异常，请联系管理员
+[FAIL] stat-global => code=500 msg=系统异常，请联系管理员
+[FAIL] stat-team => code=500 msg=系统异常，请联系管理员
+[FAIL] assign-page => code=500 msg=系统异常，请联系管理员
+[FAIL] cache-info => code=500 msg=系统异常，请联系管理员

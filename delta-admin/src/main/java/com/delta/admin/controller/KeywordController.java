@@ -40,7 +40,7 @@ public class KeywordController extends BaseController {
 
     @Operation(summary = "分页查询关键词")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<Page<KeywordVO>> getKeywordPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -51,7 +51,7 @@ public class KeywordController extends BaseController {
 
     @Operation(summary = "获取关键词详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<KeywordVO> getKeywordById(@PathVariable("id") String id) {
         KeywordVO keywordVO = keywordService.getKeywordById(decodeId(id));
         return Result.success(keywordVO);
@@ -99,7 +99,7 @@ public class KeywordController extends BaseController {
 
     @Operation(summary = "导出关键词Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "keyword", required = false) String keyword) {
         keywordService.exportKeywords(response, keyword);

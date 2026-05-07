@@ -1,5 +1,6 @@
 package com.delta.common.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.ServiceItemDTO;
 import com.delta.common.dto.ServicePriceRuleDTO;
 import com.delta.common.vo.ServiceItemVO;
@@ -26,4 +27,6 @@ public interface ServiceItemService {
     void savePriceRule(ServicePriceRuleDTO dto);
 
     void deletePriceRule(Long id);
+
+    Page<ServiceItemVO> getPage(Integer page, Integer size, Long clubConfigId, Long gameConfigId);
 }

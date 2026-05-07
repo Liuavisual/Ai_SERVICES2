@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.annotation.AuditLog;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.OrderCreateDTO;
 import com.delta.common.dto.OrderQueryDTO;
@@ -24,6 +25,22 @@ import java.util.List;
 public class OrderController extends BaseController {
 
     private final OrderService orderService;
+
+    @Operation(summary = "分页查询订单")
+    @GetMapping("/page")
+    public Result<Page<OrderVO>> getOrderPage(
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
+            @RequestParam(name = "userId", required = false) String userId,
+            @RequestParam(name = "companionId", required = false) String companionId,
+            @RequestParam(name = "orderStatus", required = false) String orderStatus,
+            @RequestParam(name = "paymentStatus", required = false) String paymentStatus,
+            @RequestParam(name = "orderNo", required = false) String orderNo) {
+        Long decodedUserId = userId != null ? decodeId(userId) : null;
+        Long decodedCompanionId = companionId != null ? decodeId(companionId) : null;
+        Page<OrderVO> pageResult = orderService.getOrderPage(page, size, decodedUserId, decodedCompanionId, orderStatus, paymentStatus, orderNo);
+        return Result.success(pageResult);
+    }
 
     @Operation(summary = "获取订单详情")
     @GetMapping("/{id}")

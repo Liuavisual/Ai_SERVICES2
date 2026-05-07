@@ -36,7 +36,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "获取FAQ列表")
     @GetMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<Page<FaqItemVO>> getFaqItems(
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
@@ -73,7 +73,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "导出FAQ知识库Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "category", required = false) String category) throws IOException {
         Page<FaqItemVO> page = faqItemService.getFaqItems(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, category);

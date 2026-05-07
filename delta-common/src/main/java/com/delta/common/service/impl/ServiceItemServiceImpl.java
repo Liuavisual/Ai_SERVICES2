@@ -2,6 +2,7 @@ package com.delta.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.ServiceItemDTO;
 import com.delta.common.dto.ServicePriceRuleDTO;
 import com.delta.common.entity.CompanionLevel;
@@ -115,6 +116,32 @@ public class ServiceItemServiceImpl implements ServiceItemService {
         ruleWrapper.eq(ServicePriceRule::getServiceItemId, id);
         servicePriceRuleMapper.delete(ruleWrapper);
         serviceItemMapper.deleteById(id);
+    }
+
+    @Override
+    public Page<ServiceItemVO> getPage(Integer page, Integer size, Long clubConfigId, Long gameConfigId) {
+        LambdaQueryWrapper<ServiceItem> wrapper = new LambdaQueryWrapper<>();
+        if (clubConfigId != null) {
+            wrapper.eq(ServiceItem::getClubConfigId, clubConfigId);
+        }
+        if (gameConfigId != null) {
+            wrapper.eq(ServiceItem::getGameConfigId, gameConfigId);
+        }
+        wrapper.orderByAsc(ServiceItem::getSortOrder);
+
+        Page<ServiceItem> entityPage = serviceItemMapper.selectPage(new Page<>(page, size), wrapper);
+        List<ServiceItem> records = entityPage.getRecords();
+        if (records.isEmpty()) {
+            return new Page<>(page, size, 0);
+        }
+
+        Map<Long, GameConfig> gameConfigMap = batchQueryGameConfig(records);
+        List<ServiceItemVO> voList = records.stream()
+                .map(item -> convertToVO(item, gameConfigMap))
+                .collect(Collectors.toList());
+        Page<ServiceItemVO> voPage = new Page<>(page, size, entityPage.getTotal());
+        voPage.setRecords(voList);
+        return voPage;
     }
 
     @Override

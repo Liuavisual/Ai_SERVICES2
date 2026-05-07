@@ -2,6 +2,7 @@ package com.delta.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.dto.GameConfigDTO;
 import com.delta.common.entity.GameConfig;
@@ -70,6 +71,23 @@ public class GameConfigServiceImpl implements GameConfigService {
             throw new BusinessException("游戏配置不存在");
         }
         gameConfigMapper.deleteById(id);
+    }
+
+    @Override
+    public Page<GameConfigVO> getPage(Integer page, Integer size, Long clubConfigId) {
+        LambdaQueryWrapper<GameConfig> wrapper = new LambdaQueryWrapper<>();
+        if (clubConfigId != null) {
+            wrapper.eq(GameConfig::getClubConfigId, clubConfigId);
+        }
+        wrapper.orderByAsc(GameConfig::getSortOrder);
+
+        Page<GameConfig> entityPage = gameConfigMapper.selectPage(new Page<>(page, size), wrapper);
+        List<GameConfigVO> records = entityPage.getRecords().stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+        Page<GameConfigVO> voPage = new Page<>(page, size, entityPage.getTotal());
+        voPage.setRecords(records);
+        return voPage;
     }
 
     private GameConfigVO convertToVO(GameConfig config) {

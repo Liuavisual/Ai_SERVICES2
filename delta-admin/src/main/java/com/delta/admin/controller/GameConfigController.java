@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.dto.GameConfigDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.GameConfigService;
@@ -28,6 +29,18 @@ import java.util.Map;
 public class GameConfigController extends BaseController {
 
     private final GameConfigService gameConfigService;
+
+    @Operation(summary = "分页查询游戏配置")
+    @GetMapping("/page")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    public Result<Page<GameConfigVO>> getPage(
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer size,
+            @RequestParam(name = "clubConfigId", required = false) String clubConfigId) {
+        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
+        Page<GameConfigVO> pageResult = gameConfigService.getPage(page, size, decodedClubConfigId);
+        return Result.success(pageResult);
+    }
 
     @Operation(summary = "获取俱乐部的游戏配置")
     @GetMapping("/club/{clubConfigId}")

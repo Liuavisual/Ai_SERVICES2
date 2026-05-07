@@ -66,19 +66,19 @@ const routes = [
         path: 'faq-items',
         name: 'FaqItems',
         component: () => import('@/views/FaqItems.vue'),
-        meta: { title: '知识库', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+        meta: { title: '知识库', roles: ['SYS_ADMIN'] }
       },
       {
         path: 'keywords',
         name: 'Keywords',
         component: () => import('@/views/Keywords.vue'),
-        meta: { title: '关键词', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+        meta: { title: '关键词', roles: ['SYS_ADMIN'] }
       },
       {
         path: 'replies',
         name: 'Replies',
         component: () => import('@/views/Replies.vue'),
-        meta: { title: '回复话术', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+        meta: { title: '回复话术', roles: ['SYS_ADMIN'] }
       },
       {
         path: 'messages',

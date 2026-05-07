@@ -1,47 +1,36 @@
 /**
- * Vue应用入口文件
+ * 应用入口文件
  *
- * 初始化配置：
- * - Pinia: 状态管理
- * - Vue Router: 路由
- * - Element Plus: UI组件库（按需引入，由unplugin-auto-import和unplugin-vue-components自动处理）
- * - Element Plus Icons: 通过插件全局注册（模板中动态引用需要）
- * - Element Plus CSS: 全量导入（按需引入CSS有时不够完整）
- * - 全局样式: 古风主题CSS
+ * 负责创建Vue应用实例、注册全局插件和组件、挂载应用
  *
  * @author 刘建国
  */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-
-import './styles/global.css'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 
 import App from './App.vue'
 import router from './router'
-import { registerIcons } from './plugins/icons'
+import vLazy from './directives/vLazy'
+import ErrorBoundary from './components/ErrorBoundary.vue'
 
-const passiveEvents = ['wheel', 'mousewheel', 'touchstart', 'touchmove']
-const origAdd = EventTarget.prototype.addEventListener
-EventTarget.prototype.addEventListener = function (type, listener, options) {
-  if (passiveEvents.includes(type) && typeof listener === 'function') {
-    if (typeof options === 'boolean') {
-      options = { capture: options, passive: true }
-    } else if (options && typeof options === 'object') {
-      options = { ...options, passive: options.passive !== false }
-    } else {
-      options = { passive: true }
-    }
-  }
-  return origAdd.call(this, type, listener, options)
-}
+import './styles/global.css'
 
 const app = createApp(App)
 
-// 通过插件注册Element Plus图标组件（模板中通过动态名称引用图标，需要全量注册）
-registerIcons(app)
-
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
+app.use(ElementPlus, { locale: zhCn })
+
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
+
+app.directive('lazy', vLazy)
+app.component('ErrorBoundary', ErrorBoundary)
 
 app.mount('#app')

@@ -40,7 +40,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "分页查询回复话术")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<Page<ReplyVO>> getReplyPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -51,7 +51,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "获取回复话术详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<ReplyVO> getReplyById(@PathVariable("id") String id) {
         ReplyVO replyVO = replyService.getReplyById(decodeId(id));
         return Result.success(replyVO);
@@ -89,7 +89,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "导出回复话术Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PreAuthorize("hasRole('SYS_ADMIN')")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "triggerType", required = false) String triggerType) {
         replyService.exportReplies(response, triggerType);

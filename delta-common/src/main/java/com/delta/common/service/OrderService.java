@@ -1,5 +1,6 @@
 package com.delta.common.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.vo.OrderVO;
 import java.time.LocalDateTime;
@@ -26,4 +27,6 @@ public interface OrderService {
     List<OrderVO> getOrdersByCompanionId(Long companionId);
 
     List<OrderVO> queryOrders(OrderQueryDTO queryDTO);
+
+    Page<OrderVO> getOrderPage(Integer page, Integer size, Long userId, Long companionId, String orderStatus, String paymentStatus, String orderNo);
 }

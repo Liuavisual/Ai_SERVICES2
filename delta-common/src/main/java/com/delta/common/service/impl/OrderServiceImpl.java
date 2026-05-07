@@ -1,6 +1,7 @@
 package com.delta.common.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.entity.Companion;
@@ -177,6 +178,32 @@ public class OrderServiceImpl implements OrderService {
         wrapper.orderByDesc(Order::getCreatedAt);
         List<Order> orders = orderMapper.selectList(wrapper);
         return convertList(orders);
+    }
+
+    @Override
+    public Page<OrderVO> getOrderPage(Integer page, Integer size, Long userId, Long companionId, String orderStatus, String paymentStatus, String orderNo) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        if (userId != null) {
+            wrapper.eq(Order::getUserId, userId);
+        }
+        if (companionId != null) {
+            wrapper.eq(Order::getCompanionId, companionId);
+        }
+        if (orderStatus != null && !orderStatus.isEmpty()) {
+            wrapper.eq(Order::getOrderStatus, orderStatus);
+        }
+        if (paymentStatus != null && !paymentStatus.isEmpty()) {
+            wrapper.eq(Order::getPaymentStatus, paymentStatus);
+        }
+        if (orderNo != null && !orderNo.isEmpty()) {
+            wrapper.like(Order::getOrderNo, orderNo);
+        }
+        wrapper.orderByDesc(Order::getCreatedAt);
+
+        Page<Order> entityPage = orderMapper.selectPage(new Page<>(page, size), wrapper);
+        Page<OrderVO> voPage = new Page<>(page, size, entityPage.getTotal());
+        voPage.setRecords(convertList(entityPage.getRecords()));
+        return voPage;
     }
 
     private Order getOrderOrThrow(Long id) {
