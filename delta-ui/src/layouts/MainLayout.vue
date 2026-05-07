@@ -6,7 +6,7 @@
   - 顶部 PageProgress 进度条提供视觉反馈，消除白屏感知
   - SkeletonBox 作为异步组件加载时的占位内容
   - 菜单项 hover 时预加载对应路由 chunk
-  - 侧边栏菜单按角色过滤
+  - 侧边栏菜单按角色过滤，完整覆盖所有26个路由页面
 
   @author 刘建国
 -->
@@ -43,7 +43,7 @@
           text-color="#bfcbd9"
           active-text-color="#409eff"
         >
-          <template v-for="item in menuItems" :key="item.path">
+          <template v-for="item in menuItems" :key="item.path || item.dividerKey">
             <el-divider v-if="item.divider" class="menu-divider" />
             <el-menu-item
               v-else
@@ -83,6 +83,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 import { Fold, Expand, UserFilled } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import PageProgress from '@/components/PageProgress.vue'
@@ -100,7 +101,10 @@ const preloadedRoutes = new Set()
 const userInfo = computed(() => authStore.userInfo)
 const cachedViews = ref([])
 
-const roleLabel = computed(() => userInfo.value?.role === 'SYS_ADMIN' ? '超级管理员' : userInfo.value?.role === 'CS_LEADER' ? '客服主管' : '客服人员')
+const roleLabel = computed(() => {
+  if (!userInfo.value?.role) return ''
+  return userInfo.value.role === 'SYS_ADMIN' ? '超级管理员' : userInfo.value.role === 'CS_LEADER' ? '客服主管' : '客服人员'
+})
 
 const activeMenu = computed(() => {
   const { meta, path } = route
@@ -108,28 +112,82 @@ const activeMenu = computed(() => {
   return path
 })
 
+/**
+ * 完整菜单配置
+ * 所有路由页面均在此定义，按业务模块分组，用分隔线区分
+ * roles 为空或未定义表示所有角色可见
+ */
 const allMenus = [
-  { path: '/dashboard', title: '工作台', icon: 'Monitor' },
-  { path: '/users', title: '用户管理', icon: 'User' },
-  { path: '/companions', title: '陪玩管理', icon: 'Avatar' },
+  // ==================== 工作台 ====================
+  { path: '/dashboard',  title: '工作台',    icon: 'Monitor' },
   { divider: true },
-  { path: '/orders', title: '订单管理', icon: 'Tickets' },
-  { path: '/work-orders', title: '工单管理', icon: 'Document' },
-  { path: '/pending-messages', title: '待办消息', icon: 'Bell' },
+
+  // ==================== 客户管理 ====================
+  { path: '/customers',           title: '客户名录',     icon: 'User' },
+  { path: '/customer-profiles',   title: '客户画像',     icon: 'Histogram' },
+  { path: '/cs-user-customer',    title: '客户分配',     icon: 'Connection',    roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/customer-lifecycle',  title: '客户生命周期',  icon: 'RefreshRight',  roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/satisfaction',        title: '满意度评价',    icon: 'Star' },
   { divider: true },
-  { path: '/faq-items', title: '知识库', icon: 'Guide', roles: ['SYS_ADMIN'] },
-  { path: '/keywords', title: '关键词', icon: 'Key', roles: ['SYS_ADMIN'] },
-  { path: '/replies', title: '回复话术', icon: 'ChatLineRound', roles: ['SYS_ADMIN'] },
-  { path: '/platform-configs', title: '平台配置', icon: 'Setting', roles: ['SYS_ADMIN'] },
-  { path: '/ai-config', title: 'AI配置', icon: 'Cpu', roles: ['SYS_ADMIN'] },
-  { path: '/club-config', title: '俱乐部配置', icon: 'HomeFilled' },
-  { path: '/game-config', title: '游戏配置', icon: 'VideoGame' },
-  { path: '/service-items', title: '服务项目', icon: 'Service' }
+
+  // ==================== 陪玩管理 ====================
+  { path: '/companions',          title: '陪玩师',       icon: 'UserFilled' },
+  { path: '/companion-levels',    title: '陪玩等级',     icon: 'Medal',           roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/companion-schedule',  title: '排班管理',     icon: 'Calendar',        roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { divider: true },
+
+  // ==================== 业务运营 ====================
+  { path: '/orders',             title: '订单管理',     icon: 'Tickets' },
+  { path: '/work-orders',        title: '工单管理',     icon: 'Document' },
+  { path: '/service-items',      title: '服务项目',     icon: 'Notebook',          roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/service-tracks',     title: '服务追踪',     icon: 'Timer' },
+  { path: '/activity-packages',  title: '活动套餐',     icon: 'Present',           roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { divider: true },
+
+  // ==================== 消息处理 ====================
+  { path: '/pending-messages',   title: '待办事项',     icon: 'Bell' },
+  { path: '/messages',           title: '消息记录',     icon: 'ChatLineSquare' },
+  { divider: true },
+
+  // ==================== 系统配置 ====================
+  { path: '/club-config',        title: '俱乐部配置',   icon: 'HomeFilled',        roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/game-configs',       title: '游戏配置',     icon: 'VideoCamera',       roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/platform-configs',   title: '平台配置',     icon: 'Setting',           roles: ['SYS_ADMIN'] },
+  { path: '/ai-config',          title: 'AI配置',       icon: 'Cpu',               roles: ['SYS_ADMIN'] },
+  { path: '/faq-items',          title: '知识库',       icon: 'Collection',        roles: ['SYS_ADMIN'] },
+  { path: '/keywords',           title: '关键词',       icon: 'Key',               roles: ['SYS_ADMIN'] },
+  { path: '/replies',            title: '回复话术',     icon: 'ChatLineRound',     roles: ['SYS_ADMIN'] },
+  { path: '/sys-users',          title: '人员管理',     icon: 'Avatar',            roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/permission',         title: '权限管理',     icon: 'Lock',              roles: ['SYS_ADMIN'] },
+  { divider: true },
+
+  // ==================== 商业化 ====================
+  { path: '/pricing-plans',      title: '定价方案',     icon: 'PriceTag',          roles: ['SYS_ADMIN'] },
+  { path: '/subscriptions',      title: '订阅管理',     icon: 'CreditCard',        roles: ['SYS_ADMIN'] },
+  { divider: true },
+
+  // ==================== 质检与结算 ====================
+  { path: '/quality-checks',     title: '质检记录',     icon: 'Warning',           roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/settlements',        title: '结算管理',     icon: 'Money',             roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/trainings',          title: '培训管理',     icon: 'Reading',           roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { divider: true },
+
+  // ==================== 数据分析 ====================
+  { path: '/reports',            title: '营收报表',     icon: 'TrendCharts',       roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { divider: true },
+
+  // ==================== 营销增长 ====================
+  { path: '/campaigns',          title: '营销活动',     icon: 'Promotion',         roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/referrals',          title: '裂变推荐',     icon: 'Share',             roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { divider: true },
+
+  // ==================== 开发工具 ====================
+  { path: '/chat-test',          title: '对话试炼',     icon: 'ChatDotSquare',     roles: ['SYS_ADMIN', 'CS_LEADER'] }
 ]
 
 const menuItems = computed(() => {
   if (!userInfo.value) return []
-  return allMenus.filter(m => m.divider || !m.roles || m.roles.includes(userInfo.value.role))
+  return allMenus.filter(m => m.divider || !m.roles || m.roles.length === 0 || m.roles.includes(userInfo.value.role))
 })
 
 /**
@@ -151,9 +209,11 @@ function onRouteLoaded() {
 /**
  * 预加载路由的异步chunk
  * 鼠标悬停菜单时提前加载，减少点击后等待时间
+ *
+ * @param {string} path 路由路径
  */
 function preloadRoute(path) {
-  if (preloadedRoutes.has(path)) return
+  if (!path || preloadedRoutes.has(path)) return
   preloadedRoutes.add(path)
 
   const matched = router.resolve(path)
@@ -287,7 +347,7 @@ onMounted(() => {
 }
 
 .menu-divider {
-  margin: 12px 0;
+  margin: 8px 0;
   border-top-color: rgba(255, 255, 255, 0.08);
 }
 

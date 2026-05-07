@@ -428,3 +428,77 @@ export const satisfactionApi = {
   /** 获取陪玩师平均评分 */
   getAverage: (companionId) => request({ url: `/satisfaction/average/${companionId}`, method: 'get' })
 }
+
+/** 定价方案API */
+export const pricingPlanApi = {
+  getPage: (params) => request({ url: '/pricing-plans/page', method: 'get', params }),
+  getById: (id) => request({ url: `/pricing-plans/${id}`, method: 'get' }),
+  create: (data) => request({ url: '/pricing-plans', method: 'post', data }),
+  update: (data) => request({ url: '/pricing-plans', method: 'put', data }),
+  delete: (id) => request({ url: `/pricing-plans/${id}`, method: 'delete' })
+}
+
+/** 俱乐部订阅API */
+export const subscriptionApi = {
+  getPage: (params) => request({ url: '/subscriptions/page', method: 'get', params }),
+  getById: (id) => request({ url: `/subscriptions/${id}`, method: 'get' }),
+  getByClubConfigId: (clubConfigId) => request({ url: `/subscriptions/by-club/${clubConfigId}`, method: 'get' }),
+  subscribe: (data) => request({ url: '/subscriptions/subscribe', method: 'post', data }),
+  trial: (data) => request({ url: '/subscriptions/trial', method: 'post', data }),
+  cancel: (id) => request({ url: `/subscriptions/${id}/cancel`, method: 'put' }),
+  renew: (id, data) => request({ url: `/subscriptions/${id}/renew`, method: 'put', data })
+}
+
+/** 质检记录API */
+export const qualityCheckApi = {
+  getPage: (params) => request({ url: '/quality-checks/page', method: 'get', params }),
+  getById: (id) => request({ url: `/quality-checks/${id}`, method: 'get' }),
+  handle: (id, data) => request({ url: `/quality-checks/${id}/handle`, method: 'put', data })
+}
+
+/** 陪玩师结算API */
+export const settlementApi = {
+  getPage: (params) => request({ url: '/settlements/page', method: 'get', params }),
+  getById: (id) => request({ url: `/settlements/${id}`, method: 'get' }),
+  confirm: (id, data) => request({ url: `/settlements/${id}/confirm`, method: 'put', data }),
+  dispute: (id, data) => request({ url: `/settlements/${id}/dispute`, method: 'put', data }),
+  settle: (id) => request({ url: `/settlements/${id}/settle`, method: 'put' })
+}
+
+/** 陪玩师培训API */
+export const trainingApi = {
+  getPage: (params) => request({ url: '/trainings/page', method: 'get', params }),
+  getById: (id) => request({ url: `/trainings/${id}`, method: 'get' }),
+  create: (data) => request({ url: '/trainings', method: 'post', data }),
+  update: (data) => request({ url: '/trainings', method: 'put', data }),
+  startTraining: (id) => request({ url: `/trainings/${id}/start`, method: 'put' }),
+  completeTraining: (id, data) => request({ url: `/trainings/${id}/complete`, method: 'put', data }),
+  delete: (id) => request({ url: `/trainings/${id}`, method: 'delete' })
+}
+
+/** 营收报表API */
+export const reportApi = {
+  getPage: (params) => request({ url: '/reports/page', method: 'get', params }),
+  getById: (id) => request({ url: `/reports/${id}`, method: 'get' }),
+  generate: (data) => request({ url: '/reports/generate', method: 'post', data })
+}
+
+/** 营销活动API */
+export const campaignApi = {
+  getPage: (params) => request({ url: '/campaigns/page', method: 'get', params }),
+  getById: (id) => request({ url: `/campaigns/${id}`, method: 'get' }),
+  create: (data) => request({ url: '/campaigns', method: 'post', data }),
+  update: (data) => request({ url: '/campaigns', method: 'put', data }),
+  start: (id) => request({ url: `/campaigns/${id}/start`, method: 'put' }),
+  pause: (id) => request({ url: `/campaigns/${id}/pause`, method: 'put' }),
+  end: (id) => request({ url: `/campaigns/${id}/end`, method: 'put' }),
+  delete: (id) => request({ url: `/campaigns/${id}`, method: 'delete' })
+}
+
+/** 裂变推荐API */
+export const referralApi = {
+  getPage: (params) => request({ url: '/referrals/page', method: 'get', params }),
+  getById: (id) => request({ url: `/referrals/${id}`, method: 'get' }),
+  issueReward: (id) => request({ url: `/referrals/${id}/issue-reward`, method: 'put' }),
+  cancelReward: (id) => request({ url: `/referrals/${id}/cancel-reward`, method: 'put' })
+}

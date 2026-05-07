@@ -32,6 +32,25 @@ public class JwtUtils {
         return createToken(claims, username, jwtConfig.getExpiration());
     }
 
+    /**
+     * 生成包含权限信息的访问令牌
+     *
+     * @param userId      用户ID
+     * @param username    用户名
+     * @param role        内置角色
+     * @param permissions 权限编码列表（逗号分隔）
+     * @return JWT Token字符串
+     */
+    public String generateTokenWithPermissions(Long userId, String username, String role, String permissions) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("username", username);
+        claims.put("role", role);
+        claims.put("permissions", permissions != null ? permissions : "");
+        claims.put("type", "access");
+        return createToken(claims, username, jwtConfig.getExpiration());
+    }
+
     public String generateRefreshToken(Long userId, String username) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);

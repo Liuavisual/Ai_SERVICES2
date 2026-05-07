@@ -164,4 +164,13 @@ public class CustomerProfile extends BaseEntity {
 
     /** 备注 */
     private String remark;
+
+    /** 游戏偏好列表（JSON数组格式，如 ["delta_force","league_of_legends"]） */
+    private String gamePreferences;
+
+    /** 消费能力等级：HIGH-高(月均>5000), MEDIUM-中(月均1000-5000), LOW-低(月均<1000) */
+    private String spendingLevel;
+
+    /** 专属客服ID */
+    private Long assignedCsUserId;
 }

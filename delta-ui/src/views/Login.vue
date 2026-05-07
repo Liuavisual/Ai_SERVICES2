@@ -1,3 +1,8 @@
+<!--
+  登录/注册页面 - 全屏响应式布局
+
+  @author 刘建国
+-->
 <template>
   <div class="login-container">
     <div class="login-bg">
@@ -163,17 +168,18 @@ const handleRegister = async (): Promise<void> => {
 
 <style scoped>
 .login-container {
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   overflow: hidden;
   background: #0F172A;
+  z-index: 9999;
 }
 
 .login-bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
 }
@@ -201,41 +207,41 @@ const handleRegister = async (): Promise<void> => {
 }
 
 .bg-orb-1 {
-  width: 400px;
-  height: 400px;
-  background: rgba(99, 102, 241, 0.15);
-  top: -100px;
+  width: 500px;
+  height: 500px;
+  background: rgba(99, 102, 241, 0.12);
+  top: -150px;
   right: -100px;
   animation-delay: 0s;
 }
 
 .bg-orb-2 {
-  width: 300px;
-  height: 300px;
-  background: rgba(139, 92, 246, 0.12);
-  bottom: -80px;
-  left: -80px;
+  width: 400px;
+  height: 400px;
+  background: rgba(139, 92, 246, 0.10);
+  bottom: -120px;
+  left: -100px;
   animation-delay: -3s;
 }
 
 .bg-orb-3 {
-  width: 200px;
-  height: 200px;
-  background: rgba(249, 115, 22, 0.08);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 250px;
+  background: rgba(249, 115, 22, 0.06);
+  top: 60%;
+  left: 30%;
   animation-delay: -5s;
 }
 
 .login-card {
-  width: min(420px, 90vw);
+  width: min(420px, 92vw);
   position: relative;
   z-index: 1;
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .card-glass {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--gu-radius-xl);
@@ -294,7 +300,45 @@ const handleRegister = async (): Promise<void> => {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-height: 600px) {
+  .card-glass {
+    padding: 20px 24px 16px;
+  }
+  .login-header {
+    margin-bottom: 16px;
+  }
+  .logo-wrap {
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .login-tabs {
+    margin-top: 12px;
+  }
+  .login-footer {
+    margin-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-glass {
+    padding: 28px 20px 24px;
+  }
 }
 </style>

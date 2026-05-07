@@ -9,6 +9,7 @@ import com.delta.common.enums.UserStatusEnum;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.SysUserMapper;
 import com.delta.common.service.AuthService;
+import com.delta.common.service.PermissionService;
 import com.delta.common.service.RedisService;
 import com.delta.common.util.JwtUtils;
 import com.delta.common.vo.LoginVO;
@@ -20,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -49,6 +51,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtils jwtUtils;
 
     private final RedisService redisService;
+
+    private final PermissionService permissionService;
 
     private final TokenBlacklistService tokenBlacklistService;
 
@@ -85,7 +89,9 @@ public class AuthServiceImpl implements AuthService {
 
         clearLoginAttempts(username, clientIp);
 
-        String accessToken = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
+        List<String> permList = permissionService.getUserPermissions(user.getId());
+        String permStr = String.join(",", permList);
+        String accessToken = jwtUtils.generateTokenWithPermissions(user.getId(), user.getUsername(), user.getRole(), permStr);
         String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
         long expiresIn = jwtUtils.getExpirationFromNow() / 1000;
 
@@ -186,7 +192,9 @@ public class AuthServiceImpl implements AuthService {
             log.warn("旧刷新令牌加入黑名单失败: {}", e.getMessage());
         }
 
-        String newAccessToken = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
+        List<String> permList = permissionService.getUserPermissions(user.getId());
+        String permStr = String.join(",", permList);
+        String newAccessToken = jwtUtils.generateTokenWithPermissions(user.getId(), user.getUsername(), user.getRole(), permStr);
         String newRefreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
         long expiresIn = jwtUtils.getExpirationFromNow() / 1000;
 

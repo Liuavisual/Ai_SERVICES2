@@ -57,6 +57,60 @@ const routes = [
         meta: { title: '对话试炼', roles: ['SYS_ADMIN', 'CS_LEADER'] }
       },
       {
+        path: 'permission',
+        name: 'Permission',
+        component: () => import('@/views/Permission.vue'),
+        meta: { title: '权限管理', roles: ['SYS_ADMIN'] }
+      },
+      {
+        path: 'pricing-plans',
+        name: 'PricingPlans',
+        component: () => import('@/views/PricingPlans.vue'),
+        meta: { title: '定价方案', roles: ['SYS_ADMIN'] }
+      },
+      {
+        path: 'subscriptions',
+        name: 'Subscriptions',
+        component: () => import('@/views/Subscriptions.vue'),
+        meta: { title: '订阅管理', roles: ['SYS_ADMIN'] }
+      },
+      {
+        path: 'quality-checks',
+        name: 'QualityChecks',
+        component: () => import('@/views/QualityChecks.vue'),
+        meta: { title: '质检记录', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
+        path: 'settlements',
+        name: 'Settlements',
+        component: () => import('@/views/Settlements.vue'),
+        meta: { title: '结算管理', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
+        path: 'trainings',
+        name: 'Trainings',
+        component: () => import('@/views/Trainings.vue'),
+        meta: { title: '培训管理', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
+        path: 'reports',
+        name: 'Reports',
+        component: () => import('@/views/Reports.vue'),
+        meta: { title: '营收报表', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
+        path: 'campaigns',
+        name: 'Campaigns',
+        component: () => import('@/views/Campaigns.vue'),
+        meta: { title: '营销活动', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
+        path: 'referrals',
+        name: 'Referrals',
+        component: () => import('@/views/Referrals.vue'),
+        meta: { title: '裂变推荐', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
         path: 'club-config',
         name: 'ClubConfig',
         component: () => import('@/views/ClubConfig.vue'),
