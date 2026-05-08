@@ -5,11 +5,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 /**
  * 密码工具类，提供BCrypt密码加密和验证功能
  *
- * @author delta
+ * @author 刘建国
  */
 public class PasswordGenerator {
 
     private static final BCryptPasswordEncoder ENCODER = new BCryptPasswordEncoder();
+
+    /** 私有构造函数，防止实例化工具类 */
+    private PasswordGenerator() {
+        throw new UnsupportedOperationException("工具类不可实例化");
+    }
 
     /**
      * 对原始密码进行BCrypt加密

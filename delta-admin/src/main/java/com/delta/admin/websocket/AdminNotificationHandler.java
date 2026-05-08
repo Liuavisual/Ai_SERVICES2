@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 管理员通知WebSocket处理器，实时推送待处理工单通知
  *
- * @author delta
+ * @author 刘建国
  */
 @Component
 public class AdminNotificationHandler extends TextWebSocketHandler {

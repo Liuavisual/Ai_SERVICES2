@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * 自动回复服务实现，处理关键词回复和欢迎语回复
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

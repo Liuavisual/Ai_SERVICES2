@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationEvent;
 /**
  * 待处理消息创建事件，用于通知客服有新的待处理工单
  *
- * @author delta
+ * @author 刘建国
  */
 public class PendingMessageCreatedEvent extends ApplicationEvent {
 

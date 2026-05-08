@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  * 对应数据库表 keywords，定义AI客服的关键词匹配规则，
  * 当客户消息命中关键词时触发对应的自动回复或转人工流程。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  * 对应数据库表 users，存储来自各平台（微信、测试等）的客户信息，
  * 包括平台标识、平台用户ID、昵称、AI开关和分配的客服ID。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

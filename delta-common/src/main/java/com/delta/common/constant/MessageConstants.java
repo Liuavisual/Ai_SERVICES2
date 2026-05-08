@@ -6,7 +6,7 @@ package com.delta.common.constant;
  * 定义消息表中 direction 字段的取值，用于区分消息是来自客户还是系统发出。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 public final class MessageConstants {
 

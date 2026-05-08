@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * 客服-客户分配服务实现，管理绑定关系
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

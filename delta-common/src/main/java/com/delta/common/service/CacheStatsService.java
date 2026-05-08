@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * 缓存统计服务接口，监控缓存命中率和使用情况
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CacheStatsService {
 

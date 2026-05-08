@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 陪玩师等级服务接口，管理等级体系和定价
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CompanionLevelService {
 

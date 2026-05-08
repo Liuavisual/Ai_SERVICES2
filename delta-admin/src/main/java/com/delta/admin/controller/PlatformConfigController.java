@@ -20,7 +20,7 @@ import java.util.List;
  * 权限：仅 SYS_ADMIN 可查看和修改
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @RequiredArgsConstructor
 @Tag(name = "平台配置管理", description = "平台配置管理接口")

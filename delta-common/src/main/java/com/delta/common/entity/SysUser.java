@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  * 对应数据库表 sys_user，存储系统后台用户（客服、管理员等）信息，
  * 包括用户名、角色、状态等。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

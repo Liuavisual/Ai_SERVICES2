@@ -7,7 +7,7 @@ import com.delta.common.vo.ClubConfigVO;
 /**
  * 俱乐部配置服务接口，管理俱乐部信息和定价策略
  *
- * @author delta
+ * @author 刘建国
  */
 public interface ClubConfigService {
     ClubConfig getClubConfig();

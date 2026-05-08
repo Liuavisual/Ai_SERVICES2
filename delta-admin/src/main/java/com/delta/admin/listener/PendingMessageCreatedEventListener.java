@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 待处理消息创建事件监听器，通过WebSocket通知在线客服
  *
- * @author delta
+ * @author 刘建国
  */
 @Component
 @RequiredArgsConstructor

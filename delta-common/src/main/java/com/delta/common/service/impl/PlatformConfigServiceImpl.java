@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 平台配置服务实现，管理平台接入参数
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

@@ -13,7 +13,7 @@ import java.util.Arrays;
 /**
  * 微信公众号控制器，处理微信消息回调和验证
  *
- * @author delta
+ * @author 刘建国
  */
 @RestController
 @RequestMapping("/wechat")

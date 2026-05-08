@@ -130,7 +130,7 @@ public final class AiPersonalityConstants {
      * @return 游戏标识→提示词的映射
      */
     private static Map<String, String> createGamePrompts() {
-        Map<String, String> prompts = new HashMap<>();
+        Map<String, String> prompts = new HashMap<>(16);
 
         prompts.put("delta_force",
                 "\n【三角洲行动特别知识】\n"

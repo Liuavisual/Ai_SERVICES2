@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * 关键词服务接口，管理关键词的增删改查
  *
- * @author delta
+ * @author 刘建国
  */
 public interface KeywordService {
 

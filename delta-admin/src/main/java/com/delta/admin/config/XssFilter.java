@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * 对请求参数、请求头和请求体(JSON)进行XSS过滤，防止存储型XSS攻击。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

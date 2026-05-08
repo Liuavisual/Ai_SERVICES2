@@ -67,6 +67,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
+import { useAuthStore } from '@/stores/auth'
 import { authStorage } from '@/utils/storage'
 import { authApi } from '@/api'
 import type { LoginDTO, RegisterDTO, LoginVO, UserRole } from '@/types'
@@ -104,9 +105,11 @@ const registerRules = {
   email: [{ type: 'email' as const, message: '邮箱格式不正确', trigger: 'blur' }]
 }
 
+const authStore = useAuthStore()
+
 /**
  * 处理用户登录
- * 验证表单后调用登录API，成功后存储Token并跳转
+ * 验证表单后通过 Pinia Store 调用登录API，存储Token并跳转
  */
 const handleLogin = async (): Promise<void> => {
   if (!loginFormRef.value) return
@@ -117,20 +120,20 @@ const handleLogin = async (): Promise<void> => {
   }
   loading.value = true
   try {
-    const res = await authApi.login(loginForm)
+    const res = await authStore.login(loginForm)
     if (res.code === 200) {
-      const data = res.data as LoginVO
-      authStorage.setAuth(data as unknown as Record<string, unknown>)
       ElMessage.success('登录成功')
-      const redirect = route.query.redirect as string
-      if (redirect && redirect !== '/login') {
+      const redirect = route.query.redirect
+      if (redirect && typeof redirect === 'string' && redirect !== '/login') {
         router.push(redirect)
       } else {
+        const data = res.data as LoginVO
         router.push(authStorage.getRoleHomePage(data.role as UserRole))
       }
     }
-  } catch (error: any) {
-    if (!error.response) {
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number } }
+    if (!err.response) {
       ElMessage.error('网络连接异常，请检查网络后重试')
     }
     console.error('登录失败', error)
@@ -152,8 +155,9 @@ const handleRegister = async (): Promise<void> => {
   try {
     const res = await authApi.register(registerForm)
     if (res.code === 200) { ElMessage.success('注册成功，请等待客服负责人审核'); activeTab.value = 'login' }
-  } catch (error: any) {
-    if (!error.response) {
+  } catch (error: unknown) {
+    const err = error as { response?: { status?: number } }
+    if (!err.response) {
       ElMessage.error('网络连接异常，请检查网络后重试')
     }
     console.error('注册失败', error)

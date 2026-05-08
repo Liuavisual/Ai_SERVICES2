@@ -16,7 +16,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 /**
  * Redis配置类，配置RedisTemplate序列化策略
  *
- * @author delta
+ * @author 刘建国
  */
 @Configuration
 @EnableCaching

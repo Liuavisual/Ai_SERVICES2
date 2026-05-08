@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Redis缓存服务接口，提供键值操作、过期管理等功能
  *
- * @author delta
+ * @author 刘建国
  */
 public interface RedisService {
 

@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * AI配置管理控制器
  *
- * @author delta
+ * @author 刘建国
  */
 @RequiredArgsConstructor
 @Tag(name = "AI配置管理", description = "AI配置管理接口")

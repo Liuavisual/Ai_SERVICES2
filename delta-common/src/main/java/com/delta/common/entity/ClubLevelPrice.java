@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  * 对应数据库表 club_level_prices，建立俱乐部配置与陪玩师等级之间的价格关联，
  * 支持不同俱乐部对同一等级设置不同价格。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

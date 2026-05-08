@@ -8,14 +8,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import cn.hutool.dfa.FoundWord;
+import cn.hutool.dfa.WordTree;
 import jakarta.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
- * 关键词匹配服务实现，基于模糊匹配算法
+ * 关键词匹配服务实现，基于Hutool WordTree（Trie树）实现高效多模式匹配
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor
@@ -25,7 +28,11 @@ public class KeywordMatcherServiceImpl implements KeywordMatcherService {
 
     private final KeywordMapper keywordMapper;
 
+    /** 关键词原始映射（key→Keyword对象），用于获取优先级等属性 */
     private volatile Map<String, Keyword> keywordMap = new ConcurrentHashMap<>();
+
+    /** Hutool WordTree（Trie树），用于O(n)复杂度多模式匹配 */
+    private volatile WordTree wordTree = new WordTree();
 
     @PostConstruct
     public void init() {
@@ -38,19 +45,22 @@ public class KeywordMatcherServiceImpl implements KeywordMatcherService {
             return Collections.emptyList();
         }
 
-        List<String> matchedKeywords = new ArrayList<>();
-        String lowerText = text.toLowerCase();
-
-        for (Map.Entry<String, Keyword> entry : keywordMap.entrySet()) {
-            String keyword = entry.getKey().toLowerCase();
-            if (lowerText.contains(keyword)) {
-                matchedKeywords.add(entry.getKey());
-            }
+        List<FoundWord> foundWords = wordTree.matchAllWords(text, -1, true, false);
+        if (foundWords.isEmpty()) {
+            return Collections.emptyList();
         }
+
+        List<String> matchedKeywords = foundWords.stream()
+                .map(FoundWord::getWord)
+                .distinct()
+                .collect(Collectors.toList());
 
         matchedKeywords.sort((a, b) -> {
             Keyword ka = keywordMap.get(a);
             Keyword kb = keywordMap.get(b);
+            if (ka == null || kb == null) {
+                return 0;
+            }
             return Integer.compare(kb.getPriority(), ka.getPriority());
         });
 
@@ -68,11 +78,14 @@ public class KeywordMatcherServiceImpl implements KeywordMatcherService {
         List<Keyword> keywords = keywordMapper.selectList(wrapper);
 
         Map<String, Keyword> newKeywordMap = new ConcurrentHashMap<>();
+        WordTree newWordTree = new WordTree();
         for (Keyword keyword : keywords) {
             newKeywordMap.put(keyword.getKeyword(), keyword);
+            newWordTree.addWord(keyword.getKeyword());
         }
 
         this.keywordMap = newKeywordMap;
+        this.wordTree = newWordTree;
         log.info("关键词库刷新完成，共加载 {} 个关键词", keywords.size());
     }
 }

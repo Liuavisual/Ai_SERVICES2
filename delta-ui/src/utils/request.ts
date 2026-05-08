@@ -61,13 +61,14 @@ let lastRefreshAttemptTime = 0
 
 http.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (['post', 'put', 'patch'].includes(config.method || '') && config.data === undefined) {
+    const method = (config.method || '').toLowerCase()
+    if (['post', 'put', 'patch'].includes(method) && config.data === undefined) {
       config.data = {}
     }
     const token = authStorage.getToken()
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
-      config.headers['X-User-ID'] = authStorage.getUserInfo().id || ''
+      config.headers['X-User-ID'] = authStorage.getUserInfo()?.id || ''
     }
     return config
   },

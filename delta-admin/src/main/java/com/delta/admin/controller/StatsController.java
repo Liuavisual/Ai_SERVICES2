@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
  * 统计数据控制器
  * 提供个人、团队及全局的统计信息查询接口
  *
- * @author delta
+ * @author 刘建国
  */
 @RequiredArgsConstructor
 @RestController

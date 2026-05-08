@@ -35,7 +35,7 @@ import java.util.Collections;
  *   <li>role为null时拒绝认证，防止创建ROLE_null权限</li>
  * </ul>
  *
- * @author delta
+ * @author 刘建国
  */
 @Component
 @RequiredArgsConstructor

@@ -5,7 +5,7 @@ import com.delta.common.vo.StatsVO;
 /**
  * 统计服务接口，提供运营数据统计和报表
  *
- * @author delta
+ * @author 刘建国
  */
 public interface StatsService {
 

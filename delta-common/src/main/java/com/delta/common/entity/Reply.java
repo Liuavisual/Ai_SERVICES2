@@ -15,7 +15,7 @@ import org.springframework.lang.NonNull;
  * 对应数据库表 replies，定义自动回复的触发规则和回复内容，
  * 支持按关键词（KEYWORD）和欢迎消息（WELCOME）两种触发类型。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

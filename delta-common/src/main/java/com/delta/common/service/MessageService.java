@@ -6,7 +6,7 @@ import com.delta.common.vo.MessageVO;
 /**
  * 消息服务接口，管理客户对话消息的存储和查询
  *
- * @author delta
+ * @author 刘建国
  */
 public interface MessageService {
 

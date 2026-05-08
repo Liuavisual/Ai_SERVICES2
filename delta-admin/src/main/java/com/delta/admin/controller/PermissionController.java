@@ -1,6 +1,5 @@
 package com.delta.admin.controller;
 
-import com.delta.common.annotation.RequirePermission;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.entity.SysRole;
 import com.delta.common.entity.SysUserRole;
@@ -14,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/permission")
 @RequiredArgsConstructor
-@RequirePermission("system:permission")
+@PreAuthorize("hasRole('SYS_ADMIN')")
 public class PermissionController extends BaseController {
 
     private final PermissionService permissionService;

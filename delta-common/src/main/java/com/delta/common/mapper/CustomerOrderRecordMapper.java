@@ -6,7 +6,7 @@ import com.delta.common.entity.CustomerOrderRecord;
 /**
  * 客户消费记录Mapper接口
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CustomerOrderRecordMapper extends BaseMapper<CustomerOrderRecord> {
 }

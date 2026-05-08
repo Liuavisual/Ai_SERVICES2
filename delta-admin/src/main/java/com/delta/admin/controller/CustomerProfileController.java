@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 客户画像管理控制器
  *
- * @author delta
+ * @author 刘建国
  */
 @Tag(name = "客户画像管理", description = "客户画像和消费记录管理接口")
 @RestController

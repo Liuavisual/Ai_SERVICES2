@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  * 对应数据库表 work_order_attachments，存储工单关联的附件信息，
  * 包括文件名、路径、类型、大小、上传人等。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

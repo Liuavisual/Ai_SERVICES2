@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 /**
  * 分布式锁服务实现，基于Redisson
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

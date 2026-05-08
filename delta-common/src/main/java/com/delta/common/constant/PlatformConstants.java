@@ -7,7 +7,7 @@ package com.delta.common.constant;
  * 新增平台时必须在此处添加对应常量。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 public final class PlatformConstants {
 

@@ -16,7 +16,7 @@ import java.math.BigDecimal;
  * 对应数据库表 companions，记录陪玩师的基本信息，
  * 包括等级、游戏类型、价格、服务标签、支持游戏等。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -22,7 +22,7 @@ import org.springframework.util.StringUtils;
 /**
  * 系统用户服务实现，管理后台账号和权限
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

@@ -67,6 +67,12 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
     /** 银行卡号正则：匹配16-19位银行卡号 */
     private static final Pattern BANK_CARD_PATTERN = Pattern.compile("\\d{16,19}");
 
+    /** 问句检测关键词，用于上下文分析 */
+    private static final Set<String> QUESTION_KEYWORDS = Set.of(
+        "吗", "呢", "什么", "怎么", "为什么", "是不是", "能不能", "如何",
+        "请问", "想问", "咨询", "请教", "问一下", "了解"
+    );
+
     /** 敏感词过滤引擎（DFA算法），集成开源词库+数据库自定义词库 */
     private final SensitiveWordBs sensitiveWordBs;
 
@@ -110,8 +116,13 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
         String reason;
 
         if (!allMatches.isEmpty()) {
-            level = SafetyLevel.BLOCK;
-            reason = "检测到敏感内容：" + String.join("、", allMatches);
+            if (isQuestionContext(text)) {
+                level = SafetyLevel.WARNING;
+                reason = "疑似涉及敏感内容（问句上下文）：" + String.join("、", allMatches);
+            } else {
+                level = SafetyLevel.BLOCK;
+                reason = "检测到敏感内容：" + String.join("、", allMatches);
+            }
         } else {
             level = SafetyLevel.SAFE;
             reason = "内容安全";
@@ -132,9 +143,31 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
         if (level == SafetyLevel.BLOCK) {
             log.warn("【内容安全拦截】userId={} | 匹配词={} | 原始内容长度={}",
                     userId, allMatches, text.length());
+        } else if (level == SafetyLevel.WARNING) {
+            log.warn("【内容安全告警】userId={} | 匹配词={} | 疑似问句上下文",
+                    userId, allMatches);
         }
 
         return result;
+    }
+
+    /**
+     * 检测文本是否为问句上下文
+     * 若文本以问号结尾或包含疑问关键词，判定为问句上下文
+     */
+    private boolean isQuestionContext(String text) {
+        if (text == null || text.isEmpty()) {
+            return false;
+        }
+        if (text.trim().endsWith("?") || text.trim().endsWith("？")) {
+            return true;
+        }
+        for (String keyword : QUESTION_KEYWORDS) {
+            if (text.contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

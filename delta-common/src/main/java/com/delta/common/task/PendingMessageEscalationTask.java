@@ -23,7 +23,7 @@ import java.util.List;
  * 建议在 pending_messages 表的 (status, deleted, deadline) 字段上建立联合索引以优化查询性能。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Component
 @RequiredArgsConstructor

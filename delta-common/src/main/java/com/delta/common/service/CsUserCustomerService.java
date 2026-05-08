@@ -7,7 +7,7 @@ import com.delta.common.vo.CsUserCustomerVO;
 /**
  * 客服-客户分配服务接口，管理客服与客户的绑定关系
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CsUserCustomerService {
     

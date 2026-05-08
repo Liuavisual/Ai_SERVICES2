@@ -20,7 +20,6 @@ const uploadExcel = (url: string, file: File) => {
     url,
     method: 'post',
     data: formData,
-    headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 60000
   })
 }

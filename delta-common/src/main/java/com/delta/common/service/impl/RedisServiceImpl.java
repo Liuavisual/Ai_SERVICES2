@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Redis缓存服务实现，封装RedisTemplate操作
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

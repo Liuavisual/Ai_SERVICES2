@@ -326,7 +326,7 @@ public class StatsServiceImpl implements StatsService {
         wrapper.lt("created_at", end);
         wrapper.groupBy("DATE(created_at)");
         List<Map<String, Object>> results = messageMapper.selectMaps(wrapper);
-        Map<LocalDate, Long> map = new HashMap<>();
+        Map<LocalDate, Long> map = new HashMap<>(32);
         for (Map<String, Object> row : results) {
             LocalDate date = LocalDate.parse(row.get("date").toString());
             Long count = ((Number) row.get("count")).longValue();

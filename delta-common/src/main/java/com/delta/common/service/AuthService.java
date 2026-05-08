@@ -7,7 +7,7 @@ import com.delta.common.vo.LoginVO;
 /**
  * 认证服务接口，提供登录、注册、Token刷新等认证功能
  *
- * @author delta
+ * @author 刘建国
  */
 public interface AuthService {
     

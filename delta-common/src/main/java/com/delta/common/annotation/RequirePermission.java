@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 权限校验注解
+ * 权限校验注解（已废弃）
  * <p>
  * 标注在Controller方法上，用于声明该方法需要哪些权限。
  * 使用 @RequirePermission("customer:edit") 声明单个权限，
@@ -22,7 +22,9 @@ import java.lang.annotation.Target;
  * </p>
  *
  * @author 刘建国
+ * @deprecated 请使用 Spring Security 的 {@link org.springframework.security.access.prepost.PreAuthorize} 注解替代
  */
+@Deprecated
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequirePermission {

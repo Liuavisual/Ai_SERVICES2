@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * 统一API响应结果视图对象
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @NoArgsConstructor
@@ -21,13 +21,16 @@ public class Result<T> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "状态码", example = "200")
-    /** 状态码 */    private Integer code;
+    /** 状态码 */
+    private Integer code;
 
     @Schema(description = "提示消息", example = "success")
-    /** 提示消息 */    private String message;
+    /** 提示消息 */
+    private String message;
 
     @Schema(description = "响应数据")
-    /** 响应数据 */    private T data;
+    /** 响应数据 */
+    private T data;
 
     public static <T> Result<T> success() {
         return new Result<>(200, "success", null);

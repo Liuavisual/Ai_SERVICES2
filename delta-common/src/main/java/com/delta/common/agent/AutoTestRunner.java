@@ -143,7 +143,7 @@ public class AutoTestRunner {
         try {
             String loginUrl = serverUrl + loginPath;
 
-            Map<String, String> loginBody = new HashMap<>();
+            Map<String, String> loginBody = new HashMap<>(8);
             loginBody.put("username", testUsername);
             loginBody.put("password", testPassword);
 
@@ -209,7 +209,7 @@ public class AutoTestRunner {
 
             try {
                 // 构建请求体
-                Map<String, Object> sendBody = new HashMap<>();
+                Map<String, Object> sendBody = new HashMap<>(16);
                 sendBody.put("customerNickname", "AutoTest_" + testCase.getId());
                 sendBody.put("platform", "WEB");
                 sendBody.put("csUserId", 1);

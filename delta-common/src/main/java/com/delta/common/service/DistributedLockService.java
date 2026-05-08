@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 /**
  * 分布式锁服务接口，基于Redis实现分布式互斥
  *
- * @author delta
+ * @author 刘建国
  */
 public interface DistributedLockService {
 

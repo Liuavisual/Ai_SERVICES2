@@ -45,10 +45,11 @@ public class DesensitizeUtils {
             return false;
         }
         String lowerKey = key.toLowerCase();
-        return lowerKey.contains("secret") || lowerKey.contains("key") ||
-                lowerKey.contains("token") || lowerKey.contains("password") ||
-                lowerKey.contains("apikey") || lowerKey.contains("api_key") ||
-                lowerKey.contains("appid") || lowerKey.contains("app_id") ||
-                lowerKey.contains("aeskey") || lowerKey.contains("aes_key");
+        return lowerKey.equals("password") || lowerKey.equals("secret")
+                || lowerKey.equals("token") || lowerKey.endsWith("key")
+                || lowerKey.endsWith("secret") || lowerKey.endsWith("password")
+                || lowerKey.equals("apikey") || lowerKey.equals("api_key")
+                || lowerKey.equals("appid") || lowerKey.equals("app_id")
+                || lowerKey.equals("aeskey") || lowerKey.equals("aes_key");
     }
 }

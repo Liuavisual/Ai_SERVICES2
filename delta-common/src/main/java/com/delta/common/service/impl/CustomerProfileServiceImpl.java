@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * 7. 需求分类 - 情感陪伴/技能提升/社交拓展/娱乐
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

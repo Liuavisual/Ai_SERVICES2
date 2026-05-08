@@ -14,7 +14,7 @@ import java.util.Map;
  * 对应数据库表 platform_configs，存储各接入平台（如微信公众号）的集成配置，
  * 包括平台标识、启用状态和JSON格式的平台特定配置参数。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

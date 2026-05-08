@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * 自动回复管理控制器
  *
- * @author delta
+ * @author 刘建国
  */
 @Tag(name = "回复话术管理", description = "回复话术管理接口")
 @RestController

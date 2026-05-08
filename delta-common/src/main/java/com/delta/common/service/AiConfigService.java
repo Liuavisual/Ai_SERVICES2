@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * AI配置服务接口，管理AI模型参数和提示词
  *
- * @author delta
+ * @author 刘建国
  */
 public interface AiConfigService {
 

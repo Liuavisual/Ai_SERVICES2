@@ -11,8 +11,13 @@ import java.math.BigDecimal;
  * <p>
  * 对应数据库表 club_config，存储陪玩俱乐部的基本信息和定价策略，
  * 包括俱乐部名称、Logo、主营游戏、服务口号、各等级价格等。</p>
+ * <p>
+ * 注意：priceLevelTwo/priceLevelOne/priceTop/priceStar 字段已废弃，
+ * 请使用 {@link com.delta.common.entity.CompanionLevel#basePrice}
+ * + {@link com.delta.common.entity.ClubLevelPrice} 作为唯一价格数据源。
+ * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -37,16 +42,32 @@ public class ClubConfig extends BaseEntity {
     /** 联系方式 */
     private String contactInfo;
 
-    /** 二品陪玩师价格（元/小时） */
+    /**
+     * 二品陪玩师价格（元/小时）
+     * @deprecated 请使用 CompanionLevel.basePrice + ClubLevelPrice 替代
+     */
+    @Deprecated
     private BigDecimal priceLevelTwo;
 
-    /** 一品陪玩师价格（元/小时） */
+    /**
+     * 一品陪玩师价格（元/小时）
+     * @deprecated 请使用 CompanionLevel.basePrice + ClubLevelPrice 替代
+     */
+    @Deprecated
     private BigDecimal priceLevelOne;
 
-    /** 顶尖陪玩师价格（元/小时） */
+    /**
+     * 顶尖陪玩师价格（元/小时）
+     * @deprecated 请使用 CompanionLevel.basePrice + ClubLevelPrice 替代
+     */
+    @Deprecated
     private BigDecimal priceTop;
 
-    /** 明星陪玩师价格（元/小时） */
+    /**
+     * 明星陪玩师价格（元/小时）
+     * @deprecated 请使用 CompanionLevel.basePrice + ClubLevelPrice 替代
+     */
+    @Deprecated
     private BigDecimal priceStar;
 
     private String clubFeatures;

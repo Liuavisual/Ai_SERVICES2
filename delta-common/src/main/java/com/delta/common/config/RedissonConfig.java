@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Redisson配置类，配置分布式锁客户端连接
  *
- * @author delta
+ * @author 刘建国
  */
 @Configuration
 public class RedissonConfig {
@@ -32,7 +32,7 @@ public class RedissonConfig {
         Config config = new Config();
         String address = "redis://" + host + ":" + port;
         
-        config.useSingleServer()
+        org.redisson.config.SingleServerConfig serverConfig = config.useSingleServer()
                 .setAddress(address)
                 .setDatabase(database)
                 .setConnectionMinimumIdleSize(10)
@@ -44,7 +44,7 @@ public class RedissonConfig {
                 .setRetryInterval(1500);
         
         if (password != null && !password.isEmpty()) {
-            config.useSingleServer().setPassword(password);
+            serverConfig.setPassword(password);
         }
         
         return Redisson.create(config);

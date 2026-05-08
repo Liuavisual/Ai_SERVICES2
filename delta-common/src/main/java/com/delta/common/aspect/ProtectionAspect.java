@@ -96,14 +96,14 @@ public class ProtectionAspect {
         // 第四步：执行目标方法并记录耗时
         long startTime = System.currentTimeMillis();
         Object result = null;
-        Throwable error = null;
+        Exception error = null;
 
         try {
             result = joinPoint.proceed();
             return result;
-        } catch (Throwable t) {
-            error = t;
-            throw t;
+        } catch (Exception e) {
+            error = e;
+            throw e;
         } finally {
             long duration = System.currentTimeMillis() - startTime;
             String status = error == null ? "SUCCESS" : "FAIL";

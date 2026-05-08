@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * 对应数据库表 activity_package，存储促销活动套餐信息，
  * 包括套餐标题、类型、价格、活动时间、条款等。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * WeChatConfig
  *
- * @author delta
+ * @author 刘建国
  */
 @Configuration
 @ConditionalOnProperty(prefix = "wx.mp", name = "enabled", havingValue = "true", matchIfMissing = false)

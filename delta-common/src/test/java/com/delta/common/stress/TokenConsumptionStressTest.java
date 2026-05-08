@@ -47,7 +47,7 @@ import static org.mockito.Mockito.*;
  * - 兜底回复比例应≤10%
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

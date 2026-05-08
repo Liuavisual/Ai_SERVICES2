@@ -16,7 +16,7 @@ import java.time.LocalTime;
  * 对应数据库表 companion_schedules，记录陪玩师每日的可用时间段，
  * 支持按日期和时段排班，状态包括 AVAILABLE（可预约）、BOOKED（已预约）、UNAVAILABLE（不可用）。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

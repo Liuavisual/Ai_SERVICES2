@@ -13,7 +13,7 @@ import lombok.Getter;
  * </ul>
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Getter
 public enum PendingMessageStatusEnum {

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 /**
  * 客户服务实现，处理客户信息CRUD和AI开关管理
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor
@@ -98,7 +98,7 @@ public class CustomerServiceImpl implements CustomerService {
             msgWrapper.in("user_id", userIds);
             msgWrapper.groupBy("user_id");
             List<Map<String, Object>> msgCountResults = messageMapper.selectMaps(msgWrapper);
-            messageCountMap = new HashMap<>();
+            messageCountMap = new HashMap<>(64);
             for (Map<String, Object> row : msgCountResults) {
                 Long userId = ((Number) row.get("user_id")).longValue();
                 Integer count = ((Number) row.get("count")).intValue();

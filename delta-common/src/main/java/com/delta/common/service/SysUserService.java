@@ -8,7 +8,7 @@ import com.delta.common.vo.SysUserVO;
 /**
  * 系统用户服务接口，管理后台账号和权限
  *
- * @author delta
+ * @author 刘建国
  */
 public interface SysUserService {
     

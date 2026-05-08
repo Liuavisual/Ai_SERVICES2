@@ -88,7 +88,7 @@ public class ServiceProtectionManager {
     private String activeProfile;
 
     /** 已解密Prompt的内存缓存（避免重复解密） */
-    private final Map<String, String> decryptedPromptCache = new HashMap<>();
+    private final Map<String, String> decryptedPromptCache = new HashMap<>(64);
 
     /**
      * 从系统属性获取激活的profile（构造函数中使用，@Value注入在构造函数之后）
@@ -315,7 +315,7 @@ public class ServiceProtectionManager {
      * @return 特征名称→权重的映射
      */
     private Map<String, Double> extractFeatures(String message) {
-        Map<String, Double> features = new HashMap<>();
+        Map<String, Double> features = new HashMap<>(16);
 
         if (message == null || message.isEmpty()) {
             return features;

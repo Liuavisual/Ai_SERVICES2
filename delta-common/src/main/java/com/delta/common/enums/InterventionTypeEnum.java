@@ -7,7 +7,7 @@ package com.delta.common.enums;
  * 当系统检测到转人工关键词时，通过 {@link #fromKeyword(String)} 自动分类。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 public enum InterventionTypeEnum {
 

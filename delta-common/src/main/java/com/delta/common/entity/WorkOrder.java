@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * 对应数据库表 work_orders，记录客服工单信息，
  * 包括工单类型、优先级、分配状态、处理结果等。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

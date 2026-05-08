@@ -17,10 +17,10 @@ import java.time.LocalDateTime;
  * 画像维度：RFM价值评估、消费行为、服务偏好、交互行为、满意度、生命周期、需求分类。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @TableName("customer_profile")
 @Table(name = "customer_profile", indexes = {
         @Index(name = "idx_customer_profile_user_id", columnList = "user_id")

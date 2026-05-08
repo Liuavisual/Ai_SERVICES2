@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * DeepSeek AI服务接口，封装AI对话API调用
  *
- * @author delta
+ * @author 刘建国
  */
 public interface DeepSeekService {
 

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * AI配置更新数据传输对象
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @Schema(description = "AI配置更新数据传输对象")
@@ -17,7 +17,8 @@ public class AiConfigUpdateDTO {
 
     @Schema(description = "待更新的配置项列表")
     @NotEmpty(message = "配置项不能为空")
-    /** 待更新的配置项列表 */    private List<ConfigUpdateItem> updates;
+    /** 待更新的配置项列表 */
+    private List<ConfigUpdateItem> updates;
 
     public List<ConfigUpdateItem> getUpdates() {
         return updates;

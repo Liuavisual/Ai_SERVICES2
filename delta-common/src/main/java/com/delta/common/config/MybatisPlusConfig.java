@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 /**
  * MyBatis-Plus配置类，启用分页插件和自动填充
  *
- * @author delta
+ * @author 刘建国
  */
 @Configuration
 public class MybatisPlusConfig {

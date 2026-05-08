@@ -12,7 +12,7 @@ import com.delta.common.vo.CustomerProfileVO;
  * 数据来源：仅店内消费记录 + 客服/陪玩交互数据，不涉及客户隐私信息。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CustomerProfileService {
 

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 缓存初始化监听器，应用启动时预加载关键词和回复规则到缓存
  *
- * @author delta
+ * @author 刘建国
  */
 @Component
 @RequiredArgsConstructor

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 陪玩师服务接口，管理陪玩师信息和状态
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CompanionService {
 

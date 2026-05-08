@@ -25,7 +25,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
  * </p>
  *
  * @author 刘建国
+ * @deprecated 请使用 Spring Security 的 @PreAuthorize 注解替代，权限体系已统一
  */
+@Deprecated
 @Component
 @RequiredArgsConstructor
 public class PermissionInterceptor implements HandlerInterceptor {

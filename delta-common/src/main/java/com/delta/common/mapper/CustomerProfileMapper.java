@@ -6,7 +6,7 @@ import com.delta.common.entity.CustomerProfile;
 /**
  * 客户画像Mapper接口
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CustomerProfileMapper extends BaseMapper<CustomerProfile> {
 }

@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * 关键词管理控制器
  *
- * @author delta
+ * @author 刘建国
  */
 @Tag(name = "关键词管理", description = "关键词管理接口")
 @RestController

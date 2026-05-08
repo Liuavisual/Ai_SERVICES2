@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  * 对应数据库表 faq_items，存储常见问题与答案，
  * 用于AI客服回复时的知识检索和自动问答。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

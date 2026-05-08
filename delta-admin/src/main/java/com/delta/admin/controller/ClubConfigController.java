@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 俱乐部配置管理控制器
  *
- * @author delta
+ * @author 刘建国
  */
 @RequiredArgsConstructor
 @Tag(name = "俱乐部配置管理", description = "俱乐部配置管理接口")

@@ -20,19 +20,19 @@ const routes = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
-        meta: { title: '数据总览', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '数据总览', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'customers',
         name: 'Customers',
         component: () => import('@/views/Customer.vue'),
-        meta: { title: '客户名录', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '客户名录', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'customer-profiles',
         name: 'CustomerProfiles',
         component: () => import('@/views/CustomerProfiles.vue'),
-        meta: { title: '客户画像', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '客户画像', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'game-configs',
@@ -140,13 +140,13 @@ const routes = [
         path: 'messages',
         name: 'Messages',
         component: () => import('@/views/Messages.vue'),
-        meta: { title: '消息记录', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '消息记录', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'pending-messages',
         name: 'PendingMessages',
         component: () => import('@/views/PendingMessages.vue'),
-        meta: { title: '待办事项', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '待办事项', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'sys-users',
@@ -170,7 +170,7 @@ const routes = [
         path: 'companions',
         name: 'Companions',
         component: () => import('@/views/Companions.vue'),
-        meta: { title: '陪玩师', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '陪玩师', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'companion-schedule',
@@ -182,13 +182,13 @@ const routes = [
         path: 'orders',
         name: 'Orders',
         component: () => import('@/views/Orders.vue'),
-        meta: { title: '订单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '订单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'work-orders',
         name: 'WorkOrders',
         component: () => import('@/views/WorkOrders.vue'),
-        meta: { title: '工单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'] }
+        meta: { title: '工单管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
       },
       {
         path: 'service-tracks',
@@ -294,15 +294,23 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.path === '/login') {
     const userInfo = authStorage.getUserInfo()
-    next(authStorage.getRoleHomePage(userInfo.role))
+    if (userInfo?.role) {
+      next(authStorage.getRoleHomePage(userInfo.role))
+    } else {
+      next()
+    }
     return
   }
 
   if (to.meta && to.meta.roles) {
     const userInfo = authStorage.getUserInfo()
-    if (!to.meta.roles.includes(userInfo.role)) {
+    if (!userInfo?.role || !to.meta.roles.includes(userInfo.role)) {
       ElMessage.error('您没有权限访问该页面')
-      next(authStorage.getRoleHomePage(userInfo.role))
+      if (userInfo?.role) {
+        next(authStorage.getRoleHomePage(userInfo.role))
+      } else {
+        next('/login')
+      }
       return
     }
   }

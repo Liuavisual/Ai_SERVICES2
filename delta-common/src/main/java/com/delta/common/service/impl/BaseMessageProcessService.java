@@ -44,6 +44,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import cn.hutool.crypto.digest.DigestUtil;
+
 /**
  * 消息处理服务抽象基类
  * <p>
@@ -105,6 +107,7 @@ public abstract class BaseMessageProcessService {
      * 在消息处理入口调用，对用户输入内容进行安全审核。
      * 如果内容被BLOCK拦截，返回固定的安全提示文本；
      * 如果内容安全通过，返回null继续正常处理流程。
+     * 同时进行消息去重检查，60秒内相同内容不重复处理。
      * </p>
      *
      * @param text   用户输入文本
@@ -112,13 +115,38 @@ public abstract class BaseMessageProcessService {
      * @return 如果被拦截返回安全提示文本，否则返回null
      */
     protected String checkContentSafety(String text, String userId) {
+        if (isDuplicateMessage(text)) {
+            log.debug("【消息去重】60秒内重复消息被跳过 | userId={} | text={}", userId, text);
+            return null;
+        }
         ContentSafetyService.ContentSafetyResult result = contentSafetyService.checkContent(text, userId);
         if (result.getLevel() == ContentSafetyService.SafetyLevel.BLOCK) {
             log.warn("【内容安全拦截】消息被拦截 | userId={} | level={} | matchedWords={}",
                     userId, result.getLevel(), result.getMatchedWords());
             return "您的消息包含敏感内容，已被系统安全机制拦截。请遵守平台规范，发送合规内容。如有疑问请联系人工客服。";
         }
+        if (result.getLevel() == ContentSafetyService.SafetyLevel.WARNING) {
+            log.warn("【内容安全告警】消息含疑似敏感词 | userId={} | matchedWords={}",
+                    userId, result.getMatchedWords());
+        }
         return null;
+    }
+
+    /**
+     * 消息去重检查
+     * 对消息内容计算MD5，通过Redis SETNX设置60秒窗口的去重键
+     *
+     * @param content 消息内容
+     * @return true-重复消息需跳过，false-可通过
+     */
+    private boolean isDuplicateMessage(String content) {
+        if (content == null || content.isEmpty()) {
+            return false;
+        }
+        String md5 = DigestUtil.md5Hex(content);
+        String dedupKey = "message:dedup:" + md5;
+        Boolean success = redisService.setIfAbsent(dedupKey, "1", 60, TimeUnit.SECONDS);
+        return success != null && !success;
     }
 
     /**
@@ -846,7 +874,7 @@ public abstract class BaseMessageProcessService {
                     .map(ServicePriceRule::getServiceItemId)
                     .distinct()
                     .collect(Collectors.toList());
-            Map<Long, String> serviceItemNameMap = new HashMap<>();
+            Map<Long, String> serviceItemNameMap = new HashMap<>(32);
             if (!serviceItemIds.isEmpty()) {
                 serviceItemMapper.selectByIds(serviceItemIds).forEach(
                         item -> serviceItemNameMap.put(item.getId(), item.getServiceName()));

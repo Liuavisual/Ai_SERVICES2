@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 陪玩师排班服务接口，管理排班和预约状态
  *
- * @author delta
+ * @author 刘建国
  */
 public interface CompanionScheduleService {
 

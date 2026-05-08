@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
  * 对应数据库表 ai_config，存储AI客服系统的键值对配置项，
  * 如模型名称、温度参数、系统提示词等。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

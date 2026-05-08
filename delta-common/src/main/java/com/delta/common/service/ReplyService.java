@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * 自动回复服务接口，管理关键词和欢迎语回复规则
  *
- * @author delta
+ * @author 刘建国
  */
 public interface ReplyService {
 

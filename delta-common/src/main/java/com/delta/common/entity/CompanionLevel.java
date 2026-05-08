@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  * 对应数据库表 companion_levels，定义陪玩师的等级体系，
  * 如二品、一品、顶尖、明星等，每个等级有基础定价。</p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

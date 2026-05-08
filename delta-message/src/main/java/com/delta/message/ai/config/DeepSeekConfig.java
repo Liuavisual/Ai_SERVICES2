@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * DeepSeek AI配置类，定义API密钥、模型参数和系统提示词
  *
- * @author delta
+ * @author 刘建国
  */
 @Data
 @Configuration

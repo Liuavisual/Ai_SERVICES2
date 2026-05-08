@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 确保多线程环境下的缓存可见性和单次加载。
  * </p>
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

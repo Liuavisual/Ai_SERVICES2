@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * AI配置服务实现，管理AI模型参数
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

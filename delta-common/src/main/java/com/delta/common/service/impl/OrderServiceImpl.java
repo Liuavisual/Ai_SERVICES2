@@ -14,15 +14,19 @@ import com.delta.common.vo.OrderVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +37,8 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
 
     private final CompanionMapper companionMapper;
+
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public OrderVO getOrderById(Long id) {
@@ -220,8 +226,17 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    /**
+     * 生成订单号
+     * 使用 Redis 自增序列 + 日期前缀，避免高并发时时间戳碰撞
+     * 格式：ORD + yyyyMMdd + 6位序列号（如 ORD20260508000001）
+     */
     private String generateOrderNo() {
-        return "ORD" + System.currentTimeMillis() + String.format("%04d", (int)(Math.random() * 10000));
+        String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String redisKey = "order:seq:" + datePrefix;
+        Long seq = redisTemplate.opsForValue().increment(redisKey);
+        redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
+        return "ORD" + datePrefix + String.format("%06d", seq);
     }
 
     private BigDecimal calculateAmount(Companion companion, int durationMinutes) {

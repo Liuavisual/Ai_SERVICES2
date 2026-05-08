@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * 俱乐部配置服务实现，管理俱乐部信息和等级价格
  *
- * @author delta
+ * @author 刘建国
  */
 @Service
 @RequiredArgsConstructor

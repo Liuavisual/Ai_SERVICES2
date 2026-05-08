@@ -5,7 +5,7 @@ import lombok.Getter;
 /**
  * 业务异常类，用于抛出可预期的业务逻辑错误
  *
- * @author delta
+ * @author 刘建国
  */
 @Getter
 public class BusinessException extends RuntimeException {
