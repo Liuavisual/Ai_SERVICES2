@@ -87,7 +87,7 @@ describe('HTTP请求工具测试', () => {
       try {
         await request.get('/test')
         expect(adapterSpy).toHaveBeenCalled()
-        const config = adapterSpy.mock.calls[0]![0]!
+        const config = (adapterSpy.mock.calls as any)[0][0]
         expect(config.headers.Authorization).toBe('Bearer test-token-123')
       } finally {
         request.defaults.adapter = originalAdapter
@@ -112,7 +112,7 @@ describe('HTTP请求工具测试', () => {
       try {
         await request.get('/test')
         expect(adapterSpy).toHaveBeenCalled()
-        const config = adapterSpy.mock.calls[0]![0]!
+        const config = (adapterSpy.mock.calls as any)[0][0]
         expect(config.headers.Authorization).toBeFalsy()
       } finally {
         request.defaults.adapter = originalAdapter
@@ -133,7 +133,7 @@ describe('HTTP请求工具测试', () => {
 
       try {
         await request.get('/test')
-        const config = adapterSpy.mock.calls[0]![0]!
+        const config = (adapterSpy.mock.calls as any)[0][0]
         expect(config.withCredentials).toBe(true)
       } finally {
         request.defaults.adapter = originalAdapter
@@ -154,7 +154,7 @@ describe('HTTP请求工具测试', () => {
 
       try {
         await request.get('/test', { params: { pageNum: 2, pageSize: 20, keyword: 'test' } })
-        const config = adapterSpy.mock.calls[0]![0]!
+        const config = (adapterSpy.mock.calls as any)[0][0]
         expect(config.params.page).toBe(2)
         expect(config.params.size).toBe(20)
         expect(config.params.pageNum).toBeUndefined()

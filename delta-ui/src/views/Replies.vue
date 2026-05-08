@@ -171,11 +171,16 @@ const getTriggerTypeText = (type: string): string => {
 }
 
 const fetchData = async (): Promise<void> => {
-  const res: Result<PageResult<ReplyVO>> = await replyApi.getPage(queryParams)
+  const params = {
+    page: queryParams.pageNum,
+    size: queryParams.pageSize,
+    triggerType: queryParams.triggerType || null
+  }
+  const res: Result<PageResult<ReplyVO>> = await replyApi.getPage(params)
   if (res.code === 200) {
     tableData.value = res.data.records.map(item => ({
       ...item,
-      enabled: Boolean(item.enabled)
+      enabled: Number(item.enabled)
     }))
     total.value = res.data.total
   }

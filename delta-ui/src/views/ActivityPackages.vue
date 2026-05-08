@@ -123,7 +123,7 @@ import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Download, Upload } from '@element-plus/icons-vue'
 import { activityPackageApi, gameConfigApi, serviceItemApi, clubConfigApi, downloadExcel, uploadExcel } from '@/api/index.js'
-import type { Result, ActivityPackageVO, GameConfigVO, ServiceItemVO } from '@/types'
+import type { Result, GameConfigVO, ServiceItemVO } from '@/types'
 
 const loading = ref<boolean>(false)
 const packageList = ref<any[]>([])
@@ -151,9 +151,9 @@ const loadData = async (): Promise<void> => {
     if (res.code === 200 && res.data) clubConfigId.value = res.data.id || 1
     form.value.clubConfigId = clubConfigId.value
     const [pkgRes, gameRes, svcRes] = await Promise.all([
-      activityPackageApi.getByClubId(clubConfigId.value),
-      gameConfigApi.getByClubId(clubConfigId.value),
-      serviceItemApi.getByClubId(clubConfigId.value)
+      activityPackageApi.getByClubId(String(clubConfigId.value)),
+      gameConfigApi.getByClubId(String(clubConfigId.value)),
+      serviceItemApi.getByClubId(String(clubConfigId.value))
     ])
     packageList.value = pkgRes.data || []
     gameList.value = gameRes.data || []

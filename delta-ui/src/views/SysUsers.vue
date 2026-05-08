@@ -199,10 +199,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { sysUserApi } from '@/api'
+import { authStorage } from '@/utils/storage'
 import type { Result, PageResult, SysUserVO, UserRole } from '@/types'
 
 const isAdmin = computed<boolean>(() => {
-  try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
+  return authStorage.getUserInfo().role === 'SYS_ADMIN'
 })
 
 const loading = ref<boolean>(false)
@@ -271,8 +272,8 @@ const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
     const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
+      page: pageNum.value,
+      size: pageSize.value,
       role: searchForm.role,
       status: searchForm.status
     })

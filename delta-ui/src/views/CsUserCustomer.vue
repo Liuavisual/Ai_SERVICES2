@@ -154,6 +154,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { csUserCustomerApi, sysUserApi, customerApi } from '@/api'
+import { authStorage } from '@/utils/storage'
 import type { Result, PageResult, SysUserVO, CustomerVO } from '@/types'
 
 interface CsUserCustomerRow {
@@ -172,7 +173,7 @@ interface CsUserCustomerRow {
 }
 
 const isAdmin = computed<boolean>(() => {
-  try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
+  return authStorage.getUserInfo().role === 'SYS_ADMIN'
 })
 
 const loading = ref<boolean>(false)
@@ -218,8 +219,8 @@ const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
     const res: Result<PageResult<CsUserCustomerRow>> = await csUserCustomerApi.getPage({
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
+      page: pageNum.value,
+      size: pageSize.value,
       status: searchForm.status
     })
     if (res.code === 200) {
@@ -236,7 +237,7 @@ const fetchData = async (): Promise<void> => {
 
 const fetchCsUsers = async (): Promise<void> => {
   try {
-    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ pageNum: 1, pageSize: 1000 })
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ page: 1, size: 1000 })
     if (res.code === 200) {
       csUsers.value = res.data.records.filter((u: SysUserVO) => u.role === 'CS_STAFF' || u.role === 'CS_LEADER')
     }
@@ -248,7 +249,7 @@ const fetchCsUsers = async (): Promise<void> => {
 
 const fetchCustomers = async (): Promise<void> => {
   try {
-    const res: Result<PageResult<CustomerVO>> = await customerApi.getPage({ pageNum: 1, pageSize: 1000 })
+    const res: Result<PageResult<CustomerVO>> = await customerApi.getPage({ page: 1, size: 1000 })
     if (res.code === 200) {
       customers.value = res.data.records
     }
@@ -285,7 +286,7 @@ const handleDelete = async (row: CsUserCustomerRow): Promise<void> => {
       type: 'warning'
     })
     
-    const res: Result<null> = await csUserCustomerApi.delete(row.id)
+    const res: Result<null> = await csUserCustomerApi.delete(String(row.id))
     if (res.code === 200) {
       ElMessage.success('删除成功')
       fetchData()

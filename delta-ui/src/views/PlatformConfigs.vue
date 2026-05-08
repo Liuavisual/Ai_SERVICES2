@@ -86,7 +86,7 @@ import { platformConfigApi } from '@/api'
 import type { Result } from '@/types'
 
 interface PlatformConfigRow {
-  id: number
+  id: string | number
   platform: string
   enabled: boolean
   config: Record<string, any>
@@ -182,7 +182,7 @@ const fetchData = async (): Promise<void> => {
 }
 
 const handleEdit = (row: PlatformConfigRow): void => {
-  formData.value = { ...row }
+  formData.value = { ...row, id: String(row.id) }
   jsonError.value = ''
   dialogVisible.value = true
 }
@@ -194,7 +194,7 @@ const handleSubmit = async (): Promise<void> => {
   }
   submitLoading.value = true
   try {
-    const res: Result<null> = await platformConfigApi.update(formData.value)
+    const res: Result<null> = await platformConfigApi.update(formData.value.id as string, formData.value)
     if (res.code === 200) {
       ElMessage.success('更新成功')
       dialogVisible.value = false

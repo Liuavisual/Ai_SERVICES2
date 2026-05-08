@@ -67,8 +67,8 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
+import { authStorage } from '@/utils/storage'
 import { authApi } from '@/api'
-import { getRoleHomePage } from '@/router'
 import type { LoginDTO, RegisterDTO, LoginVO, UserRole } from '@/types'
 
 const router = useRouter()
@@ -120,18 +120,13 @@ const handleLogin = async (): Promise<void> => {
     const res = await authApi.login(loginForm)
     if (res.code === 200) {
       const data = res.data as LoginVO
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('refreshToken', data.refreshToken)
-      localStorage.setItem('expiresIn', String(data.expiresIn))
-      const tokenExpiry = Date.now() + (data.expiresIn || 7200) * 1000
-      localStorage.setItem('tokenExpiry', String(tokenExpiry))
-      localStorage.setItem('userInfo', JSON.stringify(data))
+      authStorage.setAuth(data as unknown as Record<string, unknown>)
       ElMessage.success('登录成功')
       const redirect = route.query.redirect as string
       if (redirect && redirect !== '/login') {
         router.push(redirect)
       } else {
-        router.push(getRoleHomePage(data.role as UserRole))
+        router.push(authStorage.getRoleHomePage(data.role as UserRole))
       }
     }
   } catch (error: any) {

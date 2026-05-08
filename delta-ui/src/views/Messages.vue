@@ -215,13 +215,16 @@ const getPlatformText = (platform: string): string => {
   return map[platform] || platform
 }
 
-const getPlatformTagType = (platform: string): string => {
+/** Element Plus Tag 组件的 type 属性联合类型 */
+type TagType = 'primary' | 'info' | 'success' | 'warning' | 'danger'
+
+const getPlatformTagType = (platform: string): TagType => {
   const map: Record<string, string> = {
     'wechat': 'primary',
     'kook': 'success',
     'yy': 'warning'
   }
-  return map[platform] || 'info'
+  return (map[platform] || 'info') as TagType
 }
 
 interface MessageRow extends MessageVO {
@@ -283,9 +286,14 @@ const handleQuery = async (): Promise<void> => {
   loading.value = true
   try {
     const params = {
-      ...queryParams,
+      page: queryParams.pageNum,
+      size: queryParams.pageSize,
+      userId: queryParams.userId || null,
+      platform: queryParams.platform || null,
+      direction: queryParams.direction || null,
       ai: queryParams.ai === 'true' ? true : queryParams.ai === 'false' ? false : null,
-      keywordTriggered: queryParams.keywordTriggered === 'true' ? true : queryParams.keywordTriggered === 'false' ? false : null
+      keywordTriggered: queryParams.keywordTriggered === 'true' ? true : queryParams.keywordTriggered === 'false' ? false : null,
+      keyword: queryParams.keyword || null
     }
     const res: Result<PageResult<MessageRow>> = await messageApi.getPage(params)
     if (res.code === 200) {
@@ -317,7 +325,7 @@ const handleReset = (): void => {
   handleQuery()
 }
 
-const handleViewCustomer = (userId: string): void => {
+const handleViewCustomer = (_userId: string): void => {
   router.push({
     path: '/customers',
     query: { keyword: '' }

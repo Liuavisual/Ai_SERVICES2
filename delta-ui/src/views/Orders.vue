@@ -208,12 +208,16 @@ const queryParams = reactive<{
   orderStatus: OrderStatus | ''
   paymentStatus: string
   orderNo: string
+  userId: string
+  companionId: string
 }>({
   pageNum: 1,
   pageSize: 10,
   orderStatus: '',
   paymentStatus: '',
-  orderNo: ''
+  orderNo: '',
+  userId: '',
+  companionId: ''
 })
 
 const cancelForm = reactive<{ reason: string }>({ reason: '' })
@@ -244,7 +248,15 @@ function formatDateTime(val: string): string {
 async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const res: Result<PageResult<OrderVO>> = await orderApi.getPage(queryParams)
+    const params = {
+      page: queryParams.pageNum,
+      size: queryParams.pageSize,
+      orderNo: queryParams.orderNo || null,
+      orderStatus: queryParams.orderStatus || null,
+      userId: queryParams.userId || null,
+      companionId: queryParams.companionId || null
+    }
+    const res: Result<PageResult<OrderVO>> = await orderApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data?.records || []
       total.value = res.data?.total || 0
@@ -342,7 +354,7 @@ async function confirmCancel(): Promise<void> {
   }
   cancelLoading.value = true
   try {
-    const res: Result<null> = await orderApi.cancelOrder(currentOrder.value!.id, { reason: cancelForm.reason })
+    const res: Result<null> = await orderApi.cancelOrder(currentOrder.value!.id, cancelForm.reason)
     if (res.code === 200) {
       ElMessage.success('订单已取消')
       cancelVisible.value = false

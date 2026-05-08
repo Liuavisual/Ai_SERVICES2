@@ -189,11 +189,11 @@ describe('API模块测试', () => {
       })
     })
 
-    it('handle 应发送POST请求到 /pending-messages/handle', () => {
+    it('process 应发送POST请求到 /pending-messages/process', () => {
       const data = { id: '1', action: 'accept' }
-      pendingMessageApi.handle(data)
+      pendingMessageApi.process(data)
       expect(mockRequest).toHaveBeenCalledWith({
-        url: '/pending-messages/handle',
+        url: '/pending-messages/process',
         method: 'post',
         data
       })
@@ -660,7 +660,7 @@ describe('API模块测试', () => {
     it('createBatch 应发送POST请求到 /companion-schedules/batch', () => {
       const params = { companionId: 'c1' }
       const data = [{ date: '2024-01-01' }]
-      companionScheduleApi.createBatch(params, data)
+      companionScheduleApi.createBatch(params, data as unknown as Record<string, unknown>)
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/batch',
         method: 'post',
@@ -1079,11 +1079,11 @@ describe('API模块测试', () => {
       })
     })
 
-    it('update 应发送PUT请求到 /platform-configs', () => {
-      const data = { platform: 'wechat', apiKey: 'xxx' }
-      platformConfigApi.update(data)
+    it('update 应发送PUT请求到 /platform-configs/:id', () => {
+      const data = { apiKey: 'xxx' }
+      platformConfigApi.update('wechat', data)
       expect(mockRequest).toHaveBeenCalledWith({
-        url: '/platform-configs',
+        url: '/platform-configs/wechat',
         method: 'put',
         data
       })
@@ -1308,7 +1308,7 @@ describe('API模块测试', () => {
         })
       )
       /** 验证data是FormData实例 */
-      const callArgs = mockRequest.mock.calls[0][0]
+      const callArgs = (mockRequest.mock.calls[0] as Array<Record<string, unknown>>)[0]
       expect(callArgs.data).toBeInstanceOf(FormData)
     })
   })

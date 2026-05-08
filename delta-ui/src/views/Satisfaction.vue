@@ -193,8 +193,8 @@ async function fetchData(): Promise<void> {
   loading.value = true
   try {
     const params: Record<string, any> = {
-      pageNum: queryParams.pageNum,
-      pageSize: queryParams.pageSize
+      page: queryParams.pageNum,
+      size: queryParams.pageSize
     }
     if (queryParams.companionId) {
       params.companionId = queryParams.companionId

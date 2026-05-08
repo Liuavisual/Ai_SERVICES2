@@ -143,8 +143,8 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="() => { queryParams.pageNum = 1; handleQuery() }"
-        @current-change="handleQuery"
+        @size-change="onSizeChange"
+        @current-change="onPageChange"
       />
       <!-- 数据量较大时的提示信息 -->
       <el-alert
@@ -224,6 +224,7 @@ import { ref, reactive, computed, h, onMounted, onUnmounted, onActivated, onDeac
 import { ElMessage, ElTag, ElButton } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
 import { pendingMessageApi, customerApi, downloadExcel } from '@/api'
+import { authStorage } from '@/utils/storage'
 import type { Result, PageResult, PendingMessageVO, CustomerVO } from '@/types'
 
 const loading = ref<boolean>(false)
@@ -255,10 +256,7 @@ const debouncedQuery = (delay: number = 300): void => {
   }, delay)
 }
 
-let userInfo: Record<string, any> = {}
-try {
-  userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-} catch (e) {}
+const userInfo = authStorage.getUserInfo()
 const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
 
 const queryParams = reactive<{
@@ -266,8 +264,10 @@ const queryParams = reactive<{
   pageSize: number
   status: string | null
   platform: string | null
+  priority: string | null
+  orderType: string | null
   keyword: string
-}>({ pageNum: 1, pageSize: 20, status: null, platform: null, keyword: '' })
+}>({ pageNum: 1, pageSize: 20, status: null, platform: null, priority: null, orderType: null, keyword: '' })
 const processDialogVisible = ref<boolean>(false)
 const processForm = reactive<{
   id: string | null
@@ -297,19 +297,22 @@ const getRemaining = (row: PendingMessageVO): number => {
 const overdueCount = computed<number>(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) <= 0).length)
 const urgentCount = computed<number>(() => tableData.value.filter(r => r.status !== 'resolved' && getRemaining(r) > 0 && getRemaining(r) < 120).length)
 
-const getStatusType = (s: string): string => ({ pending: 'warning', processing: 'primary', resolved: 'success' }[s] || 'info')
+/** Element Plus Tag 组件的 type 属性联合类型 */
+type TagType = 'primary' | 'info' | 'success' | 'warning' | 'danger'
+
+const getStatusType = (s: string): TagType => ({ pending: 'warning', processing: 'primary', resolved: 'success' }[s] || 'info') as TagType
 
 const getStatusText = (s: string): string => ({ pending: '待处理', processing: '处理中', resolved: '已解决' }[s] || s)
 
 const getPlatformText = (p: string): string => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
 
-const getPlatformType = (p: string): string => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info')
+const getPlatformType = (p: string): TagType => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info') as TagType
 
-const getInterventionTypeTag = (t: string): string => ({ ORDER: 'danger', SCHEDULE: 'warning', SPECIFIC_COMPANION: 'primary', COMPLAINT: 'danger', HUMAN_REQUEST: '' }[t] || 'info')
+const getInterventionTypeTag = (t: string): TagType => ({ ORDER: 'danger', SCHEDULE: 'warning', SPECIFIC_COMPANION: 'primary', COMPLAINT: 'danger', HUMAN_REQUEST: 'info' }[t] || 'info') as TagType
 
 const getPlatformLabel = (p: string): string => ({ wechat: '微信', kook: 'KOOK', yy: 'YY' }[p] || p || '—')
 
-const getPlatformTagType = (p: string): string => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info')
+const getPlatformTagType = (p: string): TagType => ({ wechat: 'primary', kook: 'success', yy: 'warning' }[p] || 'info') as TagType
 
 const formatCountdown = (row: PendingMessageVO): string => {
   const s = getRemaining(row)
@@ -413,9 +416,19 @@ const v2Columns = computed(() => [
 ])
 
 const handleQuery = async (): Promise<void> => {
+  queryParams.pageNum = 1
   loading.value = true
   try {
-    const res: Result<PageResult<PendingMessageVO>> = await pendingMessageApi.getPage(queryParams)
+    const params = {
+      page: queryParams.pageNum,
+      size: queryParams.pageSize,
+      status: queryParams.status || null,
+      platform: queryParams.platform || null,
+      priority: queryParams.priority || null,
+      orderType: queryParams.orderType || null,
+      keyword: queryParams.keyword || null
+    }
+    const res: Result<PageResult<PendingMessageVO>> = await pendingMessageApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data.records || []
       total.value = res.data.total || 0
@@ -431,10 +444,61 @@ const handleQuery = async (): Promise<void> => {
   }
 }
 
+const onSizeChange = (): void => {
+  queryParams.pageNum = 1
+  const params = {
+    page: queryParams.pageNum,
+    size: queryParams.pageSize,
+    status: queryParams.status || null,
+    platform: queryParams.platform || null,
+    priority: queryParams.priority || null,
+    orderType: queryParams.orderType || null,
+    keyword: queryParams.keyword || null
+  }
+  loading.value = true
+  pendingMessageApi.getPage(params).then((res: Result<any>) => {
+    if (res.code === 200) {
+      tableData.value = res.data.records || []
+      total.value = res.data.total || 0
+    }
+  }).catch((e: Error) => {
+    ElMessage.error('查询失败')
+    console.error('查询失败', e)
+  }).finally(() => {
+    loading.value = false
+  })
+}
+
+const onPageChange = (): void => {
+  const params = {
+    page: queryParams.pageNum,
+    size: queryParams.pageSize,
+    status: queryParams.status || null,
+    platform: queryParams.platform || null,
+    priority: queryParams.priority || null,
+    orderType: queryParams.orderType || null,
+    keyword: queryParams.keyword || null
+  }
+  loading.value = true
+  pendingMessageApi.getPage(params).then((res: Result<any>) => {
+    if (res.code === 200) {
+      tableData.value = res.data.records || []
+      total.value = res.data.total || 0
+    }
+  }).catch((e: Error) => {
+    ElMessage.error('查询失败')
+    console.error('查询失败', e)
+  }).finally(() => {
+    loading.value = false
+  })
+}
+
 const handleReset = (): void => {
   queryParams.pageNum = 1
   queryParams.status = null
   queryParams.platform = null
+  queryParams.priority = null
+  queryParams.orderType = null
   queryParams.keyword = ''
   handleQuery()
 }
@@ -460,7 +524,7 @@ const submitProcess = async (): Promise<void> => {
   }
   submitLoading.value = true
   try {
-    const res: Result<null> = await pendingMessageApi.handle({
+    const res: Result<null> = await pendingMessageApi.process({
       id: processForm.id,
       status: processForm.status,
       remark: processForm.remark

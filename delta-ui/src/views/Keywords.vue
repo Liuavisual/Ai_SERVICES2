@@ -150,8 +150,8 @@ const fetchData = async (): Promise<void> => {
   loading.value = true
   try {
     const res: Result<PageResult<KeywordVO>> = await keywordApi.getPage({
-      pageNum: currentPage.value,
-      pageSize: pageSize.value,
+      page: currentPage.value,
+      size: pageSize.value,
       keyword: searchKeyword.value || undefined
     })
     if (res.code === 200) {
@@ -181,7 +181,7 @@ const handleAdd = (): void => {
 const handleEdit = (row: KeywordVO): void => {
   isEdit.value = true
   dialogTitle.value = '编辑关键词'
-  form.value = { ...row, enabled: Boolean(row.enabled) }
+  form.value = { id: row.id, keyword: row.keyword, category: row.category || '', priority: (row as any).priority || 10, enabled: Boolean(row.enabled) }
   dialogVisible.value = true
 }
 

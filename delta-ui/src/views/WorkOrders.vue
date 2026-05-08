@@ -343,6 +343,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { workOrderApi } from '@/api'
+import { authStorage } from '@/utils/storage'
 import type { Result, PageResult, WorkOrderVO, WorkOrderStatus, WorkOrderPriority, WorkOrderType } from '@/types'
 
 const loading = ref<boolean>(false)
@@ -350,10 +351,7 @@ const actionLoading = ref<boolean>(false)
 const tableData = ref<WorkOrderVO[]>([])
 const total = ref<number>(0)
 
-let userInfo: Record<string, any> = {}
-try {
-  userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-} catch (e) {}
+const userInfo = authStorage.getUserInfo()
 const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
 const isAdmin: boolean = userInfo.role === 'SYS_ADMIN'
 
@@ -441,7 +439,16 @@ const orderTypeTagMap: Record<WorkOrderType, string> = {
 async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const res: Result<PageResult<WorkOrderVO>> = await workOrderApi.getPage(queryParams)
+    const params = {
+      page: queryParams.pageNum,
+      size: queryParams.pageSize,
+      status: queryParams.status || null,
+      orderType: queryParams.orderType || null,
+      priority: queryParams.priority || null,
+      platform: queryParams.platform || null,
+      keyword: queryParams.keyword || null
+    }
+    const res: Result<PageResult<WorkOrderVO>> = await workOrderApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data?.records || []
       total.value = res.data?.total || 0

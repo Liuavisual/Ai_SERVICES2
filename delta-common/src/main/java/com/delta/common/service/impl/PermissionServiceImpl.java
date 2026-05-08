@@ -3,12 +3,8 @@ package com.delta.common.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.delta.common.entity.SysPermission;
 import com.delta.common.entity.SysRolePermission;
-import com.delta.common.entity.SysRole;
-import com.delta.common.entity.SysUserRole;
 import com.delta.common.mapper.SysPermissionMapper;
-import com.delta.common.mapper.SysRoleMapper;
 import com.delta.common.mapper.SysRolePermissionMapper;
-import com.delta.common.mapper.SysUserRoleMapper;
 import com.delta.common.service.PermissionService;
 import com.delta.common.service.RedisService;
 import com.delta.common.vo.SysPermissionVO;
@@ -49,8 +45,6 @@ public class PermissionServiceImpl implements PermissionService {
 
     private final SysPermissionMapper permissionMapper;
     private final SysRolePermissionMapper rolePermissionMapper;
-    private final SysUserRoleMapper userRoleMapper;
-    private final SysRoleMapper roleMapper;
     private final RedisService redisService;
 
     @Override
@@ -115,7 +109,8 @@ public class PermissionServiceImpl implements PermissionService {
                 if (!cachedStr.isEmpty()) {
                     List<Long> ids = Arrays.stream(cachedStr.split(","))
                             .map(Long::parseLong).collect(Collectors.toList());
-                    List<SysPermission> perms = permissionMapper.selectBatchIds(ids);
+                    List<SysPermission> perms = permissionMapper.selectList(
+                            new LambdaQueryWrapper<SysPermission>().in(SysPermission::getId, ids));
                     return perms.stream().map(this::toVO).collect(Collectors.toList());
                 }
             }
@@ -126,7 +121,8 @@ public class PermissionServiceImpl implements PermissionService {
                 new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId)
         ).stream().map(SysRolePermission::getPermId).collect(Collectors.toList());
         List<SysPermission> perms = permIds.isEmpty() ? Collections.emptyList()
-                : permissionMapper.selectBatchIds(permIds);
+                : permissionMapper.selectList(
+                        new LambdaQueryWrapper<SysPermission>().in(SysPermission::getId, permIds));
         return perms.stream().map(this::toVO).collect(Collectors.toList());
     }
 

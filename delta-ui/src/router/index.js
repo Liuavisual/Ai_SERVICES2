@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import axios from 'axios'
+import { authStorage } from '@/utils/storage'
+import { SessionManager } from '@/session'
 
 const routes = [
   {
@@ -231,75 +233,30 @@ const router = createRouter({
   routes
 })
 
-const ROLE_HOME_MAP = {
-  SYS_ADMIN: '/dashboard',
-  CS_LEADER: '/pending-messages',
-  CS_STAFF: '/pending-messages'
-}
-
-function getRoleHomePage(role) {
-  return ROLE_HOME_MAP[role] || '/dashboard'
-}
-
-function clearAuthData() {
-  localStorage.removeItem('token')
-  localStorage.removeItem('refreshToken')
-  localStorage.removeItem('expiresIn')
-  localStorage.removeItem('tokenExpiry')
-  localStorage.removeItem('userInfo')
-}
-
-function isTokenExpired() {
-  const tokenExpiry = localStorage.getItem('tokenExpiry')
-  if (!tokenExpiry) return true
-  return Date.now() >= parseInt(tokenExpiry)
-}
-
-function hasAnyToken() {
-  return !!(localStorage.getItem('token') || localStorage.getItem('refreshToken'))
-}
-
-function getUserInfo() {
-  try {
-    return JSON.parse(localStorage.getItem('userInfo') || '{}')
-  } catch {
-    localStorage.removeItem('userInfo')
-    return {}
-  }
-}
-
-function redirectToLogin(targetPath) {
-  clearAuthData()
-  const query = targetPath && targetPath !== '/login' && targetPath !== '/'
-    ? { redirect: targetPath }
-    : {}
-  router.push({ path: '/login', query })
-}
-
 let isRouteRefreshing = false
 
 router.beforeEach(async (to, from, next) => {
   if (to.meta && to.meta.public) {
-    if (hasAnyToken() && !isTokenExpired()) {
-      const userInfo = getUserInfo()
-      next(getRoleHomePage(userInfo.role))
+    if (authStorage.hasAnyToken() && !authStorage.isTokenExpired()) {
+      const userInfo = authStorage.getUserInfo()
+      next(authStorage.getRoleHomePage(userInfo.role))
       return
     }
     next()
     return
   }
 
-  if (!hasAnyToken()) {
+  if (!authStorage.hasAnyToken()) {
     ElMessage.warning('请先登录')
-    redirectToLogin(to.fullPath)
+    SessionManager.redirectToLogin(to.fullPath)
     return
   }
 
-  if (isTokenExpired()) {
-    const refreshToken = localStorage.getItem('refreshToken')
+  if (authStorage.isTokenExpired()) {
+    const refreshToken = authStorage.getRefreshToken()
     if (!refreshToken) {
       ElMessage.warning('登录已过期，请重新登录')
-      redirectToLogin(to.fullPath)
+      SessionManager.redirectToLogin(to.fullPath)
       return
     }
 
@@ -314,14 +271,10 @@ router.beforeEach(async (to, from, next) => {
       const res = await axios.post('/api/v1/auth/refresh', { refreshToken }, { timeout: 10000 })
       const data = res.data?.data || res.data
       if (data && data.token) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('refreshToken', data.refreshToken)
-        localStorage.setItem('expiresIn', data.expiresIn)
-        localStorage.setItem('tokenExpiry', Date.now() + (data.expiresIn || 900) * 1000)
-        localStorage.setItem('userInfo', JSON.stringify(data))
+        authStorage.setAuth(data)
       } else {
         ElMessage.warning('登录已过期，请重新登录')
-        redirectToLogin(to.fullPath)
+        SessionManager.redirectToLogin(to.fullPath)
         return
       }
     } catch (err) {
@@ -332,7 +285,7 @@ router.beforeEach(async (to, from, next) => {
       } else {
         ElMessage.warning('登录已过期，请重新登录')
       }
-      redirectToLogin(to.fullPath)
+      SessionManager.redirectToLogin(to.fullPath)
       return
     } finally {
       isRouteRefreshing = false
@@ -340,16 +293,16 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.path === '/login') {
-    const userInfo = getUserInfo()
-    next(getRoleHomePage(userInfo.role))
+    const userInfo = authStorage.getUserInfo()
+    next(authStorage.getRoleHomePage(userInfo.role))
     return
   }
 
   if (to.meta && to.meta.roles) {
-    const userInfo = getUserInfo()
+    const userInfo = authStorage.getUserInfo()
     if (!to.meta.roles.includes(userInfo.role)) {
       ElMessage.error('您没有权限访问该页面')
-      next(getRoleHomePage(userInfo.role))
+      next(authStorage.getRoleHomePage(userInfo.role))
       return
     }
   }
@@ -357,131 +310,8 @@ router.beforeEach(async (to, from, next) => {
   next()
 })
 
-function detectEnvironment() {
-  const ua = navigator.userAgent
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)
-  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua)
-  return { isMobile, isTablet, isDesktop: !isMobile && !isTablet }
-}
-
-const SessionManager = {
-  config: {
-    idleTimeoutDesktop: 30 * 60 * 1000,
-    idleTimeoutMobile: 15 * 60 * 1000,
-    heartbeatInterval: 2 * 60 * 1000,
-    heartbeatGrace: 5 * 60 * 1000
-  },
-
-  state: {
-    lastActivityTime: Date.now(),
-    heartbeatTimer: null
-  },
-
-  init() {
-    this.setupActivityTracking()
-    this.setupBeforeUnload()
-    this.startHeartbeat()
-    this.setupOnlineHandler()
-  },
-
-  setupActivityTracking() {
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart']
-    let throttleTimer = null
-    const handler = () => {
-      if (throttleTimer) return
-      throttleTimer = setTimeout(() => { throttleTimer = null }, 5000)
-      this.state.lastActivityTime = Date.now()
-    }
-    events.forEach(evt => document.addEventListener(evt, handler, { passive: true }))
-  },
-
-  getIdleDuration() {
-    return Date.now() - this.state.lastActivityTime
-  },
-
-  getIdleTimeout() {
-    const env = detectEnvironment()
-    return env.isMobile ? this.config.idleTimeoutMobile : this.config.idleTimeoutDesktop
-  },
-
-  setupBeforeUnload() {
-    window.addEventListener('beforeunload', () => {
-      const env = detectEnvironment()
-      if (env.isMobile) {
-        clearAuthData()
-        return
-      }
-      const payload = JSON.stringify({
-        eventType: 'SESSION_END',
-        userId: getUserInfo().id,
-        timestamp: Date.now(),
-        idleDuration: this.getIdleDuration()
-      })
-      navigator.sendBeacon('/api/auth/session-event', new Blob([payload], { type: 'application/json' }))
-    })
-  },
-
-  startHeartbeat() {
-    this.state.heartbeatTimer = setInterval(() => {
-      if (!hasAnyToken()) return
-      this.checkIdleTimeout()
-    }, this.config.heartbeatInterval)
-  },
-
-  checkIdleTimeout() {
-    const idleDuration = this.getIdleDuration()
-    const timeout = this.getIdleTimeout()
-    if (idleDuration >= timeout) {
-      ElMessage.warning('由于长时间未操作，已自动退出登录')
-      redirectToLogin(router.currentRoute.value?.fullPath)
-    }
-  },
-
-  setupOnlineHandler() {
-    window.addEventListener('online', () => {
-      if (hasAnyToken() && isTokenExpired()) {
-        const refreshToken = localStorage.getItem('refreshToken')
-        if (refreshToken) {
-          axios.post('/api/auth/refresh', { refreshToken }, { timeout: 10000 })
-            .then(res => {
-              const data = res.data?.data || res.data
-              if (data && data.token) {
-                localStorage.setItem('token', data.token)
-                localStorage.setItem('refreshToken', data.refreshToken)
-                localStorage.setItem('expiresIn', data.expiresIn)
-                localStorage.setItem('tokenExpiry', Date.now() + (data.expiresIn || 900) * 1000)
-                localStorage.setItem('userInfo', JSON.stringify(data))
-              }
-            })
-            .catch(() => {
-              redirectToLogin(router.currentRoute.value?.fullPath)
-            })
-        }
-      }
-    })
-  },
-
-  destroy() {
-    if (this.state.heartbeatTimer) {
-      clearInterval(this.state.heartbeatTimer)
-    }
-  }
-}
-
+SessionManager.setRouter(router)
 SessionManager.init()
 
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
-    SessionManager.state.lastActivityTime = Date.now()
-    if (hasAnyToken() && isTokenExpired()) {
-      const refreshToken = localStorage.getItem('refreshToken')
-      if (!refreshToken) {
-        ElMessage.warning('登录已过期，请重新登录')
-        redirectToLogin(router.currentRoute.value.fullPath)
-      }
-    }
-  }
-})
-
-export { getRoleHomePage, redirectToLogin, clearAuthData, isTokenExpired, hasAnyToken, getUserInfo }
+export { SessionManager }
 export default router

@@ -152,7 +152,7 @@ const quickMessages: string[] = ['你好', '预约', '价格', '陪玩', '人工
 
 const loadCsUsers = async (): Promise<void> => {
   try {
-    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ pageNum: 1, pageSize: 100, role: 'CS_STAFF' })
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ page: 1, size: 100, role: 'CS_STAFF' })
     if (res.code === 200) {
       csUsers.value = res.data.records || []
     }

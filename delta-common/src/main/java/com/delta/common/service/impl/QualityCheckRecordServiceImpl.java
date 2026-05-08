@@ -4,12 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.entity.Companion;
-import com.delta.common.entity.CustomerOrderRecord;
 import com.delta.common.entity.QualityCheckRecord;
 import com.delta.common.entity.User;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionMapper;
-import com.delta.common.mapper.CustomerOrderRecordMapper;
 import com.delta.common.mapper.QualityCheckRecordMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.QualityCheckRecordService;
@@ -34,7 +32,6 @@ public class QualityCheckRecordServiceImpl implements QualityCheckRecordService 
 
     private final QualityCheckRecordMapper qualityCheckRecordMapper;
     private final CompanionMapper companionMapper;
-    private final CustomerOrderRecordMapper customerOrderRecordMapper;
     private final UserMapper userMapper;
 
     @Override

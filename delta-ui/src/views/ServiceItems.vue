@@ -161,6 +161,7 @@ import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { serviceItemApi, gameConfigApi, clubConfigApi, companionLevelApi } from '@/api/index.js'
+import { authStorage } from '@/utils/storage'
 import type { Result, ServiceItemVO } from '@/types'
 
 const loading = ref<boolean>(false)
@@ -172,7 +173,7 @@ const dialogTitle = ref<string>('新增服务')
 const priceDialogVisible = ref<boolean>(false)
 const priceFormVisible = ref<boolean>(false)
 const priceFormTitle = ref<string>('新增定价')
-const currentServiceItemId = ref<number | null>(null)
+const currentServiceItemId = ref<string | null>(null)
 const priceRules = ref<any[]>([])
 const clubConfigId = ref<number>(1)
 
@@ -180,7 +181,7 @@ const form = ref<Record<string, any>>({ id: null, clubConfigId: 1, itemName: '',
 const priceForm = ref<Record<string, any>>({ id: null, serviceItemId: null, companionLevelId: null, price: null, originalPrice: null, priceUnit: 'HOUR', enabled: 1 })
 
 const isAdmin = computed<boolean>(() => {
-  try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
+  return authStorage.getUserInfo().role === 'SYS_ADMIN'
 })
 
 const categoryLabel = (c: string): string => ({ TECHNICAL: '技术陪玩', ENTERTAINMENT: '娱乐陪玩', PURE_PLAY: '纯陪玩', ESCORT: '护航服务', ACTIVITY: '活动玩法' }[c] || c)
@@ -193,8 +194,8 @@ const loadData = async (): Promise<void> => {
     if (res.code === 200 && res.data) clubConfigId.value = res.data.id || 1
     form.value.clubConfigId = clubConfigId.value
     const [svcRes, gameRes, lvlRes] = await Promise.all([
-      serviceItemApi.getByClubId(clubConfigId.value),
-      gameConfigApi.getByClubId(clubConfigId.value),
+      serviceItemApi.getByClubId(String(clubConfigId.value)),
+      gameConfigApi.getByClubId(String(clubConfigId.value)),
       companionLevelApi.getAll()
     ])
     serviceList.value = svcRes.data || []

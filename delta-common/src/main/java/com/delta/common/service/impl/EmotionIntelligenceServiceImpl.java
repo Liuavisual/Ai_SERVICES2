@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,7 +79,6 @@ public class EmotionIntelligenceServiceImpl implements EmotionIntelligenceServic
         state.setMoodIntensity(newIntensity);
 
         // 更新情绪状态
-        String oldMood = state.getCurrentMood();
         String newMood = determineMoodLevel(newIntensity, message);
         state.setCurrentMood(newMood);
 

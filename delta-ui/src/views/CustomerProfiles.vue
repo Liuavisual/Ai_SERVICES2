@@ -518,7 +518,7 @@ const handleViewProfile = async (row: CustomerProfileVO): Promise<void> => {
 
 const loadOrderRecords = async (userId: string): Promise<void> => {
   try {
-    const res: Result<PageResult<OrderRecord>> = await customerProfileApi.getOrderPage({ pageNum: 1, pageSize: 20, userId })
+    const res: Result<PageResult<OrderRecord>> = await customerProfileApi.getOrderPage({ page: 1, size: 20, userId })
     if (res.code === 200) {
       orderRecords.value = res.data.records
     }

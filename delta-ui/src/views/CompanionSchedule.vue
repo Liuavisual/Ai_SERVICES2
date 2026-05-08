@@ -172,6 +172,24 @@
 
     <el-dialog v-model="editDialogVisible" title="编辑时间" width="500px">
       <el-form :model="editForm" label-width="100px">
+        <el-form-item label="开始时间">
+          <el-time-picker
+            v-model="editForm.startTime"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            placeholder="选择开始时间"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-time-picker
+            v-model="editForm.endTime"
+            format="HH:mm"
+            value-format="HH:mm:ss"
+            placeholder="选择结束时间"
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="editForm.status" style="width: 100%" :teleported="false">
             <el-option label="可预约" value="AVAILABLE" />
@@ -204,7 +222,7 @@ interface ScheduleRow extends CompanionScheduleVO {
 }
 
 const props = defineProps<{
-  companionId?: number | null
+  companionId?: string | number | null
 }>()
 
 const emit = defineEmits<{ refresh: [] }>()
@@ -244,10 +262,14 @@ const batchRangeForm = reactive<{
 const editForm = reactive<{
   id: string | null
   status: string
+  startTime: string
+  endTime: string
   remark: string
 }>({
   id: null,
   status: 'AVAILABLE',
+  startTime: '',
+  endTime: '',
   remark: ''
 })
 
@@ -265,7 +287,7 @@ const getStatusText = (status: string): string => {
 
 const fetchCompanions = async (): Promise<void> => {
   try {
-    const res: Result<PageResult<CompanionVO>> = await companionApi.getPage({ pageNum: 1, pageSize: 200, enabled: 1 })
+    const res: Result<PageResult<CompanionVO>> = await companionApi.getPage({ page: 1, size: 200, enabled: 1 })
     if (res.code === 200) {
       companionList.value = res.data.records || []
     }
@@ -282,7 +304,7 @@ const fetchSchedules = async (): Promise<void> => {
       scheduleDate: currentDate.value
     })
     if (res.code === 200) {
-      schedules.value = (res.data || []).map(s => ({ ...s, exists: true }))
+      schedules.value = (res.data || []).map(s => ({ ...s, timeSlot: s.startTime + '-' + s.endTime, exists: true }))
     }
   } catch (error) {
     ElMessage.error('获取排班失败')
@@ -382,17 +404,25 @@ const submitBatchRange = async (): Promise<void> => {
 const editSchedule = (row: ScheduleRow): void => {
   editForm.id = row.id
   editForm.status = row.status
-  editForm.remark = row.remark || ''
+  editForm.startTime = row.startTime || ''
+  editForm.endTime = row.endTime || ''
+  editForm.remark = row.note || ''
   editDialogVisible.value = true
 }
 
 const submitEdit = async (): Promise<void> => {
   try {
-    await companionScheduleApi.update({
+    const payload: Record<string, any> = {
       id: editForm.id,
       status: editForm.status,
       remark: editForm.remark
-    })
+    }
+    if (editForm.startTime && editForm.endTime) {
+      payload.startTime = editForm.startTime
+      payload.endTime = editForm.endTime
+      payload.timeSlot = editForm.startTime + '-' + editForm.endTime
+    }
+    await companionScheduleApi.update(payload)
     ElMessage.success('更新成功')
     editDialogVisible.value = false
     fetchSchedules()

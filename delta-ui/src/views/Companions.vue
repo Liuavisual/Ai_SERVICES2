@@ -76,8 +76,8 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="() => { queryParams.pageNum = 1; handleQuery() }"
-        @current-change="handleQuery"
+        @size-change="onSizeChange"
+        @current-change="onPageChange"
       />
     </el-card>
 
@@ -196,14 +196,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, defineAsyncComponent } from 'vue'
+import { ref, reactive, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import type { FormInstance } from 'element-plus'
+import { authStorage } from '@/utils/storage'
 import { companionApi, companionLevelApi } from '@/api'
 import type { Result, PageResult, CompanionVO, CompanionLevelVO } from '@/types'
 
 const isAdmin = computed<boolean>(() => {
-  try { return JSON.parse(localStorage.getItem('userInfo') || '{}').role === 'SYS_ADMIN' } catch { return false }
+  return authStorage.getUserInfo().role === 'SYS_ADMIN'
 })
 
 const CompanionSchedule = defineAsyncComponent(() => import('./CompanionSchedule.vue'))
@@ -229,7 +230,6 @@ const dialogVisible = ref<boolean>(false)
 const scheduleDialogVisible = ref<boolean>(false)
 const isEdit = ref<boolean>(false)
 const formRef = ref<FormInstance>()
-const scheduleRef = ref<any>(null)
 const currentCompanion = ref<CompanionVO | null>(null)
 
 const formData = reactive<{
@@ -266,7 +266,10 @@ const formRules = {
 const fetchData = async (): Promise<void> => {
   try {
     const params = {
-      ...queryParams,
+      page: queryParams.pageNum,
+      size: queryParams.pageSize,
+      levelId: queryParams.levelId,
+      nickname: queryParams.nickname || null,
       enabled: queryParams.enabled === '1' ? 1 : queryParams.enabled === '0' ? 0 : null
     }
     const res: Result<PageResult<CompanionVO>> = await companionApi.getPage(params)
@@ -308,6 +311,15 @@ const handleReset = (): void => {
   queryParams.levelId = null
   queryParams.nickname = ''
   queryParams.enabled = null
+  fetchData()
+}
+
+const onSizeChange = (): void => {
+  queryParams.pageNum = 1
+  fetchData()
+}
+
+const onPageChange = (): void => {
   fetchData()
 }
 
@@ -378,6 +390,15 @@ const handleSchedule = (row: CompanionVO): void => {
 onMounted(() => {
   fetchData()
   fetchLevels()
+})
+
+watch(() => formData.levelId, (newLevelId) => {
+  if (newLevelId && levels.value.length > 0) {
+    const level = levels.value.find(l => String(l.id) === String(newLevelId))
+    if (level && level.basePrice != null) {
+      formData.price = Number(level.basePrice)
+    }
+  }
 })
 </script>
 

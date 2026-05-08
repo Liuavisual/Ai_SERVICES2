@@ -145,6 +145,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { authStorage } from '@/utils/storage'
 import request from '@/utils/request'
 
 const activeTab = ref('permissions')
@@ -170,8 +171,7 @@ const roleDialogVisible = ref(false)
 const roleForm = ref({})
 
 const isAdmin = computed(() => {
-  const info = JSON.parse(localStorage.getItem('userInfo') || '{}')
-  return info.role === 'SYS_ADMIN'
+  return authStorage.getUserInfo().role === 'SYS_ADMIN'
 })
 
 const permGroups = [
@@ -209,7 +209,7 @@ const getGroupPermissions = (group) => permissions.value.filter(p => p.permGroup
 async function loadPermissions() {
   permLoading.value = true
   try {
-    const res = await request.get('/api/v1/permission/list')
+    const res = await request.get('/permission/list')
     permissions.value = res.data || []
   } finally {
     permLoading.value = false
@@ -219,7 +219,7 @@ async function loadPermissions() {
 async function loadRoles() {
   roleLoading.value = true
   try {
-    const res = await request.get('/api/v1/permission/roles')
+    const res = await request.get('/permission/roles')
     roles.value = res.data || []
   } finally {
     roleLoading.value = false
@@ -229,7 +229,7 @@ async function loadRoles() {
 async function loadUsers() {
   userLoading.value = true
   try {
-    const res = await request.get('/api/v1/sys-users/page', { params: { page: 1, size: 200 } })
+    const res = await request.get('/sys-users/page', { params: { page: 1, size: 200 } })
     users.value = (res.data?.records || []).filter(u => u.status === 'ACTIVE')
   } finally {
     userLoading.value = false
@@ -238,7 +238,7 @@ async function loadUsers() {
 
 async function loadUserRoles(userId) {
   try {
-    const res = await request.get(`/api/v1/permission/users/${userId}/roles`)
+    const res = await request.get(`/permission/users/${userId}/roles`)
     selectedUserRoleIds.value = (res.data || []).map(r => r.id)
   } catch { selectedUserRoleIds.value = [] }
 }
@@ -249,7 +249,7 @@ async function handleInitPermissions() {
   try {
     await ElMessageBox.confirm('将初始化系统默认权限定义，已有数据不会重复创建。确认继续？', '提示', { type: 'info' })
     initLoading.value = true
-    await request.post('/api/v1/permission/init')
+    await request.post('/permission/init')
     await loadPermissions()
     ElMessage.success('权限初始化成功')
   } catch { /* 取消 */ }
@@ -274,9 +274,9 @@ async function saveRole() {
   saveRoleLoading.value = true
   try {
     if (roleForm.value.id) {
-      await request.put(`/api/v1/permission/roles/${roleForm.value.id}`, roleForm.value)
+      await request.put(`/permission/roles/${roleForm.value.id}`, roleForm.value)
     } else {
-      await request.post('/api/v1/permission/roles', roleForm.value)
+      await request.post('/permission/roles', roleForm.value)
     }
     roleDialogVisible.value = false
     await loadRoles()
@@ -288,7 +288,7 @@ async function saveRole() {
 async function deleteRole(row) {
   try {
     await ElMessageBox.confirm(`确定删除角色「${row.roleName}」？`, '提示', { type: 'warning' })
-    await request.delete(`/api/v1/permission/roles/${row.id}`)
+    await request.delete(`/permission/roles/${row.id}`)
     if (selectedRole.value?.id === row.id) selectedRole.value = null
     await loadRoles()
     ElMessage.success('删除成功')
@@ -298,7 +298,7 @@ async function deleteRole(row) {
 async function toggleRoleStatus(row) {
   const newStatus = row.status === 1 ? 0 : 1
   try {
-    await request.put(`/api/v1/permission/roles/${row.id}`, { ...row, status: newStatus })
+    await request.put(`/permission/roles/${row.id}`, { ...row, status: newStatus })
     row.status = newStatus
     ElMessage.success(newStatus === 1 ? '已启用' : '已禁用')
   } catch { /* handled */ }
@@ -307,7 +307,7 @@ async function toggleRoleStatus(row) {
 async function saveRolePermissions() {
   savePermLoading.value = true
   try {
-    await request.put(`/api/v1/permission/roles/${selectedRole.value.id}/permissions`, { permIds: selectedPermIds.value })
+    await request.put(`/permission/roles/${selectedRole.value.id}/permissions`, { permIds: selectedPermIds.value })
     await loadRoles()
     ElMessage.success('权限配置已保存')
   } finally {
@@ -327,7 +327,7 @@ function onUserSelect(row) {
 async function saveUserRoles() {
   saveUserRoleLoading.value = true
   try {
-    await request.put(`/api/v1/permission/users/${selectedUser.value.id}/roles`, { roleIds: selectedUserRoleIds.value })
+    await request.put(`/permission/users/${selectedUser.value.id}/roles`, { roleIds: selectedUserRoleIds.value })
     ElMessage.success('用户角色已保存')
   } finally {
     saveUserRoleLoading.value = false

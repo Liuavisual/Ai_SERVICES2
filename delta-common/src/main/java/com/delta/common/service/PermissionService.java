@@ -1,6 +1,5 @@
 package com.delta.common.service;
 
-import com.delta.common.entity.SysPermission;
 import com.delta.common.vo.SysPermissionVO;
 
 import java.util.List;

@@ -126,7 +126,7 @@ public class CompanionScheduleController extends BaseController {
     @Operation(summary = "更新陪玩师时间")
     @PutMapping
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    public Result<Void> update(@Valid @RequestBody CompanionScheduleDTO dto) {
+    public Result<Void> update(@RequestBody CompanionScheduleDTO dto) {
         companionScheduleService.update(dto);
         return Result.success();
     }

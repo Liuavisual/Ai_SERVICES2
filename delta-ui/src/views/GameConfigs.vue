@@ -75,6 +75,7 @@ import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { gameConfigApi, clubConfigApi } from '@/api/index.js'
+import { authStorage } from '@/utils/storage'
 import type { Result, GameConfigVO } from '@/types'
 
 const loading = ref<boolean>(false)
@@ -85,10 +86,7 @@ const clubConfigId = ref<number>(1)
 const form = ref<Record<string, any>>({ id: null, clubConfigId: 1, gameName: '', gameCode: '', gameType: 'FPS', description: '', sortOrder: 0, enabled: 1 })
 
 const isAdmin = computed<boolean>(() => {
-  try {
-    const info = JSON.parse(localStorage.getItem('userInfo') || '{}')
-    return info.role === 'SYS_ADMIN'
-  } catch { return false }
+  return authStorage.getUserInfo().role === 'SYS_ADMIN'
 })
 
 const gameTypeLabel = (t: string): string => ({ FPS: 'FPS射击', MOBA: 'MOBA竞技', BR: '大逃杀', RPG: 'RPG角色' }[t] || t)
@@ -100,7 +98,7 @@ const loadData = async (): Promise<void> => {
     const res: Result<any> = await clubConfigApi.get()
     if (res.code === 200 && res.data) clubConfigId.value = res.data.id || 1
     form.value.clubConfigId = clubConfigId.value
-    const result: Result<GameConfigVO[]> = await gameConfigApi.getByClubId(clubConfigId.value)
+    const result: Result<GameConfigVO[]> = await gameConfigApi.getByClubId(String(clubConfigId.value))
     gameList.value = result.data || []
   } catch (e) { ElMessage.error('加载失败') }
   loading.value = false

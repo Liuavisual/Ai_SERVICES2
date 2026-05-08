@@ -173,7 +173,12 @@ const formRules = {
 
 const fetchData = async (): Promise<void> => {
   try {
-    const res: Result<PageResult<CompanionLevelVO>> = await companionLevelApi.getPage(queryParams)
+    const params = {
+      page: queryParams.pageNum,
+      size: queryParams.pageSize,
+      levelName: queryParams.levelName || null
+    }
+    const res: Result<PageResult<CompanionLevelVO>> = await companionLevelApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data.records.map(item => ({
         ...item,

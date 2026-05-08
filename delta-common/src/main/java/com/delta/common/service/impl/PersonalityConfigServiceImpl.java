@@ -14,7 +14,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -39,14 +38,8 @@ public class PersonalityConfigServiceImpl implements PersonalityConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(PersonalityConfigServiceImpl.class);
 
-    /** 人格配置列表Redis Key前缀 */
-    private static final String CONFIG_LIST_CACHE_PREFIX = "delta:personality:club:";
-
     /** 活跃人格配置Redis Key前缀 */
     private static final String ACTIVE_CONFIG_CACHE_PREFIX = "delta:personality:active:";
-
-    /** 配置列表缓存TTL（秒） */
-    private static final long CONFIG_LIST_CACHE_TTL_SECONDS = 1800L;
 
     /** 活跃配置缓存TTL（秒） */
     private static final long ACTIVE_CONFIG_CACHE_TTL_SECONDS = 600L;

@@ -81,8 +81,8 @@
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="() => { queryForm.pageNum = 1; handleQuery() }"
-        @current-change="handleQuery"
+        @size-change="onSizeChange"
+        @current-change="onPageChange"
       />
     </el-card>
 
@@ -155,6 +155,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { customerApi, sysUserApi } from '@/api'
+import { authStorage } from '@/utils/storage'
 import type { Result, PageResult, CustomerVO, SysUserVO } from '@/types'
 
 interface CustomerRow extends CustomerVO {
@@ -162,10 +163,7 @@ interface CustomerRow extends CustomerVO {
   assignedCsUserId?: string
 }
 
-let userInfo: Record<string, any> = {}
-try {
-  userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-} catch (e) {}
+const userInfo = authStorage.getUserInfo()
 const isAdminOrLeader: boolean = userInfo.role === 'SYS_ADMIN' || userInfo.role === 'CS_LEADER'
 
 const loading = ref<boolean>(false)
@@ -222,11 +220,16 @@ const getPlatformTagType = (platform: string): string => {
 }
 
 const handleQuery = async (): Promise<void> => {
+  queryForm.pageNum = 1
   loading.value = true
   try {
     const params = {
-      ...queryForm,
-      aiEnabled: queryForm.aiEnabled === '1' ? true : queryForm.aiEnabled === '0' ? false : null
+      page: queryForm.pageNum,
+      size: queryForm.pageSize,
+      platform: queryForm.platform || null,
+      aiEnabled: queryForm.aiEnabled === '1' ? true : queryForm.aiEnabled === '0' ? false : null,
+      csUserId: queryForm.csUserId || null,
+      keyword: queryForm.keyword || null
     }
     const res: Result<PageResult<CustomerRow>> = await customerApi.getPage(params)
     if (res.code === 200) {
@@ -250,6 +253,32 @@ const handleReset = (): void => {
   queryForm.csUserId = null
   queryForm.keyword = ''
   handleQuery()
+}
+
+const buildPageParams = () => ({
+  page: queryForm.pageNum,
+  size: queryForm.pageSize
+})
+
+const onSizeChange = (): void => {
+  queryForm.pageNum = 1
+  loading.value = true
+  customerApi.getPage(buildPageParams()).then((res: Result<any>) => {
+    if (res.code === 200) {
+      tableData.value = res.data.records.map((item: Record<string, unknown>) => ({ ...item, aiEnabled: Boolean(item.aiEnabled) }))
+      total.value = res.data.total
+    }
+  }).finally(() => { loading.value = false })
+}
+
+const onPageChange = (): void => {
+  loading.value = true
+  customerApi.getPage(buildPageParams()).then((res: Result<any>) => {
+    if (res.code === 200) {
+      tableData.value = res.data.records.map((item: Record<string, unknown>) => ({ ...item, aiEnabled: Boolean(item.aiEnabled) }))
+      total.value = res.data.total
+    }
+  }).finally(() => { loading.value = false })
 }
 
 const handleViewDetail = async (row: CustomerVO): Promise<void> => {
@@ -315,7 +344,7 @@ const handleToggleAi = async (row: CustomerRow): Promise<void> => {
 const loadCsList = async (): Promise<void> => {
   if (!isAdminOrLeader) return
   try {
-    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ pageNum: 1, pageSize: 100, role: 'CS_STAFF' })
+    const res: Result<PageResult<SysUserVO>> = await sysUserApi.getPage({ page: 1, size: 100, role: 'CS_STAFF' })
     if (res.code === 200) {
       csList.value = res.data.records
     }
