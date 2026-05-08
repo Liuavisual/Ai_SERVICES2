@@ -80,7 +80,9 @@ public class PermissionServiceImpl implements PermissionService {
         }
         List<String> perms = new ArrayList<>(permissionMapper.findPermCodesByUserId(userId));
         try {
-            redisService.set(cacheKey, String.join(",", perms), CACHE_TTL_MINUTES, TimeUnit.MINUTES);
+            @SuppressWarnings("null")
+            String joinedPerms = String.join(",", perms);
+            redisService.set(cacheKey, joinedPerms, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.debug("缓存用户权限失败: userId={}", userId);
         }

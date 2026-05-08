@@ -316,8 +316,9 @@ onMounted(() => {
 
 .main-aside {
   background: #304156;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   transition: width 0.3s ease;
   width: 220px;
   flex-shrink: 0;
@@ -332,6 +333,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   height: 44px;
+  flex-shrink: 0;
   color: #bfcbd9;
   cursor: pointer;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -343,6 +345,10 @@ onMounted(() => {
 }
 
 .sidebar-menu {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
   border-right: none;
 }
 

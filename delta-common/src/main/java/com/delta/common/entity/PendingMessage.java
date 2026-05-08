@@ -31,7 +31,6 @@ public class PendingMessage extends BaseEntity {
     @TableField(exist = false)
     private Long messageId;
 
-    @TableField(exist = false)
     private String keyword;
 
     @TableField(exist = false)
@@ -47,15 +46,11 @@ public class PendingMessage extends BaseEntity {
 
     private Integer reminderCount;
 
-    @TableField(exist = false)
     private Long handledBy;
 
-    @TableField(exist = false)
     private LocalDateTime handledAt;
 
-    @TableField(exist = false)
     private String remark;
 
-    @TableField(exist = false)
     private String contextSummary;
 }

@@ -1,6 +1,7 @@
 package com.delta.common.task;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.WorkOrderConstants;
 import com.delta.common.entity.WorkOrder;
 import com.delta.common.entity.WorkOrderRecord;
@@ -16,6 +17,15 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 工单升级定时任务，超时自动升级并关闭工单
+ * <p>
+ * 每60秒巡检一次，采用分页查询避免全表扫描。
+ * 建议在 work_orders 表的 (status, deleted, created_at, updated_at) 字段上建立联合索引以优化查询性能。
+ * </p>
+ *
+ * @author delta
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -24,21 +34,35 @@ public class WorkOrderEscalationTask {
     private final WorkOrderMapper workOrderMapper;
     private final WorkOrderRecordMapper workOrderRecordMapper;
 
+    /** 每次巡检的最大处理条数 */
+    private static final int BATCH_SIZE = 500;
+
     @Scheduled(fixedRate = 60000)
     public void checkWorkOrderTimeout() {
-        List<WorkOrder> activeOrders = workOrderMapper.selectList(
-                new LambdaQueryWrapper<WorkOrder>()
-                        .in(WorkOrder::getStatus,
-                                WorkOrderConstants.STATUS_NEW,
-                                WorkOrderConstants.STATUS_PROCESSING,
-                                WorkOrderConstants.STATUS_PENDING_CONFIRM));
+        int pageNum = 1;
 
-        for (WorkOrder order : activeOrders) {
-            try {
-                processTimeout(order);
-            } catch (Exception e) {
-                log.warn("工单超时检查异常, orderId={}: {}", order.getId(), e.getMessage());
+        while (true) {
+            Page<WorkOrder> page = new Page<>(pageNum, BATCH_SIZE);
+            LambdaQueryWrapper<WorkOrder> queryWrapper = new LambdaQueryWrapper<WorkOrder>()
+                    .in(WorkOrder::getStatus,
+                            WorkOrderConstants.STATUS_NEW,
+                            WorkOrderConstants.STATUS_PROCESSING,
+                            WorkOrderConstants.STATUS_PENDING_CONFIRM);
+            Page<WorkOrder> pageResult = workOrderMapper.selectPage(page, queryWrapper);
+            List<WorkOrder> activeOrders = pageResult.getRecords();
+
+            if (activeOrders.isEmpty()) break;
+
+            for (WorkOrder order : activeOrders) {
+                try {
+                    processTimeout(order);
+                } catch (Exception e) {
+                    log.warn("工单超时检查异常, orderId={}: {}", order.getId(), e.getMessage());
+                }
             }
+
+            if (!pageResult.hasNext()) break;
+            pageNum++;
         }
     }
 

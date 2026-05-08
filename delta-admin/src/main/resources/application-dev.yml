@@ -23,17 +23,11 @@ spring:
       test-on-return: false
       time-between-eviction-runs-millis: 60000
       min-evictable-idle-time-millis: 300000
-      remove-abandoned: true
+      remove-abandoned: false
       remove-abandoned-timeout: 300
-      log-abandoned: true
+      log-abandoned: false
+      filters: stat,wall
       connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=200
-      filter:
-        stat:
-          enabled: true
-          slow-sql-millis: 200
-          log-slow-sql: true
-        wall:
-          enabled: true
       stat-view-servlet:
         enabled: true
         url-pattern: /druid/*
@@ -131,12 +125,6 @@ logging:
     "[com.delta]": DEBUG
     "[org.springframework.security]": INFO
     "[org.mybatis]": INFO
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
-  logback:
-    rollingpolicy:
-      max-file-size: 50MB
-      max-history: 30
 
 wx:
   mp:

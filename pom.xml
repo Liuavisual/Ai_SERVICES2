@@ -153,7 +153,15 @@
                             </exclude>
                         </excludes>
                         <!-- 强制JVM使用UTF-8编码，解决Windows终端中文乱码 -->
-                        <jvmArguments>-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8</jvmArguments>
+                        <jvmArguments>-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -Dconsole.encoding=UTF-8 -Dinput.encoding=UTF-8</jvmArguments>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <configuration>
+                        <encoding>UTF-8</encoding>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -161,7 +169,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.4</version>
                     <configuration>
-                        <argLine>-Dfile.encoding=UTF-8</argLine>
+                        <argLine>-Dfile.encoding=UTF-8 -Dconsole.encoding=UTF-8</argLine>
                     </configuration>
                 </plugin>
                 <plugin>

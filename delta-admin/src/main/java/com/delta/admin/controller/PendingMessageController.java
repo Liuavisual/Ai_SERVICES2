@@ -86,7 +86,7 @@ public class PendingMessageController extends BaseController {
      * </p>
      */
     @Operation(summary = "处理待处理消息")
-    @PostMapping("/handle")
+    @PostMapping({"/handle", "/process"})
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Void> handlePendingMessage(@Valid @RequestBody PendingMessageHandleDTO handleDTO,
                                               HttpServletRequest request) {
@@ -95,6 +95,23 @@ public class PendingMessageController extends BaseController {
         handleDTO.setHandledBy(currentUserId);
         pendingMessageService.handlePendingMessage(handleDTO, currentUserId, currentUserRole);
         return Result.success();
+    }
+
+    /**
+     * 查询待处理消息详情
+     * <p>
+     * 根据ID查询单条待处理消息的详细信息。
+     * </p>
+     */
+    @Operation(summary = "查询待处理消息详情")
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<PendingMessageVO> getPendingMessageById(@PathVariable Long id) {
+        PendingMessageVO vo = pendingMessageService.getPendingMessageById(id);
+        if (vo != null) {
+            return Result.success(vo);
+        }
+        return Result.error("待处理消息不存在");
     }
 
     /**

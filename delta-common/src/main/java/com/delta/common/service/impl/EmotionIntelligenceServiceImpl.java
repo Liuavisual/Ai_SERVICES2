@@ -301,7 +301,9 @@ public class EmotionIntelligenceServiceImpl implements EmotionIntelligenceServic
         try {
             String key = EMOTION_STATE_KEY_PREFIX + userId;
             String json = toJson(state);
-            redisService.set(key, json, EMOTION_STATE_TTL_MINUTES, TimeUnit.MINUTES);
+            @SuppressWarnings("null")
+            String emotionJson = json;
+            redisService.set(key, emotionJson, EMOTION_STATE_TTL_MINUTES, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.debug("【情绪智能】保存情绪状态失败 | userId={} | error={}", userId, e.getMessage());
         }
@@ -342,7 +344,9 @@ public class EmotionIntelligenceServiceImpl implements EmotionIntelligenceServic
                 newValue = sb.toString();
             }
 
-            redisService.set(key, newValue, 7, TimeUnit.DAYS);
+            @SuppressWarnings("null")
+            String historyValue = newValue;
+            redisService.set(key, historyValue, 7, TimeUnit.DAYS);
         } catch (Exception e) {
             log.debug("【情绪智能】保存情绪历史失败 | userId={} | error={}", userId, e.getMessage());
         }

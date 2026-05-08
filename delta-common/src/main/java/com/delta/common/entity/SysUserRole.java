@@ -1,6 +1,7 @@
 package com.delta.common.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -28,6 +29,7 @@ import lombok.Data;
 public class SysUserRole {
 
     /** 主键 */
+    @TableId
     @TableField("id")
     private Long id;
 

@@ -153,12 +153,14 @@ public class AutoTestRunner {
             HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(loginBody, headers);
 
             // 发送登录请求
+            @SuppressWarnings("null")
+            HttpMethod postMethod = HttpMethod.POST;
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    loginUrl, HttpMethod.POST, requestEntity,
+                    loginUrl, postMethod, requestEntity,
                     new ParameterizedTypeReference<Map<String, Object>>() {});
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                Map<String, Object> responseBody = response.getBody();
+            Map<String, Object> responseBody = response.getBody();
+            if (response.getStatusCode() == HttpStatus.OK && responseBody != null) {
                 // 解析Result包装的响应：{code:200, message:"success", data:{token:"..."}}
                 if (responseBody.get("data") instanceof Map) {
                     @SuppressWarnings("unchecked")
@@ -215,24 +217,28 @@ public class AutoTestRunner {
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setBearerAuth(jwtToken);
+                if (jwtToken != null) {
+                    headers.setBearerAuth(jwtToken);
+                }
 
                 HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(sendBody, headers);
 
                 long startTime = System.currentTimeMillis();
 
+                @SuppressWarnings("null")
+                HttpMethod postMethod2 = HttpMethod.POST;
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                        sendUrl, HttpMethod.POST, requestEntity,
+                        sendUrl, postMethod2, requestEntity,
                         new ParameterizedTypeReference<Map<String, Object>>() {});
 
                 long responseTime = System.currentTimeMillis() - startTime;
                 result.setActualResponseMs(responseTime);
 
                 // 解析响应
-                if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                    Map<String, Object> responseBody = response.getBody();
+                Map<String, Object> respBody = response.getBody();
+                if (response.getStatusCode() == HttpStatus.OK && respBody != null) {
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                    Map<String, Object> data = (Map<String, Object>) respBody.get("data");
 
                     if (data != null) {
                         Object replyContent = data.get("replyContent");

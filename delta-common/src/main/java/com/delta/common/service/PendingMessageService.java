@@ -10,6 +10,8 @@ public interface PendingMessageService {
 
     Page<PendingMessageVO> getPendingMessagePage(Integer page, Integer size, String status, String platform, String keyword, Long currentUserId, String currentUserRole);
 
+    PendingMessageVO getPendingMessageById(Long id);
+
     void handlePendingMessage(PendingMessageHandleDTO handleDTO);
 
     void handlePendingMessage(PendingMessageHandleDTO handleDTO, Long currentUserId, String currentUserRole);

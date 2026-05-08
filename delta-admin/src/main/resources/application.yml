@@ -1,3 +1,5 @@
 spring:
   profiles:
     active: dev
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration

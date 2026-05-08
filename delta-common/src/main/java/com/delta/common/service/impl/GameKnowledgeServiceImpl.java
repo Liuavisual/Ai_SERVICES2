@@ -296,7 +296,9 @@ public class GameKnowledgeServiceImpl implements GameKnowledgeService {
         // 第五步：写入Redis热点缓存
         if (!injectText.isEmpty()) {
             try {
-                redisService.set(cacheKey, injectText, HOT_KEY_TTL_MINUTES, TimeUnit.MINUTES);
+                @SuppressWarnings("null")
+                String cacheValue = injectText;
+                redisService.set(cacheKey, cacheValue, HOT_KEY_TTL_MINUTES, TimeUnit.MINUTES);
                 log.info("【知识库】热点知识已缓存 | cacheKey={} | TTL={}分钟 | 知识长度={}",
                         cacheKey, HOT_KEY_TTL_MINUTES, injectText.length());
             } catch (Exception e) {

@@ -91,6 +91,17 @@ public class ServiceProtectionManager {
     private final Map<String, String> decryptedPromptCache = new HashMap<>();
 
     /**
+     * 从系统属性获取激活的profile（构造函数中使用，@Value注入在构造函数之后）
+     */
+    private static String getActiveProfile() {
+        String profile = System.getProperty("spring.profiles.active");
+        if (profile == null || profile.trim().isEmpty()) {
+            profile = System.getenv("SPRING_PROFILES_ACTIVE");
+        }
+        return profile != null ? profile : "dev";
+    }
+
+    /**
      * 构造函数，从环境变量 COMPETITIVE_SECRET_KEY 读取加密密钥
      * <p>
      * 如果环境变量未设置，生产环境将抛出异常，开发环境使用默认密钥。
@@ -106,6 +117,11 @@ public class ServiceProtectionManager {
 
         boolean isDevKey = false;
         if (keyFromEnv == null || keyFromEnv.trim().isEmpty()) {
+            if ("prod".equalsIgnoreCase(getActiveProfile()) || "production".equalsIgnoreCase(getActiveProfile())) {
+                throw new IllegalStateException(
+                        "【竞争保护】生产环境必须设置环境变量 COMPETITIVE_SECRET_KEY ！"
+                                + "请使用至少32字节的Base64编码密钥");
+            }
             log.warn("【竞争保护】环境变量 COMPETITIVE_SECRET_KEY 未设置，将使用默认开发密钥");
             keyFromEnv = "RGVmYXVsdEtleUZvckRldmVsb3BtZW50T25seSE=";
             isDevKey = true;
@@ -119,7 +135,9 @@ public class ServiceProtectionManager {
                 keyBytes = new byte[32];
                 random.nextBytes(keyBytes);
             } else {
-                throw new IllegalArgumentException("【竞争保护】密钥长度必须为32字节（AES-256），当前：" + keyBytes.length);
+                throw new IllegalArgumentException(
+                        "【竞争保护】密钥长度必须为32字节（AES-256），当前：" + keyBytes.length
+                                + "，请提供正确的Base64编码的32字节密钥");
             }
         }
 
