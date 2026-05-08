@@ -229,7 +229,7 @@ async function loadRoles() {
 async function loadUsers() {
   userLoading.value = true
   try {
-    const res = await request.get('/api/v1/sys-users', { params: { page: 1, size: 200 } })
+    const res = await request.get('/api/v1/sys-users/page', { params: { page: 1, size: 200 } })
     users.value = (res.data?.records || []).filter(u => u.status === 'ACTIVE')
   } finally {
     userLoading.value = false
