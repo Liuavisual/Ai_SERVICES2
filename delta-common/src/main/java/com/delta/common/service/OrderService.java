@@ -3,6 +3,7 @@ package com.delta.common.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.vo.OrderVO;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,4 +30,14 @@ public interface OrderService {
     List<OrderVO> queryOrders(OrderQueryDTO queryDTO);
 
     Page<OrderVO> getOrderPage(Integer page, Integer size, Long userId, Long companionId, String orderStatus, String paymentStatus, String orderNo);
+
+    /**
+     * 确认支付成功，更新订单支付状态
+     *
+     * @param orderNo       订单号
+     * @param transactionId 第三方交易流水号
+     * @param paidAmount    实付金额
+     * @param payTime       支付完成时间
+     */
+    void confirmPayment(String orderNo, String transactionId, BigDecimal paidAmount, LocalDateTime payTime);
 }

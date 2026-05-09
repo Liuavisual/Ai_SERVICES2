@@ -77,7 +77,35 @@ public class AuthController {
         }
         loginDTO.setClientIp(clientIp);
         LoginVO loginVO = authService.login(loginDTO);
+        if (loginVO.getRequireTwoFactor() != null && loginVO.getRequireTwoFactor()) {
+            return Result.success(loginVO);
+        }
         // 将Token设置到httpOnly Cookie中，防止XSS攻击窃取
+        setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
+        return Result.success(loginVO);
+    }
+
+    /**
+     * 验证2FA验证码，签发正式JWT令牌
+     * <p>
+     * 在密码登录返回 requireTwoFactor=true 后调用，
+     * 使用登录响应中的 twoFactorToken 和认证器生成的6位验证码完成2FA验证。
+     * </p>
+     *
+     * @param body 包含 twoFactorToken 和 code 的请求体
+     * @return 登录信息（含正式JWT令牌）
+     */
+    @PostMapping("/verify-2fa")
+    @AuditLog(module = "认证", action = "2FA验证")
+    public Result<LoginVO> verifyTwoFactor(@RequestBody Map<String, String> body, HttpServletResponse response) {
+        String twoFactorToken = body.get("twoFactorToken");
+        String code = body.get("code");
+
+        if (twoFactorToken == null || code == null) {
+            return Result.error(400, "令牌和验证码不能为空");
+        }
+
+        LoginVO loginVO = authService.verifyTwoFactor(twoFactorToken, code);
         setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
         return Result.success(loginVO);
     }

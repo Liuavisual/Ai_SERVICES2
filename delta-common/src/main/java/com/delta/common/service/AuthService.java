@@ -16,4 +16,13 @@ public interface AuthService {
     void register(RegisterDTO registerDTO);
 
     LoginVO refreshToken(String refreshToken);
+
+    /**
+     * 验证2FA验证码并签发正式JWT令牌
+     *
+     * @param twoFactorToken 2FA临时令牌（从登录响应中获取）
+     * @param code           TOTP验证码（6位数字）
+     * @return 登录信息（包含accessToken和refreshToken）
+     */
+    LoginVO verifyTwoFactor(String twoFactorToken, String code);
 }

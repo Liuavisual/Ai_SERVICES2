@@ -54,7 +54,7 @@
           <el-tab-pane label="注册" name="register">
             <el-form :model="registerForm" :rules="registerRules" ref="registerFormRef" label-width="0">
               <el-form-item prop="username"><el-input v-model="registerForm.username" placeholder="用户名（3-50位）" prefix-icon="User" size="large" /></el-form-item>
-              <el-form-item prop="password"><el-input v-model="registerForm.password" type="password" placeholder="密码（至少8位）" prefix-icon="Lock" size="large" show-password /></el-form-item>
+              <el-form-item prop="password"><el-input v-model="registerForm.password" type="password" placeholder="密码（字母+数字+特殊字符，至少8位）" prefix-icon="Lock" size="large" show-password /></el-form-item>
               <el-form-item prop="realName"><el-input v-model="registerForm.realName" placeholder="真实姓名" prefix-icon="Avatar" size="large" /></el-form-item>
               <el-form-item prop="phone"><el-input v-model="registerForm.phone" placeholder="手机号" prefix-icon="Phone" size="large" /></el-form-item>
               <el-form-item prop="email"><el-input v-model="registerForm.email" placeholder="邮箱（选填）" prefix-icon="Message" size="large" /></el-form-item>
@@ -131,7 +131,7 @@ const registerRules = {
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 8, max: 50, message: '密码长度必须在 8 到 50 个字符', trigger: 'blur' },
-    { pattern: /^(?=.*[a-zA-Z])(?=.*\d)/, message: '密码必须包含字母和数字', trigger: 'blur' }
+    { pattern: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])/, message: '密码必须包含字母、数字和特殊字符', trigger: 'blur' }
   ],
   realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
   phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],

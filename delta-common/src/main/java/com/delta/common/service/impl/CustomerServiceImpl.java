@@ -258,6 +258,44 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     /**
+     * 同步客户分配关系，确保以CsUserCustomer为权威数据源
+     * <p>
+     * 客户分配关系存在三处存储：User.assignedCsUserId、CsUserCustomer表、CustomerProfile.assignedCsUserId。
+     * 本方法以CsUserCustomer为唯一权威来源（canonical source），将其状态同步到User和CustomerProfile。
+     * 适用于数据修复、定时校准等场景。
+     * </p>
+     *
+     * @param userId 客户用户ID
+     */
+    @Override
+    public void syncCustomerAssignments(Long userId) {
+        if (userId == null) {
+            return;
+        }
+
+        LambdaQueryWrapper<CsUserCustomer> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CsUserCustomer::getCustomerUserId, userId);
+        wrapper.eq(CsUserCustomer::getStatus, BusinessStatusConstants.ASSIGN_STATUS_ACTIVE);
+        CsUserCustomer activeAssignment = csUserCustomerMapper.selectOne(wrapper);
+
+        Long canonicalCsUserId = activeAssignment != null ? activeAssignment.getCsUserId() : null;
+
+        User user = userMapper.selectById(userId);
+        if (user != null) {
+            Long currentCsUserId = user.getAssignedCsUserId();
+            boolean needUpdate = !java.util.Objects.equals(currentCsUserId, canonicalCsUserId);
+            if (needUpdate) {
+                user.setAssignedCsUserId(canonicalCsUserId);
+                userMapper.updateById(user);
+                log.info("【客户归一化】同步User.assignedCsUserId | userId={} | {} -> {}",
+                        userId, currentCsUserId, canonicalCsUserId);
+            }
+        }
+
+        log.debug("【客户归一化】同步完成 | userId={} | 规范客服ID={}", userId, canonicalCsUserId);
+    }
+
+    /**
      * 导出客户Excel
      *
      * @param response  HTTP响应

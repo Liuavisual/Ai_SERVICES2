@@ -8,14 +8,18 @@ import com.delta.common.entity.WorkOrderRecord;
 import com.delta.common.enums.WorkOrderPriorityEnum;
 import com.delta.common.mapper.WorkOrderMapper;
 import com.delta.common.mapper.WorkOrderRecordMapper;
+import com.delta.common.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 工单升级定时任务，超时自动升级并关闭工单
@@ -33,9 +37,19 @@ public class WorkOrderEscalationTask {
 
     private final WorkOrderMapper workOrderMapper;
     private final WorkOrderRecordMapper workOrderRecordMapper;
+    private final RedisService redisService;
 
     /** 每次巡检的最大处理条数 */
     private static final int BATCH_SIZE = 500;
+
+    /** SLA违规Redis Key前缀 */
+    private static final String SLA_VIOLATION_KEY_PREFIX = "sla:violation:workorder:";
+
+    /** SLA违规TTL（天） */
+    private static final int SLA_VIOLATION_TTL_DAYS = 30;
+
+    /** 日期格式化器 */
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Scheduled(fixedRate = 60000)
     public void checkWorkOrderTimeout() {
@@ -95,13 +109,17 @@ public class WorkOrderEscalationTask {
             order.setEscalationLevel(2);
             workOrderMapper.updateById(order);
             addSystemRecord(order.getId(), "工单已升级到负责人处理");
-            log.warn("工单升级到负责人, orderNo={}", order.getOrderNo());
+            trackSlaViolation(order, "ESCALATED_TO_LEADER", minutes);
+            log.warn("【SLA告警】工单严重超时已升级到负责人 | orderNo={} | 已耗时{}分钟 | 阈值={}分钟",
+                    order.getOrderNo(), minutes, priority.getTimeoutMinutes());
         } else if (minutes >= priority.getTimeoutMinutes() && order.getEscalationLevel() < 1) {
             order.setEscalationLevel(1);
             order.setReminderCount(order.getReminderCount() + 1);
             workOrderMapper.updateById(order);
             addSystemRecord(order.getId(), "工单处理超时，已发送提醒");
-            log.warn("工单超时提醒, orderNo={}", order.getOrderNo());
+            trackSlaViolation(order, "TIMEOUT_WARNING", minutes);
+            log.warn("【SLA告警】工单超时提醒 | orderNo={} | 已耗时{}分钟 | 阈值={}分钟 | 提醒次数={}",
+                    order.getOrderNo(), minutes, priority.getTimeoutMinutes(), order.getReminderCount());
         }
     }
 
@@ -112,5 +130,29 @@ public class WorkOrderEscalationTask {
         record.setOperatorName("系统");
         record.setContent(content);
         workOrderRecordMapper.insert(record);
+    }
+
+    /**
+     * 记录SLA违规事件到Redis用于监控大盘统计
+     * <p>
+     * 使用Hash结构存储单条工单的每次违规，便于后续查询指定工单的历史违规记录。
+     * Key格式：sla:violation:workorder:{orderNo}
+     * Field格式：{违规类型}_{yyyyMMdd}
+     * </p>
+     *
+     * @param order           工单实体
+     * @param violationType   违规类型（TIMEOUT_WARNING / ESCALATED_TO_LEADER）
+     * @param elapsedMinutes  已耗时分钟数
+     */
+    private void trackSlaViolation(WorkOrder order, String violationType, long elapsedMinutes) {
+        String violationKey = SLA_VIOLATION_KEY_PREFIX + order.getOrderNo();
+        String violationField = violationType + "_" + LocalDate.now().format(DATE_FORMATTER);
+        String violationValue = "status=" + order.getStatus()
+                + "|minutes=" + elapsedMinutes
+                + "|priority=" + order.getPriority()
+                + "|assignedCs=" + order.getAssignedCsUserId();
+
+        redisService.hSet(violationKey, violationField, violationValue);
+        redisService.expire(violationKey, SLA_VIOLATION_TTL_DAYS, TimeUnit.DAYS);
     }
 }

@@ -16,6 +16,13 @@ public interface CustomerService {
 
     void assignCustomer(Long id, Long csUserId, String assignType, String remark);
 
+    /**
+     * 同步客户分配关系，以CsUserCustomer为权威数据源
+     *
+     * @param userId 客户用户ID
+     */
+    void syncCustomerAssignments(Long userId);
+
     boolean isCustomerAssignedToCsStaff(Long customerId, Long csUserId);
 
     /**

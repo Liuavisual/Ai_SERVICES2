@@ -179,6 +179,12 @@ const routes = [
         meta: { title: '排班管理', roles: ['SYS_ADMIN', 'CS_LEADER'] }
       },
       {
+        path: 'companion-schedule-calendar',
+        name: 'CompanionScheduleCalendar',
+        component: () => import('@/views/CompanionScheduleCalendar.vue'),
+        meta: { title: '排班日历', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+      },
+      {
         path: 'orders',
         name: 'Orders',
         component: () => import('@/views/Orders.vue'),

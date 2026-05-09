@@ -68,6 +68,27 @@ public class KeywordMatcherServiceImpl implements KeywordMatcherService {
     }
 
     @Override
+    public String matchFirst(String text, List<String> keywords) {
+        if (text == null || text.trim().isEmpty() || keywords == null || keywords.isEmpty()) {
+            return null;
+        }
+
+        WordTree tempTree = new WordTree();
+        for (String keyword : keywords) {
+            if (keyword != null && !keyword.isEmpty()) {
+                tempTree.addWord(keyword);
+            }
+        }
+
+        List<FoundWord> foundWords = tempTree.matchAllWords(text, -1, true, false);
+        if (foundWords.isEmpty()) {
+            return null;
+        }
+
+        return foundWords.get(0).getWord();
+    }
+
+    @Override
     public void refreshKeywords() {
         log.info("开始刷新关键词库...");
 

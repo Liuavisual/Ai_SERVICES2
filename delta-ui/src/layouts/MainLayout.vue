@@ -134,6 +134,7 @@ const allMenus = [
   { path: '/companions',          title: '陪玩师',       icon: 'UserFilled' },
   { path: '/companion-levels',    title: '陪玩等级',     icon: 'Medal',           roles: ['SYS_ADMIN', 'CS_LEADER'] },
   { path: '/companion-schedule',  title: '排班管理',     icon: 'Calendar',        roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/companion-schedule-calendar', title: '排班日历', icon: 'Date', roles: ['SYS_ADMIN', 'CS_LEADER'] },
   { divider: true },
 
   // ==================== 业务运营 ====================

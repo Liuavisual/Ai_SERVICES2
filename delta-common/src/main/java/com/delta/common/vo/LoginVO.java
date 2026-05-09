@@ -38,4 +38,10 @@ public class LoginVO extends BaseVO {
 
     @Schema(description = "角色描述", example = "管理员")
     private String roleDesc;
+
+    @Schema(description = "是否需要2FA验证")
+    private Boolean requireTwoFactor;
+
+    @Schema(description = "2FA临时令牌")
+    private String twoFactorToken;
 }

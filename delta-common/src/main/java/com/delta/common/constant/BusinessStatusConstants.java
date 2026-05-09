@@ -67,6 +67,16 @@ public final class BusinessStatusConstants {
         return parseExcelEnabled(value) ? ENABLED_INT : DISABLED_INT;
     }
 
+    /** 资源类型：俱乐部 */
+    public static final String RESOURCE_TYPE_CLUB = "CLUB";
+
+    /** 订单超时取消阈值（分钟）：PENDING状态超过此时间自动取消 */
+    public static final int ORDER_TIMEOUT_CANCEL_MINUTES = 30;
+
+    /** 订单超时任务每次批量处理的最大条数 */
+    public static final int ORDER_TIMEOUT_BATCH_SIZE = 200;
+
+    /** 私有构造方法，防止实例化 */
     private BusinessStatusConstants() {
     }
 }

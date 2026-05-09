@@ -7,9 +7,11 @@ import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.entity.Companion;
 import com.delta.common.entity.Order;
 import com.delta.common.exception.BusinessException;
+import com.delta.common.dto.WorkOrderCreateDTO;
 import com.delta.common.mapper.CompanionMapper;
 import com.delta.common.mapper.OrderMapper;
 import com.delta.common.service.OrderService;
+import com.delta.common.service.WorkOrderService;
 import com.delta.common.vo.OrderVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,8 @@ public class OrderServiceImpl implements OrderService {
     private final CompanionMapper companionMapper;
 
     private final StringRedisTemplate redisTemplate;
+
+    private final WorkOrderService workOrderService;
 
     @Override
     public OrderVO getOrderById(Long id) {
@@ -85,7 +89,43 @@ public class OrderServiceImpl implements OrderService {
 
         orderMapper.insert(order);
         log.info("订单创建成功: orderNo={}, userId={}, companionId={}", orderNo, userId, companionId);
+
+        createLinkedWorkOrder(order);
+
         return convertToVO(order);
+    }
+
+    /**
+     * 订单创建后自动创建关联工单，实现订单-工单联动
+     * <p>
+     * 使用 try-catch 确保工单创建失败不影响订单核心流程，
+     * 工单可在后续手动补建。
+     * </p>
+     *
+     * @param order 已创建的订单实体
+     */
+    private void createLinkedWorkOrder(Order order) {
+        try {
+            WorkOrderCreateDTO workOrderDto = new WorkOrderCreateDTO();
+            workOrderDto.setOrderType("BOOKING");
+            workOrderDto.setPriority("NORMAL");
+            workOrderDto.setPlatform("SYSTEM");
+            workOrderDto.setUserId(order.getUserId());
+            workOrderDto.setServiceType(order.getServiceType());
+            workOrderDto.setProblemDetail("订单 " + order.getOrderNo() + " 自动创建的关联工单");
+            workOrderDto.setContextSummary("订单编号：" + order.getOrderNo()
+                    + "，陪玩师：" + order.getCompanionName()
+                    + "，服务类型：" + order.getServiceType()
+                    + "，预约时间：" + order.getScheduledStart() + " ~ " + order.getScheduledEnd());
+            workOrderDto.setRelatedCompanionId(order.getCompanionId());
+
+            Long workOrderId = workOrderService.createWorkOrder(workOrderDto);
+            log.info("【订单-工单联动】自动创建关联工单成功 | orderNo={} | workOrderId={}",
+                    order.getOrderNo(), workOrderId);
+        } catch (Exception e) {
+            log.warn("【订单-工单联动】自动创建工单失败，订单已正常创建 | orderNo={} | error={}",
+                    order.getOrderNo(), e.getMessage());
+        }
     }
 
     @Override
@@ -144,6 +184,31 @@ public class OrderServiceImpl implements OrderService {
         }
         orderMapper.updateById(order);
         log.info("订单取消: id={}, reason={}", id, reason);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmPayment(String orderNo, String transactionId, BigDecimal paidAmount, LocalDateTime payTime) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Order::getOrderNo, orderNo);
+        Order order = orderMapper.selectOne(wrapper);
+        if (order == null) {
+            log.error("【支付确认】订单不存在 | orderNo={}", orderNo);
+            throw new BusinessException("订单不存在: " + orderNo);
+        }
+
+        if (BusinessStatusConstants.PAYMENT_STATUS_PAID.equals(order.getPaymentStatus())) {
+            log.warn("【支付确认】订单已支付，忽略重复回调 | orderNo={}", orderNo);
+            return;
+        }
+
+        order.setPaymentStatus(BusinessStatusConstants.PAYMENT_STATUS_PAID);
+        order.setTransactionId(transactionId);
+        order.setPaidAmount(paidAmount);
+        order.setPaymentTime(payTime);
+        orderMapper.updateById(order);
+        log.info("【支付确认】支付成功 | orderNo={} | transactionId={} | paidAmount={} | payTime={}",
+                orderNo, transactionId, paidAmount, payTime);
     }
 
     @Override

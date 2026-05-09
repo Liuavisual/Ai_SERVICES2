@@ -12,6 +12,7 @@ import com.delta.common.service.AuthService;
 import com.delta.common.service.PermissionService;
 import com.delta.common.service.RedisService;
 import com.delta.common.util.JwtUtils;
+import com.delta.common.util.TotpUtils;
 import com.delta.common.vo.LoginVO;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private static final String LOGIN_LOCK_PREFIX = "login:lock:";
 
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-            "^(?=.*[a-zA-Z])(?=.*\\d).{8,50}$"
+            "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[!@#$%^&*(),.?\":{}|<>]).{8,50}$"
     );
 
     private static final Pattern USERNAME_PATTERN = Pattern.compile(
@@ -59,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     private static final String REFRESH_TOKEN_FAMILY_PREFIX = "token:refresh_family:";
 
     @Override
+    @SuppressWarnings("null")
     public LoginVO login(LoginDTO loginDTO) {
         String username = loginDTO.getUsername();
         String clientIp = loginDTO.getClientIp();
@@ -89,6 +91,22 @@ public class AuthServiceImpl implements AuthService {
 
         clearLoginAttempts(username, clientIp);
 
+        if (user.getTwoFactorEnabled() != null && user.getTwoFactorEnabled()) {
+            String twoFactorToken = java.util.UUID.randomUUID().toString();
+            String tokenKey = "2fa:token:" + twoFactorToken;
+            redisService.set(tokenKey, user.getId().toString(), 5, TimeUnit.MINUTES);
+
+            log.info("用户密码验证通过，等待2FA验证: userId={}, username={}", user.getId(), user.getUsername());
+
+            LoginVO loginVO = new LoginVO();
+            loginVO.setRequireTwoFactor(true);
+            loginVO.setTwoFactorToken(twoFactorToken);
+            loginVO.setUsername(user.getUsername());
+            loginVO.setRole(user.getRole());
+            loginVO.setUserId(user.getId());
+            return loginVO;
+        }
+
         List<String> permList = permissionService.getUserPermissions(user.getId());
         String permStr = String.join(",", permList);
         String accessToken = jwtUtils.generateTokenWithPermissions(user.getId(), user.getUsername(), user.getRole(), permStr);
@@ -107,7 +125,9 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsername(),
                 user.getRealName(),
                 user.getRole(),
-                roleEnum != null ? roleEnum.getDesc() : user.getRole()
+                roleEnum != null ? roleEnum.getDesc() : user.getRole(),
+                false,
+                null
         );
     }
 
@@ -119,7 +139,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         if (!PASSWORD_PATTERN.matcher(registerDTO.getPassword()).matches()) {
-            throw new BusinessException("密码必须包含字母和数字，长度8-50位");
+            throw new BusinessException("密码必须包含字母、数字和特殊字符，长度8-50位");
         }
 
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
@@ -215,7 +235,9 @@ public class AuthServiceImpl implements AuthService {
                 user.getUsername(),
                 user.getRealName(),
                 user.getRole(),
-                roleEnum != null ? roleEnum.getDesc() : user.getRole()
+                roleEnum != null ? roleEnum.getDesc() : user.getRole(),
+                false,
+                null
         );
     }
 
@@ -230,6 +252,55 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.error("使令牌家族失效异常", e);
         }
+    }
+
+    @Override
+    public LoginVO verifyTwoFactor(String twoFactorToken, String code) {
+        if (twoFactorToken == null || code == null) {
+            throw new BusinessException("令牌和验证码不能为空");
+        }
+
+        String tokenKey = "2fa:token:" + twoFactorToken;
+        String userIdStr = (String) redisService.get(tokenKey);
+        if (userIdStr == null || userIdStr.isEmpty()) {
+            throw new BusinessException("2FA临时令牌已过期，请重新登录");
+        }
+
+        Long userId = Long.valueOf(userIdStr);
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+
+        if (!TotpUtils.verifyCode(user.getTwoFactorSecret(), code)) {
+            log.warn("【2FA】验证失败 | userId={}", userId);
+            throw new BusinessException("验证码错误");
+        }
+
+        redisService.delete(tokenKey);
+
+        List<String> permList = permissionService.getUserPermissions(user.getId());
+        String permStr = String.join(",", permList);
+        String accessToken = jwtUtils.generateTokenWithPermissions(user.getId(), user.getUsername(), user.getRole(), permStr);
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
+        long expiresIn = jwtUtils.getExpirationFromNow() / 1000;
+
+        RoleEnum roleEnum = RoleEnum.fromCode(user.getRole());
+
+        log.info("【2FA】验证通过，登录成功: userId={}, username={}", user.getId(), user.getUsername());
+
+        return new LoginVO(
+                accessToken,
+                refreshToken,
+                expiresIn,
+                user.getId(),
+                user.getUsername(),
+                user.getRealName(),
+                user.getRole(),
+                roleEnum != null ? roleEnum.getDesc() : user.getRole(),
+                false,
+                null
+        );
     }
 
     private void checkLoginAttempts(String username, String clientIp) {

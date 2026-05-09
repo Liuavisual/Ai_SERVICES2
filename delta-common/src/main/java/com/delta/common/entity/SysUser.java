@@ -47,4 +47,12 @@ public class SysUser extends BaseEntity {
 
     /** 创建人ID */
     private Long createdBy;
+
+    /** 双重认证是否启用 */
+    @TableField("two_factor_enabled")
+    private Boolean twoFactorEnabled;
+
+    /** 双重认证密钥（Base32编码） */
+    @TableField("two_factor_secret")
+    private String twoFactorSecret;
 }

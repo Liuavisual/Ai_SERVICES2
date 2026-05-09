@@ -122,6 +122,7 @@ public class WeWorkApiServiceImpl implements WeWorkApiService {
         return result;
     }
 
+    @SuppressWarnings("null")
     private Map<String, Object> getForMap(String url) {
         URI uri = Objects.requireNonNull(URI.create(url), "URI不能为空");
         HttpMethod method = Objects.requireNonNull(HttpMethod.GET, "HttpMethod.GET不能为空");
@@ -132,6 +133,7 @@ public class WeWorkApiServiceImpl implements WeWorkApiService {
         return body != null ? body : Map.of();
     }
 
+    @SuppressWarnings("null")
     private Map<String, Object> postForMap(String url, Map<String, Object> body) {
         URI uri = Objects.requireNonNull(URI.create(url), "URI不能为空");
         HttpMethod method = Objects.requireNonNull(HttpMethod.POST, "HttpMethod.POST不能为空");

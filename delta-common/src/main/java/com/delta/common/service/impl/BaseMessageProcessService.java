@@ -216,6 +216,10 @@ public abstract class BaseMessageProcessService {
 
     /**
      * 检测负面情绪关键词
+     * <p>
+     * 使用Trie树（O(n)复杂度）替代传统contains()遍历（O(n×m)），
+     * 关键词数量越多性能优势越明显。
+     * </p>
      *
      * @param content 用户消息内容
      * @return 匹配到的负面情绪关键词，未匹配返回null
@@ -224,16 +228,14 @@ public abstract class BaseMessageProcessService {
         if (content == null || content.trim().isEmpty()) {
             return null;
         }
-        for (String keyword : AiCustomerServiceConstants.NEGATIVE_EMOTION_KEYWORDS) {
-            if (content.contains(keyword)) {
-                return keyword;
-            }
-        }
-        return null;
+        return keywordMatcherService.matchFirst(content, AiCustomerServiceConstants.NEGATIVE_EMOTION_KEYWORDS);
     }
 
     /**
      * 检测订单意图关键词
+     * <p>
+     * 使用Trie树匹配替代contains()遍历以提高性能。
+     * </p>
      *
      * @param content 用户消息内容
      * @return 匹配到的订单意图关键词，未匹配返回null
@@ -242,12 +244,7 @@ public abstract class BaseMessageProcessService {
         if (content == null || content.trim().isEmpty()) {
             return null;
         }
-        for (String keyword : AiCustomerServiceConstants.ORDER_INTENT_KEYWORDS) {
-            if (content.contains(keyword)) {
-                return keyword;
-            }
-        }
-        return null;
+        return keywordMatcherService.matchFirst(content, AiCustomerServiceConstants.ORDER_INTENT_KEYWORDS);
     }
 
     /**
@@ -260,12 +257,7 @@ public abstract class BaseMessageProcessService {
         if (content == null || content.trim().isEmpty()) {
             return null;
         }
-        for (String keyword : AiCustomerServiceConstants.PRICE_INQUIRY_KEYWORDS) {
-            if (content.contains(keyword)) {
-                return keyword;
-            }
-        }
-        return null;
+        return keywordMatcherService.matchFirst(content, AiCustomerServiceConstants.PRICE_INQUIRY_KEYWORDS);
     }
 
     /**
@@ -293,10 +285,7 @@ public abstract class BaseMessageProcessService {
      */
     protected String checkServiceInquiry(String content) {
         if (content == null || content.trim().isEmpty()) return null;
-        for (String keyword : AiCustomerServiceConstants.SERVICE_INQUIRY_KEYWORDS) {
-            if (content.contains(keyword)) return keyword;
-        }
-        return null;
+        return keywordMatcherService.matchFirst(content, AiCustomerServiceConstants.SERVICE_INQUIRY_KEYWORDS);
     }
 
     /**
@@ -307,10 +296,7 @@ public abstract class BaseMessageProcessService {
      */
     protected String checkScheduleInquiry(String content) {
         if (content == null || content.trim().isEmpty()) return null;
-        for (String keyword : AiCustomerServiceConstants.SCHEDULE_INQUIRY_KEYWORDS) {
-            if (content.contains(keyword)) return keyword;
-        }
-        return null;
+        return keywordMatcherService.matchFirst(content, AiCustomerServiceConstants.SCHEDULE_INQUIRY_KEYWORDS);
     }
 
     /**
@@ -418,12 +404,7 @@ public abstract class BaseMessageProcessService {
         if (content == null || content.trim().isEmpty()) {
             return null;
         }
-        for (String keyword : AiCustomerServiceConstants.HUMAN_EXPLICIT_KEYWORDS) {
-            if (content.contains(keyword)) {
-                return keyword;
-            }
-        }
-        return null;
+        return keywordMatcherService.matchFirst(content, AiCustomerServiceConstants.HUMAN_EXPLICIT_KEYWORDS);
     }
 
     /**

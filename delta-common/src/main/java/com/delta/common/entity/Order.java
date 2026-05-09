@@ -82,6 +82,13 @@ public class Order extends BaseEntity {
     /** 支付方式 */
     private String paymentMethod;
 
+    /** 第三方交易流水号 */
+    private String transactionId;
+
+    /** 支付完成时间 */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime paymentTime;
+
     /** 关联工单ID */
     private Long workOrderId;
 
