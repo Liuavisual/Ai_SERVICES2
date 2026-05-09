@@ -64,6 +64,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
+    @SuppressWarnings("null")
     public List<String> getUserPermissions(Long userId) {
         if (userId == null) return Collections.emptyList();
         String cacheKey = USER_PERM_CACHE_PREFIX + userId;
@@ -80,7 +81,6 @@ public class PermissionServiceImpl implements PermissionService {
         }
         List<String> perms = new ArrayList<>(permissionMapper.findPermCodesByUserId(userId));
         try {
-            @SuppressWarnings("null")
             String joinedPerms = String.join(",", perms);
             redisService.set(cacheKey, joinedPerms, CACHE_TTL_MINUTES, TimeUnit.MINUTES);
         } catch (Exception e) {

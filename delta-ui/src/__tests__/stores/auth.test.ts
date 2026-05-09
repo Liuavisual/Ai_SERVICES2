@@ -10,7 +10,7 @@ describe('Auth Store', () => {
 
   it('initial state should be empty', () => {
     const store = useAuthStore()
-    expect(store.token).toBe('')
+    expect(store.token).toBeNull()
     expect(store.isLoggedIn).toBe(false)
     expect(store.isAdmin).toBe(false)
   })

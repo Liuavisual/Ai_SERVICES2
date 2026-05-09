@@ -3,6 +3,7 @@ package com.delta.common.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.delta.common.entity.ServiceTrack;
 import com.delta.common.entity.User;
+import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.ServiceTrackMapper;
 import com.delta.common.mapper.UserMapper;
 import com.delta.common.service.ServiceTrackService;
@@ -74,7 +75,9 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
         data.put("bookedAt", LocalDateTime.now().toString());
         if (bookDTO != null) {
             Map<String, Object> bookMap = objectMapper.convertValue(bookDTO, new TypeReference<Map<String, Object>>() {});
-            data.putAll(bookMap);
+            if (bookMap != null) {
+                data.putAll(bookMap);
+            }
         }
 
         track.setCurrentStep("BOOKED");
@@ -112,7 +115,9 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
         data.put("serviceEndedAt", LocalDateTime.now().toString());
         if (endDTO != null) {
             Map<String, Object> endMap = objectMapper.convertValue(endDTO, new TypeReference<Map<String, Object>>() {});
-            data.putAll(endMap);
+            if (endMap != null) {
+                data.putAll(endMap);
+            }
         }
 
         track.setCurrentStep("SERVICE_DONE");
@@ -133,7 +138,7 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
         ServiceTrack track = getAndValidateTrack(trackId);
 
         if (customerRating != null && (customerRating < 1 || customerRating > 5)) {
-            throw new RuntimeException("评分必须在1-5之间");
+            throw new BusinessException("评分必须在1-5之间");
         }
 
         Map<String, Object> data = parseJson(track.getTrackData());
@@ -172,21 +177,21 @@ public class ServiceTrackServiceImpl implements ServiceTrackService {
 
     private void validateUserExists(Long userId) {
         if (userId == null) {
-            throw new RuntimeException("用户ID不能为空");
+            throw new BusinessException("用户ID不能为空");
         }
         User user = userMapper.selectById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在: " + userId);
+            throw new BusinessException("用户不存在: " + userId);
         }
     }
 
     private ServiceTrack getAndValidateTrack(Long trackId) {
         if (trackId == null) {
-            throw new RuntimeException("追踪ID不能为空");
+            throw new BusinessException("追踪ID不能为空");
         }
         ServiceTrack track = serviceTrackMapper.selectById(trackId);
         if (track == null) {
-            throw new RuntimeException("服务追踪记录不存在: " + trackId);
+            throw new BusinessException("服务追踪记录不存在: " + trackId);
         }
         return track;
     }

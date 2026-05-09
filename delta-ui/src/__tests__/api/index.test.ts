@@ -92,7 +92,8 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/auth/refresh',
         method: 'post',
-        data
+        data,
+        timeout: 10000
       })
     })
 
@@ -675,7 +676,7 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/status',
         method: 'put',
-        data
+        params: data
       })
     })
 
@@ -695,7 +696,7 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/time-range',
         method: 'post',
-        data
+        params: data
       })
     })
 
@@ -705,7 +706,7 @@ describe('API模块测试', () => {
       expect(mockRequest).toHaveBeenCalledWith({
         url: '/companion-schedules/time-range-batch',
         method: 'post',
-        data
+        params: data
       })
     })
   })
@@ -1296,14 +1297,13 @@ describe('API模块测试', () => {
 
   // ============ 工具函数 ============
   describe('uploadExcel', () => {
-    it('应发送POST请求，携带FormData和multipart头', () => {
+    it('应发送POST请求，携带FormData和超时配置', () => {
       const file = new File(['test'], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       uploadExcel('/import', file)
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/import',
           method: 'post',
-          headers: { 'Content-Type': 'multipart/form-data' },
           timeout: 60000
         })
       )

@@ -94,6 +94,7 @@ public class DeepSeekServiceImpl implements DeepSeekService {
      * @return AI回复内容，失败返回null
      */
     @Override
+    @SuppressWarnings("null")
     public String getChatReplyWithHistory(String userMessage, List<DeepSeekService.ChatMessage> conversationHistory) {
         if (!isEnabled()) {
             log.debug("【DeepSeek】AI未启用，跳过调用");
@@ -154,7 +155,6 @@ public class DeepSeekServiceImpl implements DeepSeekService {
                     recordTokenUsage(parsed.promptTokens, parsed.completionTokens, parsed.totalTokens);
 
                     try {
-                        @SuppressWarnings("null")
                         String contentToCache = parsed.content;
                         redisService.set(cacheKey, contentToCache,
                                 AiCustomerServiceConstants.AI_REPLY_CACHE_TTL_MINUTES, TimeUnit.MINUTES);
@@ -318,10 +318,12 @@ public class DeepSeekServiceImpl implements DeepSeekService {
         String clubName = clubConfig != null && clubConfig.getClubName() != null ? clubConfig.getClubName() : "三角洲行动陪玩俱乐部";
         String mainGames = clubConfig != null && clubConfig.getMainGames() != null ? clubConfig.getMainGames() : "三角洲行动";
         String clubFeatures = clubConfig != null && clubConfig.getClubFeatures() != null ? clubConfig.getClubFeatures() : "我们提供专业的陪玩服务";
-        String priceLevelTwo = formatPrice(clubConfig != null ? clubConfig.getPriceLevelTwo() : null, "50");
-        String priceLevelOne = formatPrice(clubConfig != null ? clubConfig.getPriceLevelOne() : null, "80");
-        String priceTop = formatPrice(clubConfig != null ? clubConfig.getPriceTop() : null, "200");
-        String priceStar = formatPrice(clubConfig != null ? clubConfig.getPriceStar() : null, "500");
+
+        List<CompanionLevelVO> levels = cacheService.getCompanionLevels();
+        String priceLevelTwo = formatPrice(findLevelBasePrice(levels, "BRONZE"), "50");
+        String priceLevelOne = formatPrice(findLevelBasePrice(levels, "SILVER"), "80");
+        String priceTop = formatPrice(findLevelBasePrice(levels, "GOLD"), "200");
+        String priceStar = formatPrice(findLevelBasePrice(levels, "DIAMOND"), "500");
 
         String dynamicPrompt = basePrompt;
         dynamicPrompt = dynamicPrompt.replace("{俱乐部名称}", clubName);
@@ -553,6 +555,24 @@ public class DeepSeekServiceImpl implements DeepSeekService {
         }
 
         return faqBuilder.length() > 0 ? faqBuilder.toString() : null;
+    }
+
+    /**
+     * 从陪玩师等级列表中查找指定等级编码的基础价格
+     *
+     * @param levels    陪玩师等级列表
+     * @param levelCode 等级编码（如 BRONZE, SILVER, GOLD, DIAMOND）
+     * @return 对应等级的基础价格，未找到返回null
+     */
+    private BigDecimal findLevelBasePrice(List<CompanionLevelVO> levels, String levelCode) {
+        if (levels == null || levelCode == null) {
+            return null;
+        }
+        return levels.stream()
+                .filter(l -> levelCode.equals(l.getLevelCode()))
+                .map(CompanionLevelVO::getBasePrice)
+                .findFirst()
+                .orElse(null);
     }
 
     /**

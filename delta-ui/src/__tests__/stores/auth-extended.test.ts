@@ -98,7 +98,7 @@ describe('Auth Store扩展测试', () => {
       const store = useAuthStore()
       await store.login({ username: 'wrong', password: 'wrong' })
 
-      expect(store.token).toBe('')
+      expect(store.token).toBeNull()
       expect(store.isLoggedIn).toBe(false)
     })
 
@@ -112,7 +112,7 @@ describe('Auth Store扩展测试', () => {
       const store = useAuthStore()
       await store.login({ username: 'test', password: 'test' })
 
-      expect(store.token).toBe('')
+      expect(store.token).toBeNull()
       expect(store.isLoggedIn).toBe(false)
     })
 
@@ -121,7 +121,7 @@ describe('Auth Store扩展测试', () => {
 
       const store = useAuthStore()
       await expect(store.login({ username: 'admin', password: '123' })).rejects.toThrow('网络异常')
-      expect(store.token).toBe('')
+      expect(store.token).toBeNull()
     })
   })
 

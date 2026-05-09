@@ -13,6 +13,7 @@
 <template>
   <img
     v-if="loaded && !error"
+    ref="imgRef"
     :src="actualSrc"
     :alt="alt"
     :class="imgClass"
@@ -40,7 +41,7 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
@@ -55,8 +56,9 @@ const error = ref(false)
 const actualSrc = ref('')
 const placeholderSrc = ref('')
 const fallbackSrc = ref('')
+const imgRef = ref<HTMLElement | null>(null)
 
-let observer = null
+let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   const config = typeof props.src === 'object' ? props.src : { src: props.src }
@@ -68,13 +70,14 @@ onMounted(() => {
     ([entry]) => {
       if (entry.isIntersecting) {
         loadImage()
-        observer.disconnect()
+        observer?.disconnect()
       }
     },
     { rootMargin: '100px', threshold: 0.01 }
   )
 
-  observer.observe(document.querySelector('.v-lazy-skeleton, .v-lazy-placeholder') || document.body)
+  const targetEl = imgRef.value || document.body
+  observer.observe(targetEl)
   setTimeout(() => loadImage(), 50)
 })
 

@@ -297,13 +297,12 @@ public class EmotionIntelligenceServiceImpl implements EmotionIntelligenceServic
      * @param userId 用户ID
      * @param state  情绪状态
      */
+    @SuppressWarnings("null")
     private void saveEmotionState(Long userId, EmotionState state) {
         try {
             String key = EMOTION_STATE_KEY_PREFIX + userId;
             String json = toJson(state);
-            @SuppressWarnings("null")
-            String emotionJson = json;
-            redisService.set(key, emotionJson, EMOTION_STATE_TTL_MINUTES, TimeUnit.MINUTES);
+            redisService.set(key, json, EMOTION_STATE_TTL_MINUTES, TimeUnit.MINUTES);
         } catch (Exception e) {
             log.debug("【情绪智能】保存情绪状态失败 | userId={} | error={}", userId, e.getMessage());
         }
@@ -316,6 +315,7 @@ public class EmotionIntelligenceServiceImpl implements EmotionIntelligenceServic
      * @param state       当前情绪状态
      * @param message     触发消息
      */
+    @SuppressWarnings("null")
     private void saveEmotionHistory(Long userId, EmotionState state, String message) {
         try {
             String key = EMOTION_HISTORY_KEY_PREFIX + userId;
@@ -344,7 +344,6 @@ public class EmotionIntelligenceServiceImpl implements EmotionIntelligenceServic
                 newValue = sb.toString();
             }
 
-            @SuppressWarnings("null")
             String historyValue = newValue;
             redisService.set(key, historyValue, 7, TimeUnit.DAYS);
         } catch (Exception e) {

@@ -139,6 +139,7 @@ public class AutoTestRunner {
      *
      * @return JWT令牌字符串，登录失败返回null
      */
+    @SuppressWarnings("null")
     private String loginAndGetToken() {
         try {
             String loginUrl = serverUrl + loginPath;
@@ -153,7 +154,6 @@ public class AutoTestRunner {
             HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(loginBody, headers);
 
             // 发送登录请求
-            @SuppressWarnings("null")
             HttpMethod postMethod = HttpMethod.POST;
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     loginUrl, postMethod, requestEntity,
@@ -197,6 +197,7 @@ public class AutoTestRunner {
      * @param jwtToken JWT认证令牌
      * @return 测试结果列表
      */
+    @SuppressWarnings("null")
     private List<TestAgentOrchestrator.TestResult> executeTestCases(
             TestAgentOrchestrator.TestSuite suite, String jwtToken) {
 
@@ -225,7 +226,6 @@ public class AutoTestRunner {
 
                 long startTime = System.currentTimeMillis();
 
-                @SuppressWarnings("null")
                 HttpMethod postMethod2 = HttpMethod.POST;
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                         sendUrl, postMethod2, requestEntity,

@@ -22,9 +22,10 @@ public class RegisterDTO {
     /** 用户名 */
     private String username;
 
-    @Schema(description = "密码", example = "12345678")
+    @Schema(description = "密码", example = "Admin@123456")
     @NotBlank(message = "密码不能为空")
     @Size(min = 8, max = 50, message = "密码长度必须在8-50之间")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d).{8,50}$", message = "密码必须包含字母和数字")
     /** 密码 */
     private String password;
 

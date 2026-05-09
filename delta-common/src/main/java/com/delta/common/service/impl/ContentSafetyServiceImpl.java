@@ -242,6 +242,7 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
      * @return 安全报告
      */
     @Override
+    @SuppressWarnings("null")
     public SafetyReport generateSafetyReport(LocalDate start, LocalDate end) {
         long totalChecks = 0;
         long blockedCount = 0;
@@ -273,7 +274,7 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
                     Double score = redisTemplate.opsForZSet().score(wordsKey, word);
                     if (score != null) {
                         String wordStr = word.toString();
-                        allWordsRank.merge(wordStr, score.longValue(), Long::sum);
+                        allWordsRank.merge(wordStr, score.longValue(), (a, b) -> Long.sum(a, b));
                     }
                 }
             }
@@ -284,7 +285,7 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
                 try {
                     int hour = Integer.parseInt(entry.getKey().toString());
                     long count = Long.parseLong(entry.getValue().toString());
-                    allHourlyStats.merge(hour, count, Long::sum);
+                    allHourlyStats.merge(hour, count, (a, b) -> Long.sum(a, b));
                 } catch (NumberFormatException e) {
                     log.debug("解析分时段统计失败: key={}, value={}", entry.getKey(), entry.getValue());
                 }
@@ -372,6 +373,7 @@ public class ContentSafetyServiceImpl implements ContentSafetyService {
      * @param level        安全等级
      * @param matchedWords 匹配到的敏感词列表
      */
+    @SuppressWarnings("null")
     private void recordSafetyCheck(String userId, SafetyLevel level, List<String> matchedWords) {
         try {
             String dateKey = DATE_FORMATTER.format(LocalDate.now());

@@ -260,6 +260,7 @@ public class GameKnowledgeServiceImpl implements GameKnowledgeService {
      * @return 注入用的知识文本，无匹配返回空字符串
      */
     @Override
+    @SuppressWarnings("null")
     public String injectKnowledgeToPrompt(String userMessage) {
         if (userMessage == null || userMessage.trim().isEmpty()) {
             return "";
@@ -272,9 +273,8 @@ public class GameKnowledgeServiceImpl implements GameKnowledgeService {
 
         // 第二步：尝试从Redis热点缓存获取
         try {
-            Object cached = redisService.get(cacheKey);
-            if (cached != null) {
-                String cachedKnowledge = cached.toString();
+            String cachedKnowledge = (String) redisService.get(cacheKey);
+            if (cachedKnowledge != null) {
                 log.info("【知识库】热点缓存命中 | cacheKey={} | 知识长度={}", cacheKey, cachedKnowledge.length());
                 return cachedKnowledge;
             }
@@ -296,9 +296,7 @@ public class GameKnowledgeServiceImpl implements GameKnowledgeService {
         // 第五步：写入Redis热点缓存
         if (!injectText.isEmpty()) {
             try {
-                @SuppressWarnings("null")
-                String cacheValue = injectText;
-                redisService.set(cacheKey, cacheValue, HOT_KEY_TTL_MINUTES, TimeUnit.MINUTES);
+                redisService.set(cacheKey, injectText, HOT_KEY_TTL_MINUTES, TimeUnit.MINUTES);
                 log.info("【知识库】热点知识已缓存 | cacheKey={} | TTL={}分钟 | 知识长度={}",
                         cacheKey, HOT_KEY_TTL_MINUTES, injectText.length());
             } catch (Exception e) {

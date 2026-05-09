@@ -60,7 +60,7 @@
           v-for="j in columns"
           :key="j"
           class="skeleton-line skeleton-cell"
-          :style="{ width: `${70 + Math.random() * 30}%` }"
+          :style="getCellStyle(j)"
         />
       </div>
     </template>
@@ -79,15 +79,33 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  type: { type: String, default: 'text', validator: v => ['text', 'card', 'table', 'form'].includes(v) },
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps({
+  type: { type: String, default: 'text', validator: (v: string) => ['text', 'card', 'table', 'form'].includes(v) },
   rows: { type: Number, default: 5 },
   count: { type: Number, default: 3 },
   columns: { type: Number, default: 5 },
   animated: { type: Boolean, default: true },
   lastRowShorter: { type: Boolean, default: true }
 })
+
+/**
+ * 预生成表格列的随机宽度，避免模板中 Math.random() 导致每次渲染都重新计算
+ * Math.random() 在模板中会在每次组件更新时触发，导致不必要的重渲染
+ */
+const cellWidths = computed(() => {
+  const widths: Record<number, string> = {}
+  for (let i = 1; i <= props.columns; i++) {
+    widths[i] = `${70 + Math.random() * 30}%`
+  }
+  return widths
+})
+
+const getCellStyle = (index: number) => {
+  return { width: cellWidths.value[index] || '100%' }
+}
 </script>
 
 <style scoped>

@@ -14,6 +14,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.*;
  * @author 刘建国
  */
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class OrderServiceImplTest {
 
     /** 订单Mapper */
@@ -40,6 +43,12 @@ class OrderServiceImplTest {
     /** 陪玩师Mapper */
     @Mock
     private CompanionMapper companionMapper;
+
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
     /** 被测服务实例 */
     @InjectMocks
@@ -155,6 +164,9 @@ class OrderServiceImplTest {
         companion.setEnabled(1);
         companion.setPrice(new BigDecimal("100.00"));
         when(companionMapper.selectById(1L)).thenReturn(companion);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.increment(anyString())).thenReturn(1L);
+        when(redisTemplate.expire(anyString(), anyLong(), any())).thenReturn(true);
         when(orderMapper.insert(any(Order.class))).thenReturn(1);
 
         // 执行测试

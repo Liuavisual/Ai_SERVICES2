@@ -66,6 +66,7 @@ public class RateLimiter {
      * @param windowSeconds 时间窗口（秒）
      * @return true-允许通过，false-被限流
      */
+    @SuppressWarnings("null")
     public boolean isAllowed(String key, int maxRequests, int windowSeconds) {
         String redisKey = RATE_LIMIT_PREFIX + key;
         List<String> keys = Collections.singletonList(redisKey);

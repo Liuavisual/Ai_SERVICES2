@@ -43,7 +43,13 @@ public class XssFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         String contentType = httpRequest.getContentType();
-        if (contentType != null && contentType.contains("application/json")) {
+
+        if (contentType != null && contentType.toLowerCase().contains("multipart/form-data")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        if (contentType != null && contentType.toLowerCase().contains("application/json")) {
             chain.doFilter(new XssJsonRequestWrapper(httpRequest), response);
         } else {
             chain.doFilter(new XssParamRequestWrapper(httpRequest), response);

@@ -4,6 +4,7 @@ import com.delta.common.dto.LoginDTO;
 import com.delta.common.dto.RegisterDTO;
 import com.delta.common.entity.SysUser;
 import com.delta.common.mapper.SysUserMapper;
+import com.delta.common.service.PermissionService;
 import com.delta.common.service.RedisService;
 import com.delta.common.util.JwtUtils;
 import com.delta.common.vo.LoginVO;
@@ -22,8 +23,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * 认证服务单元测试
+ *
+ * @author 刘建国
+ */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@SuppressWarnings("null")
 @DisplayName("认证服务单元测试")
 public class AuthServiceImplTest {
 
@@ -42,12 +49,14 @@ public class AuthServiceImplTest {
     @Mock
     private TokenBlacklistService tokenBlacklistService;
 
+    @Mock
+    private PermissionService permissionService;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
     private SysUser activeUser;
 
-    @SuppressWarnings("null")
     @BeforeEach
     void setUp() {
         activeUser = new SysUser();
@@ -60,6 +69,7 @@ public class AuthServiceImplTest {
         activeUser.setDeleted(0);
 
         when(jwtUtils.generateToken(anyLong(), anyString(), anyString())).thenReturn("access_token");
+        when(jwtUtils.generateTokenWithPermissions(anyLong(), anyString(), anyString(), anyString())).thenReturn("access_token");
         when(jwtUtils.generateRefreshToken(anyLong(), anyString())).thenReturn("refresh_token");
         when(jwtUtils.getExpirationFromNow()).thenReturn(7200000L);
         when(redisService.hasKey(anyString())).thenReturn(false);
@@ -112,16 +122,13 @@ public class AuthServiceImplTest {
         assertThrows(Exception.class, () -> authService.login(dto));
     }
 
-    @SuppressWarnings("null")
     @Test
     @DisplayName("连续5次登录失败后应锁定15分钟")
     void testLoginLockAfterMaxAttempts() {
         when(sysUserMapper.selectOne(any())).thenReturn(activeUser);
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-        when(redisService.increment(anyString())).thenAnswer(invocation -> {
-            return 5L;
-        });
+        when(redisService.increment(anyString())).thenAnswer(invocation -> 5L);
         when(redisService.hasKey(startsWith("login:lock:"))).thenReturn(true);
 
         LoginDTO dto = new LoginDTO();

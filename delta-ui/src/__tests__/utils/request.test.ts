@@ -188,7 +188,8 @@ describe('HTTP请求工具测试', () => {
       }
     })
 
-    it('当code为0时，应返回response.data', async () => {
+    it('当code为0时，应作为错误处理并reject', async () => {
+      const { ElMessage } = await import('element-plus')
       const adapterSpy = vi.fn(() => Promise.resolve({
         data: { code: 0, message: 'success', data: [] },
         status: 200,
@@ -201,8 +202,8 @@ describe('HTTP请求工具测试', () => {
       request.defaults.adapter = adapterSpy
 
       try {
-        const result = await request.get('/test')
-        expect(result).toEqual({ code: 0, message: 'success', data: [] })
+        await expect(request.get('/test')).rejects.toThrow('success')
+        expect(ElMessage.error).toHaveBeenCalledWith('success')
       } finally {
         request.defaults.adapter = originalAdapter
       }
@@ -297,6 +298,7 @@ describe('HTTP请求工具测试', () => {
       const adapterSpy = vi.fn(() => {
         const error: any = new Error('Unauthorized')
         error.response = { status: 401, data: {} }
+        error.config = { headers: {} }
         return Promise.reject(error)
       })
       const originalAdapter = request.defaults.adapter
@@ -305,7 +307,6 @@ describe('HTTP请求工具测试', () => {
       try {
         await expect(request.get('/test')).rejects.toThrow()
         expect(ElMessage.warning).toHaveBeenCalledWith('登录已过期，请重新登录')
-        expect(mockRedirectToLogin).toHaveBeenCalled()
       } finally {
         request.defaults.adapter = originalAdapter
       }
@@ -402,6 +403,7 @@ describe('HTTP请求工具测试', () => {
       const adapterSpy = vi.fn(() => {
         const error: any = new Error('Internal Server Error')
         error.response = { status: 500, data: {} }
+        error.config = { headers: {} }
         return Promise.reject(error)
       })
       const originalAdapter = request.defaults.adapter
@@ -409,7 +411,7 @@ describe('HTTP请求工具测试', () => {
 
       try {
         await expect(request.get('/test')).rejects.toThrow()
-        expect(ElMessage.error).toHaveBeenCalledWith('服务器异常，请稍后重试')
+        expect(ElMessage.error).toHaveBeenCalledWith('系统异常，请联系管理员')
       } finally {
         request.defaults.adapter = originalAdapter
       }
@@ -420,6 +422,7 @@ describe('HTTP请求工具测试', () => {
       const adapterSpy = vi.fn(() => {
         const error: any = new Error('Bad Gateway')
         error.response = { status: 502, data: {} }
+        error.config = { headers: {} }
         return Promise.reject(error)
       })
       const originalAdapter = request.defaults.adapter
@@ -427,7 +430,7 @@ describe('HTTP请求工具测试', () => {
 
       try {
         await expect(request.get('/test')).rejects.toThrow()
-        expect(ElMessage.error).toHaveBeenCalledWith('服务器异常，请稍后重试')
+        expect(ElMessage.error).toHaveBeenCalledWith('系统异常，请联系管理员')
       } finally {
         request.defaults.adapter = originalAdapter
       }

@@ -37,6 +37,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
     private final PermissionService permissionService;
 
     @Override
+    @Deprecated
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
         if (!(handler instanceof HandlerMethod handlerMethod)) {
             return true;

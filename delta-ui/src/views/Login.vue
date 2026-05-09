@@ -13,7 +13,7 @@
       <div class="bg-orb bg-orb-3"></div>
     </div>
 
-    <div class="login-card">
+    <div class="login-card" :class="{ 'shake': isShaking }">
       <div class="card-glass">
         <div class="login-header">
           <div class="logo-wrap">
@@ -28,12 +28,22 @@
 
         <el-tabs v-model="activeTab" class="login-tabs">
           <el-tab-pane label="登录" name="login">
+            <transition name="error-fade">
+              <div v-if="loginErrorMessage" class="login-error-banner">
+                <svg class="error-icon" viewBox="0 0 20 20" fill="none" width="18" height="18">
+                  <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M10 6v4M10 13.5v.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span class="error-text">{{ loginErrorMessage }}</span>
+              </div>
+            </transition>
+            <el-alert v-if="registerSuccessMessage" :title="registerSuccessMessage" type="success" show-icon closable class="register-success-alert" />
             <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef" label-width="0">
               <el-form-item prop="username">
-                <el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User" size="large" name="username" />
+                <el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User" size="large" name="username" @input="clearLoginError" />
               </el-form-item>
               <el-form-item prop="password">
-                <el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="Lock" size="large" show-password @keyup.enter="handleLogin" name="password" />
+                <el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="Lock" size="large" show-password @keyup.enter="handleLogin" name="password" @input="clearLoginError" />
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" size="large" class="submit-btn" :loading="loading" @click="handleLogin">登 录</el-button>
@@ -85,6 +95,15 @@ const loginFormRef = ref<FormInstance | null>(null)
 /** 注册表单引用 */
 const registerFormRef = ref<FormInstance | null>(null)
 
+/** 注册成功提示消息（切换回登录Tab后持久显示） */
+const registerSuccessMessage = ref<string>('')
+
+/** 登录错误提示消息 */
+const loginErrorMessage = ref<string>('')
+
+/** 登录卡片抖动动画触发 */
+const isShaking = ref<boolean>(false)
+
 /** 登录表单数据 */
 const loginForm = reactive<LoginDTO>({ username: '', password: '' })
 /** 注册表单数据 */
@@ -92,14 +111,28 @@ const registerForm = reactive<RegisterDTO>({ username: '', password: '', realNam
 
 /** 登录表单校验规则 */
 const loginRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 50, message: '用户名长度在 3 到 50 个字符', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 8, max: 50, message: '密码长度必须在 8 到 50 个字符', trigger: 'blur' }
+  ]
 }
 
 /** 注册表单校验规则 */
 const registerRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }, { min: 3, max: 50, message: '用户名长度在 3 到 50 个字符', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 8, message: '密码长度至少 8 个字符', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 50, message: '用户名长度在 3 到 50 个字符', trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_\u4e00-\u9fa5]{3,50}$/, message: '用户名只能包含字母、数字、下划线和中文', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 8, max: 50, message: '密码长度必须在 8 到 50 个字符', trigger: 'blur' },
+    { pattern: /^(?=.*[a-zA-Z])(?=.*\d)/, message: '密码必须包含字母和数字', trigger: 'blur' }
+  ],
   realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
   phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
   email: [{ type: 'email' as const, message: '邮箱格式不正确', trigger: 'blur' }]
@@ -119,6 +152,7 @@ const handleLogin = async (): Promise<void> => {
     return
   }
   loading.value = true
+  loginErrorMessage.value = ''
   try {
     const res = await authStore.login(loginForm)
     if (res.code === 200) {
@@ -130,14 +164,36 @@ const handleLogin = async (): Promise<void> => {
         const data = res.data as LoginVO
         router.push(authStorage.getRoleHomePage(data.role as UserRole))
       }
+    } else {
+      showLoginError(res.message || '登录失败，请检查用户名和密码')
     }
   } catch (error: unknown) {
-    const err = error as { response?: { status?: number } }
+    const err = error as { response?: { status?: number }; message?: string }
     if (!err.response) {
-      ElMessage.error('网络连接异常，请检查网络后重试')
+      showLoginError('网络连接异常，请检查网络后重试')
+    } else {
+      showLoginError(err.message || '登录失败')
     }
     console.error('登录失败', error)
   } finally { loading.value = false }
+}
+
+/**
+ * 显示登录错误提示并触发抖动动画
+ * @param message 错误消息
+ */
+const showLoginError = (message: string): void => {
+  loginErrorMessage.value = message
+  isShaking.value = true
+  setTimeout(() => { isShaking.value = false }, 500)
+}
+
+/**
+ * 清除登录错误提示
+ */
+const clearLoginError = (): void => {
+  loginErrorMessage.value = ''
+  registerSuccessMessage.value = ''
 }
 
 /**
@@ -154,7 +210,13 @@ const handleRegister = async (): Promise<void> => {
   registerLoading.value = true
   try {
     const res = await authApi.register(registerForm)
-    if (res.code === 200) { ElMessage.success('注册成功，请等待客服负责人审核'); activeTab.value = 'login' }
+    if (res.code === 200) {
+      registerSuccessMessage.value = '账号注册成功，请等待客服负责人审核通过后即可登录'
+      activeTab.value = 'login'
+      registerFormRef.value?.resetFields()
+    } else {
+      ElMessage.error(res.message || '注册失败')
+    }
   } catch (error: unknown) {
     const err = error as { response?: { status?: number } }
     if (!err.response) {
@@ -288,6 +350,57 @@ const handleRegister = async (): Promise<void> => {
 }
 
 .register-tip { margin-top: 12px; }
+
+.register-success-alert { margin-bottom: 16px; }
+
+.login-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--gu-radius-lg, 10px);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.10), rgba(220, 38, 38, 0.06));
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  margin-bottom: 16px;
+  animation: errorSlideIn 0.3s ease-out;
+}
+
+.error-icon {
+  flex-shrink: 0;
+  color: #EF4444;
+}
+
+.error-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #991B1B;
+  font-weight: 500;
+}
+
+.shake {
+  animation: shakeX 0.5s ease-in-out;
+}
+
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-fade-enter-active { animation: errorSlideIn 0.3s ease-out; }
+.error-fade-leave-active { transition: opacity 0.2s ease-in; }
+.error-fade-leave-to { opacity: 0; }
 
 .login-footer {
   margin-top: 28px;

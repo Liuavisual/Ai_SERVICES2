@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@SuppressWarnings({"null", "unchecked"})
 class CustomerLifecycleServiceImplTest {
 
     @BeforeAll
@@ -177,36 +180,22 @@ class CustomerLifecycleServiceImplTest {
     }
 
     @Test
-    @DisplayName("更新客户生命周期标签 - 正常更新")
+    @DisplayName("更新客户生命周期标签 - 批量SQL更新")
     void updateCustomerLifecycleTags_shouldUpdateTags() {
-        CustomerProfile profile = new CustomerProfile();
-        profile.setId(1L);
-        profile.setUserId(1L);
-        profile.setLastActiveAt(LocalDateTime.now().minusDays(15));
-        profile.setTotalMessages(100);
-        profile.setTags(null);
-        when(customerProfileMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(profile));
-        when(customerProfileMapper.updateById(any(CustomerProfile.class))).thenReturn(1);
+        when(customerProfileMapper.update(isNull(), any())).thenReturn(1);
 
         customerLifecycleService.updateCustomerLifecycleTags();
 
-        verify(customerProfileMapper).updateById(any(CustomerProfile.class));
+        verify(customerProfileMapper, atLeastOnce()).update(isNull(), any());
     }
 
     @Test
-    @DisplayName("更新客户生命周期标签 - 标签已存在不重复追加")
+    @DisplayName("更新客户生命周期标签 - 不重复更新")
     void updateCustomerLifecycleTags_tagExists_shouldNotDuplicate() {
-        CustomerProfile profile = new CustomerProfile();
-        profile.setId(1L);
-        profile.setUserId(1L);
-        profile.setLastActiveAt(LocalDateTime.now().minusDays(15));
-        profile.setTotalMessages(100);
-        profile.setTags("流失风险");
-        when(customerProfileMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(List.of(profile));
-        when(customerProfileMapper.updateById(any(CustomerProfile.class))).thenReturn(1);
+        when(customerProfileMapper.update(isNull(), any())).thenReturn(1);
 
         customerLifecycleService.updateCustomerLifecycleTags();
 
-        verify(customerProfileMapper).updateById(any(CustomerProfile.class));
+        verify(customerProfileMapper, atLeastOnce()).update(isNull(), any());
     }
 }

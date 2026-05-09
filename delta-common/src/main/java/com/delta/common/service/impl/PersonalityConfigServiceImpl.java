@@ -72,11 +72,10 @@ public class PersonalityConfigServiceImpl implements PersonalityConfigService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @SuppressWarnings("null")
     public com.delta.common.vo.PersonalityConfigVO createConfig(PersonalityConfigDTO dto) {
-        @SuppressWarnings("null")
-        PersonalityConfigDTO dtoNonNull = dto;
         AiPersonalityConfig config = new AiPersonalityConfig();
-        BeanUtils.copyProperties(dtoNonNull, config);
+        BeanUtils.copyProperties(dto, config);
         if (config.getIsDefault() == null) {
             config.setIsDefault(false);
         }
@@ -96,15 +95,14 @@ public class PersonalityConfigServiceImpl implements PersonalityConfigService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @SuppressWarnings("null")
     public com.delta.common.vo.PersonalityConfigVO updateConfig(Long id, PersonalityConfigDTO dto) {
         AiPersonalityConfig existing = configMapper.selectById(id);
         if (existing == null) {
             throw new com.delta.common.exception.BusinessException("人格配置不存在: id=" + id);
         }
 
-        @SuppressWarnings("null")
-        PersonalityConfigDTO updateDto = dto;
-        BeanUtils.copyProperties(updateDto, existing, "id", "clubConfigId", "createdAt", "conversionRate", "satisfactionScore", "totalConversations");
+        BeanUtils.copyProperties(dto, existing, "id", "clubConfigId", "createdAt", "conversionRate", "satisfactionScore", "totalConversations");
         configMapper.updateById(existing);
 
         clearPersonalityCache();
@@ -140,6 +138,7 @@ public class PersonalityConfigServiceImpl implements PersonalityConfigService {
     }
 
     @Override
+    @SuppressWarnings("null")
     public AiPersonalityConfig getActivePersonality(Long clubConfigId, String gameType) {
         // 先查缓存
         String cacheKey = buildActiveConfigCacheKey(clubConfigId, gameType);
@@ -163,7 +162,6 @@ public class PersonalityConfigServiceImpl implements PersonalityConfigService {
         // 缓存匹配结果
         if (matched != null) {
             try {
-                @SuppressWarnings("null")
                 Long configId = matched.getId();
                 redisService.set(cacheKey, configId, ACTIVE_CONFIG_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
             } catch (Exception e) {

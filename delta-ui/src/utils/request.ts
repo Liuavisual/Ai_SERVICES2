@@ -45,6 +45,7 @@ interface RequestInstance {
 const http = axios.create({
   baseURL: '/api/v1',
   timeout: 30000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -64,6 +65,16 @@ http.interceptors.request.use(
     const method = (config.method || '').toLowerCase()
     if (['post', 'put', 'patch'].includes(method) && config.data === undefined) {
       config.data = {}
+    }
+    if (config.params) {
+      if (config.params.pageNum !== undefined) {
+        config.params.page = config.params.pageNum
+        delete config.params.pageNum
+      }
+      if (config.params.pageSize !== undefined) {
+        config.params.size = config.params.pageSize
+        delete config.params.pageSize
+      }
     }
     const token = authStorage.getToken()
     if (token) {
@@ -96,11 +107,19 @@ http.interceptors.response.use(
   (response) => {
     const data = response.data
     if (data && data.code === 401) {
+      const url = typeof response.config.url === 'string' ? response.config.url : ''
+      if (url.includes('/auth/login')) {
+        const rejectError: Error & { response?: unknown } = new Error(data.message || '登录失败')
+        rejectError.response = response
+        return Promise.reject(rejectError)
+      }
       return handle401(response.config)
     }
     if (data && data.code !== 200) {
       ElMessage.error(data.message || '请求失败')
-      return Promise.reject(new Error(data.message || '请求失败'))
+      const rejectError: Error & { response?: unknown } = new Error(data.message || '请求失败')
+      rejectError.response = response
+      return Promise.reject(rejectError)
     }
     return data
   },
@@ -119,8 +138,23 @@ http.interceptors.response.use(
       return handle401(config)
     }
 
+    if (response.status === 403) {
+      ElMessage.error(response.data?.message || '无权操作')
+      return Promise.reject(error)
+    }
+
     if (response.status === 404) {
-      ElMessage.error('请求的资源不存在')
+      ElMessage.error(response.data?.message || '请求的资源不存在')
+      return Promise.reject(error)
+    }
+
+    if (response.status === 429) {
+      ElMessage.warning(response.data?.message || '请求过于频繁')
+      return Promise.reject(error)
+    }
+
+    if (response.status >= 400 && response.status < 500) {
+      ElMessage.error(response.data?.message || `请求错误(${response.status})`)
       return Promise.reject(error)
     }
 

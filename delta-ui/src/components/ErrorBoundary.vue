@@ -39,7 +39,7 @@ onErrorCaptured((err, instance, info) => {
   console.error('[ErrorBoundary] 捕获到渲染错误:', {
     error: err?.message,
     stack: err?.stack,
-    component: instance?.$options?.name || instance?.type?.name || '未知组件',
+    component: instance?.type?.name || '未知组件',
     info
   })
 

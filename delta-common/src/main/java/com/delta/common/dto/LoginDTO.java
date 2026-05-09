@@ -2,6 +2,7 @@ package com.delta.common.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -20,6 +21,7 @@ public class LoginDTO {
 
     @Schema(description = "密码", example = "12345678")
     @NotBlank(message = "密码不能为空")
+    @Size(min = 8, max = 50, message = "密码长度必须在8-50之间")
     /** 密码 */
     private String password;
 
