@@ -1,0 +1,266 @@
+# ============================================================
+# Delta AI 客服系统 - Promtail 日志采集Agent配置
+# 采集 Docker 容器日志、Backend JSON 日志、Nginx 日志
+# 推送到 Loki:3100 进行统一存储和查询
+# @author 刘建国
+# ============================================================
+
+# --- Promtail 自身服务配置 ---
+server:
+  # HTTP 监听端口（健康检查、就绪探针、重载接口）
+  http_listen_port: 9080
+  # gRPC 监听端口（0表示禁用，Promtail无需gRPC入站通信）
+  grpc_listen_port: 0
+  # 优雅关闭超时
+  graceful_shutdown_timeout: 10s
+  # HTTP 服务器读取超时
+  http_server_read_timeout: 30s
+  # HTTP 服务器写入超时
+  http_server_write_timeout: 30s
+  # 启用运行时配置热重载接口
+  enable_runtime_reload: true
+
+# --- 采集位置记录文件 ---
+# 记录每个日志文件的最后读取位置，容器重启后从断点继续采集
+positions:
+  filename: /tmp/positions.yaml
+  # 忽略无效位置的日志文件
+  ignore_invalid_yaml: true
+  # 批量写入位置文件间隔
+  sync_period: 10s
+
+# --- 日志推送客户端配置 ---
+clients:
+  # 推送到 Loki HTTP API
+  - url: http://loki:3100/loki/api/v1/push
+    # 批量等待时间（收集到此时间后批量发送）
+    batchwait: 5s
+    # 批量发送大小（字节）
+    batchsize: 1048576
+    # 外部标签（所有日志流都携带的标签）
+    external_labels:
+      cluster: delta-ai
+      environment: production
+    # 请求超时
+    timeout: 30s
+    # 失败重试配置
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+    # 丢弃速率限制后的日志而非阻塞
+    drop_rate_limit: false
+
+# --- 日志采集配置 ---
+scrape_configs:
+  # ============================================================
+  # 采集任务1: Docker 容器日志（自动发现）
+  # ============================================================
+  - job_name: docker-containers
+    # 通过 Docker Socket 自动发现容器
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        # 每30秒刷新容器列表
+        refresh_interval: 30s
+        # 过滤容器镜像标签
+        filters:
+          - name: label
+            values:
+              - "com.docker.compose.project=ai-servers"
+    # 标签重写规则
+    relabel_configs:
+      # 提取容器名作为标签（去掉Docker添加的前导斜杠 "/"）
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        replacement: '$1'
+        target_label: 'container'
+      # 提取容器镜像名作为标签
+      - source_labels: ['__meta_docker_container_image']
+        regex: '([^:]+):.*'
+        replacement: '$1'
+        target_label: 'image'
+      # 提取容器ID前12位作为唯一标识
+      - source_labels: ['__meta_docker_container_id']
+        regex: '(.{12}).*'
+        replacement: '$1'
+        target_label: 'container_id'
+      # 只采集 delta 项目相关容器（容器名包含 "delta-"）
+      - source_labels: ['container']
+        regex: 'delta-.*'
+        action: keep
+    # 日志处理管道
+    pipeline_stages:
+      # 添加静态标签
+      - static_labels:
+          source: docker
+          log_type: container
+      # 对Nginx容器日志进行标签标记
+      - match:
+          selector: '{container="delta-nginx"}'
+          stages:
+            - static_labels:
+                service: nginx
+      - match:
+          selector: '{container="delta-backend"}'
+          stages:
+            - static_labels:
+                service: backend
+      - match:
+          selector: '{container="delta-mysql"}'
+          stages:
+            - static_labels:
+                service: mysql
+      - match:
+          selector: '{container="delta-redis"}'
+          stages:
+            - static_labels:
+                service: redis
+      - match:
+          selector: '{container="delta-prometheus"}'
+          stages:
+            - static_labels:
+                service: prometheus
+      - match:
+          selector: '{container="delta-grafana"}'
+          stages:
+            - static_labels:
+                service: grafana
+      - match:
+          selector: '{container="delta-loki"}'
+          stages:
+            - static_labels:
+                service: loki
+      - match:
+          selector: '{container="delta-promtail"}'
+          stages:
+            - static_labels:
+                service: promtail
+      # 时间戳修正（使用日志收集时间作为fallback）
+      - timestamp:
+          source: ""
+          format: ""
+          fallback_format: "RFC3339"
+
+  # ============================================================
+  # 采集任务2: Backend 结构化JSON日志文件
+  # ============================================================
+  - job_name: backend-json-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          app: delta-backend
+          source: file
+          log_type: structured
+          service: backend
+          # 指定采集的文件路径（通过Docker卷挂载到Promtail容器内）
+          __path__: /app/logs/delta-ai.json
+    # JSON日志解析管道
+    pipeline_stages:
+      # 第1阶段：解析JSON格式的日志行
+      - json:
+          expressions:
+            # 映射logback JSON字段到Promtail内部字段
+            timestamp: timestamp
+            level: level
+            logger_name: logger
+            thread_name: thread
+            message_text: message
+            stack_trace: stack_trace
+            mdc_data: mdc
+      # 第2阶段：提取日志级别作为标签（用于LogQL按级别过滤）
+      - labels:
+          level: ""
+      # 第3阶段：提取日志Logger名作为标签（用于按组件过滤）
+      - labels:
+          logger_name: ""
+      # 第4阶段：设置时间戳（使用日志自身的时间戳）
+      - timestamp:
+          # 来源字段：JSON中的timestamp字段
+          source: timestamp
+          # LogstashEncoder默认ISO 8601格式: "2026-05-10T22:15:30.123+08:00"
+          format: RFC3339
+          # 定位修正（Asia/Shanghai = UTC+8）
+          location: Asia/Shanghai
+      # 第5阶段：设置日志输出内容（优先显示message字段）
+      - output:
+          source: message_text
+      # 第6阶段：如果有堆栈跟踪，追加到输出
+      - template:
+          source: stack_trace
+          template: '{{if .Value }}\n{{ .Value }}{{ end }}'
+      # 第7阶段：清理空消息
+      - replace:
+          expression: '^\s*$'
+          replace: '[空日志行]'
+
+  # ============================================================
+  # 采集任务3: Nginx 访问日志
+  # ============================================================
+  - job_name: nginx-access-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          app: delta-nginx
+          source: file
+          log_type: access
+          service: nginx
+          # 匹配 Nginx 访问日志文件
+          __path__: /var/log/nginx/access.log
+    pipeline_stages:
+      # 使用正则解析 Nginx 默认 combined 日志格式
+      - regex:
+          expression: '^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<request_method>\S+) (?P<request_uri>[^"]*) (?P<server_protocol>[^"]*)" (?P<status>\d{3}) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"'
+      # 提取HTTP状态码作为标签
+      - labels:
+          status: ""
+          request_method: ""
+      # 解析Nginx时间格式 "10/May/2026:14:30:00 +0800"
+      - timestamp:
+          source: time_local
+          format: "02/Jan/2006:15:04:05 -0700"
+      # 格式化输出
+      - template:
+          source: ""
+          template: '{{ .remote_addr }} {{ .request_method }} {{ .request_uri }} {{ .status }} {{ .body_bytes_sent }}B'
+
+  # ============================================================
+  # 采集任务4: Nginx 错误日志
+  # ============================================================
+  - job_name: nginx-error-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          app: delta-nginx
+          source: file
+          log_type: error
+          service: nginx
+          # Nginx 错误日志文件
+          __path__: /var/log/nginx/error.log
+    pipeline_stages:
+      # 解析 Nginx 错误日志格式
+      # 格式: "2026/05/10 14:30:00 [error] 123#123: *456 message"
+      - regex:
+          expression: '^(?P<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<error_level>\w+)\] (?P<pid>\d+#\d+): (?P<message>.*)'
+      # 提取错误级别作为标签
+      - labels:
+          error_level: ""
+      # 时间戳解析
+      - timestamp:
+          source: time
+          format: "2006/01/02 15:04:05"
+          location: Asia/Shanghai
+      # 使用完整的错误消息
+      - output:
+          source: message
+
+# --- 限制配置 ---
+limits_config:
+  # 读取行速率限制（每秒行数，不限制设为0）
+  readline_rate: 10000
+  # 读取行突发容量
+  readline_burst: 20000
+  # 单日志文件最大大小
+  max_streams_per_user: 0

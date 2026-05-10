@@ -1,0 +1,156 @@
+# ============================================================
+# Delta AI 客服系统 - Loki 日志聚合服务配置
+# 接收 Promtail 推送的结构化日志并提供查询接口
+# @author 刘建国
+# ============================================================
+
+# 关闭认证（内网部署无需认证）
+auth_enabled: false
+
+# --- 服务器配置 ---
+server:
+  # HTTP API 监听端口（Grafana 通过此端口查询日志）
+  http_listen_port: 3100
+  # gRPC 监听端口（Promtail 通过此端口推送日志，内部通信）
+  grpc_listen_port: 9096
+  # gRPC 服务最大接收消息大小（默认4MB，调大以支持批量推送）
+  grpc_server_max_recv_msg_size: 16777216
+  # gRPC 服务最大发送消息大小
+  grpc_server_max_send_msg_size: 16777216
+
+# --- 通用配置 ---
+common:
+  # 数据存储根目录
+  path_prefix: /loki
+  # 文件系统存储
+  storage:
+    filesystem:
+      # 数据块存储目录
+      chunks_directory: /loki/chunks
+      # 规则存储目录
+      rules_directory: /loki/rules
+  # 副本因子（单节点部署为1）
+  replication_factor: 1
+  # 环配置（单节点使用内存KV存储）
+  ring:
+    kvstore:
+      store: inmemory
+    # 单节点无需等待其他实例加入
+    instance_enable_ipv6: false
+
+# --- 日志流Schema配置 ---
+schema_config:
+  configs:
+    # 使用 boltdb-shipper 索引存储，兼容 Loki 2.x 并稳定可靠
+    - from: "2024-01-01"
+      store: boltdb-shipper
+      # 文件系统作为对象存储后端
+      object_store: filesystem
+      # v11 schema 版本（boltdb-shipper 推荐版本）
+      schema: v11
+      index:
+        # 索引前缀
+        prefix: index_
+        # 索引分片周期（每24小时创建一个新的索引文件）
+        period: 24h
+
+# --- 存储配置 ---
+storage_config:
+  # boltdb-shipper 索引存储
+  boltdb_shipper:
+    # 活跃索引目录（当前写入的索引）
+    active_index_directory: /loki/boltdb-shipper-active
+    # 索引缓存目录（已完成的索引缓存）
+    cache_location: /loki/boltdb-shipper-cache
+    # 索引缓存TTL
+    cache_ttl: 24h
+    # 共享存储类型
+    shared_store: filesystem
+  # 文件系统存储（数据块存储）
+  filesystem:
+    directory: /loki/chunks
+
+# --- 压缩器配置 ---
+compactor:
+  # 压缩器工作目录
+  working_directory: /loki/compactor
+  # 共享存储类型
+  shared_store: filesystem
+  # 启用基于保留策略的自动删除
+  retention_enabled: true
+  # 删除延迟（标记后2小时执行物理删除）
+  retention_delete_delay: 2h
+  # 压缩间隔
+  compaction_interval: 10m
+
+# --- 限制与保留配置 ---
+limits_config:
+  # 日志保留周期：30天（720小时）
+  retention_period: 720h
+  # 拆分查询按时间间隔
+  split_queries_by_interval: 24h
+  # 单次查询最大日志条目数
+  max_entries_limit_per_query: 5000
+  # 允许结构化元数据（用于日志标签动态提取）
+  allow_structured_metadata: true
+  # 拒绝超过168小时（7天）的旧样本写入
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  # 拒绝超出未来1小时的样本写入
+  creation_grace_period: 10m
+  # 最大查询时间范围（7天）
+  max_query_length: 168h
+  # 最大并发查询数
+  max_queriers_per_tenant: 10
+
+# --- 查询配置 ---
+querier:
+  # 查询器最大并发
+  max_concurrent: 10
+  # 查询超时时间
+  query_timeout: 3m
+  # 查询尾部超时
+  tail_max_duration: 1h
+
+# --- 查询前端配置 ---
+query_frontend:
+  # 最大同时查询数
+  max_outstanding_per_tenant: 100
+  # 查询结果缓存TTL
+  query_stats_results_cache:
+    cache:
+      enable_fifocache: true
+      fifocache:
+        max_size_bytes: 500MB
+        validity: 24h
+
+# --- 数据块缓存配置 ---
+chunk_store_config:
+  # 日志查询最大回溯时间（0表示无上限，由retention_period约束）
+  max_look_back_period: 0s
+  # 数据块缓存
+  chunk_cache_config:
+    enable_fifocache: true
+    fifocache:
+      max_size_bytes: 500MB
+      validity: 24h
+
+# --- 表管理器配置（额外保留策略兜底） ---
+table_manager:
+  # 启用表保留删除
+  retention_deletes_enabled: true
+  # 表保留周期（与 limits_config 保持一致）
+  retention_period: 720h
+  # 表轮转周期
+  creation_grace_period: 10m
+
+# --- 前端工作器配置 ---
+frontend_worker:
+  # 前端地址（连接到自身，单节点部署）
+  frontend_address: "127.0.0.1:9095"
+  # 匹配查询前端gRPC地址
+  match_max_concurrent: true
+
+# --- 分析器配置（关闭不必要的分析功能以减少资源开销） ---
+analytics:
+  reporting_enabled: false

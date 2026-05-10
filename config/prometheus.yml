@@ -1,0 +1,44 @@
+# ============================================================
+# Delta AI 客服系统 - Prometheus 监控采集配置
+# 采集后端服务 /actuator/prometheus 暴露的 Micrometer 指标
+# @author 刘建国
+# ============================================================
+
+# 全局配置
+# 每15秒采集一次指标数据，评估规则每30秒计算一次
+global:
+  scrape_interval: 15s
+  evaluation_interval: 30s
+  scrape_timeout: 10s
+
+# 告警规则文件列表
+rule_files:
+  - "alerts.yml"
+
+# 采集任务配置
+scrape_configs:
+  # --- Prometheus 自身监控 ---
+  - job_name: "prometheus"
+    static_configs:
+      - targets:
+          - "prometheus:9090"
+        labels:
+          component: "prometheus"
+
+  # --- Delta AI 后端服务监控 ---
+  # 从 Backend 服务的 /actuator/prometheus 端点采集 JVM、HTTP、业务指标
+  - job_name: "delta-backend"
+    metrics_path: "/actuator/prometheus"
+    scheme: http
+    static_configs:
+      - targets:
+          - "backend:8080"
+        labels:
+          application: "delta-ai-customer-service"
+          component: "backend"
+    # 连接超时和读取超时配置
+    scrape_timeout: 10s
+    # 自定义 HTTP header 传递（按需启用认证）
+    # basic_auth:
+    #   username: admin
+    #   password: admin

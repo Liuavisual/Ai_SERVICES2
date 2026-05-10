@@ -1,0 +1,43 @@
+package com.delta.common.service;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.dto.OrderQueryDTO;
+import com.delta.common.vo.OrderVO;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+public interface OrderService {
+
+    OrderVO getOrderById(Long id);
+
+    OrderVO createOrder(Long userId, Long companionId, String serviceType,
+                        LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
+                        String remark);
+
+    void confirmOrder(Long id);
+
+    void startService(Long id);
+
+    void completeOrder(Long id);
+
+    void cancelOrder(Long id, String reason);
+
+    List<OrderVO> getActiveOrdersByUserId(Long userId);
+
+    List<OrderVO> getOrdersByCompanionId(Long companionId);
+
+    List<OrderVO> queryOrders(OrderQueryDTO queryDTO);
+
+    Page<OrderVO> getOrderPage(Integer page, Integer size, Long userId, Long companionId, String orderStatus, String paymentStatus, String orderNo);
+
+    /**
+     * 确认支付成功，更新订单支付状态
+     *
+     * @param orderNo       订单号
+     * @param transactionId 第三方交易流水号
+     * @param paidAmount    实付金额
+     * @param payTime       支付完成时间
+     */
+    void confirmPayment(String orderNo, String transactionId, BigDecimal paidAmount, LocalDateTime payTime);
+}

@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.delta</groupId>
-            <artifactId>delta-common</artifactId>
+            <artifactId>delta-common-service</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

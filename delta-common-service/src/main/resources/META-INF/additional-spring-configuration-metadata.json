@@ -1,0 +1,99 @@
+{
+  "properties": [
+    {
+      "name": "wx.mp.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用微信公众号"
+    },
+    {
+      "name": "wx.mp.app-id",
+      "type": "java.lang.String",
+      "description": "微信公众号AppID"
+    },
+    {
+      "name": "wx.mp.secret",
+      "type": "java.lang.String",
+      "description": "微信公众号Secret"
+    },
+    {
+      "name": "wx.mp.token",
+      "type": "java.lang.String",
+      "description": "微信公众号Token"
+    },
+    {
+      "name": "wx.mp.aes-key",
+      "type": "java.lang.String",
+      "description": "微信公众号AES密钥"
+    },
+    {
+      "name": "deepseek.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用DeepSeek AI"
+    },
+    {
+      "name": "deepseek.api-key",
+      "type": "java.lang.String",
+      "description": "DeepSeek API Key"
+    },
+    {
+      "name": "deepseek.api-url",
+      "type": "java.lang.String",
+      "description": "DeepSeek API地址"
+    },
+    {
+      "name": "deepseek.model",
+      "type": "java.lang.String",
+      "description": "DeepSeek模型名称"
+    },
+    {
+      "name": "deepseek.system-prompt",
+      "type": "java.lang.String",
+      "description": "DeepSeek系统提示词"
+    },
+    {
+      "name": "deepseek.max-tokens",
+      "type": "java.lang.Integer",
+      "description": "DeepSeek最大token数"
+    },
+    {
+      "name": "deepseek.temperature",
+      "type": "java.lang.Double",
+      "description": "DeepSeek温度参数"
+    },
+    {
+      "name": "deepseek.timeout",
+      "type": "java.lang.Integer",
+      "description": "DeepSeek请求超时时间(毫秒)"
+    },
+    {
+      "name": "jwt.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用JWT认证"
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT密钥"
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "description": "JWT Token有效期(毫秒)"
+    },
+    {
+      "name": "jwt.refresh-expiration",
+      "type": "java.lang.Long",
+      "description": "JWT Refresh Token有效期(毫秒)"
+    },
+    {
+      "name": "jwt.issuer",
+      "type": "java.lang.String",
+      "description": "JWT签发者"
+    },
+    {
+      "name": "jwt.audience",
+      "type": "java.lang.String",
+      "description": "JWT受众"
+    }
+  ]
+}

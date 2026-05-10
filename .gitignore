@@ -1,6 +1,7 @@
-*.md
-!README.md
-*.sql
+# 仅忽略根目录临时Markdown文件，保留docs/和项目文档
+*.md.tmp
+README.md.tmp
+# *.sql 已移除忽略，Flyway迁移脚本需要版本控制
 
 target/
 !.mvn/wrapper/maven-wrapper.jar

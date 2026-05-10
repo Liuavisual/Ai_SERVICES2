@@ -1,0 +1,26 @@
+# ============================================================
+# Delta AI 客服系统 - Grafana 仪表盘自动加载配置
+# Grafana 启动时扫描指定目录，自动导入预定义的仪表盘 JSON
+# @author 刘建国
+# ============================================================
+
+apiVersion: 1
+
+providers:
+  # 仪表盘自动加载提供者
+  # 扫描 config/grafana-dashboards/ 目录下所有 .json 文件
+  - name: "Delta AI Dashboards"
+    # 仪表盘来源目录（相对于容器内 /etc/grafana/provisioning/ 路径）
+    folder: "/etc/grafana/provisioning/dashboards"
+    type: file
+    # 禁用用户删除（管理员保护）
+    disableDeletion: true
+    # 是否允许自定义编辑
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    # JSON 配置选项
+    options:
+      # Grafana 中显示的目录名称
+      folder: "Delta AI 客服系统"
+      # 数据源匹配路径
+      path: "/etc/grafana/provisioning/dashboards"

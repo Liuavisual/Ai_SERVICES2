@@ -1,62 +1,176 @@
-version: '3.8'
-
 services:
-  backend:
-    build: .
-    container_name: delta-ai-backend
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/delta_ai_customer_service?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD:-root123456}
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_DATA_REDIS_PORT=6379
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-      - DEEPSEEK_ENABLED=${DEEPSEEK_ENABLED:-false}
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - delta-network
-
-  db:
+  mysql:
     image: mysql:8.0
-    container_name: delta-ai-mysql
+    container_name: delta-mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root123456}
-      - MYSQL_DATABASE=delta_ai_customer_service
-      - TZ=Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      MYSQL_DATABASE: delta_ai_customer_service
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+      - ./docs/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+      timeout: 10s
+      retries: 10
     networks:
       - delta-network
 
   redis:
     image: redis:7-alpine
-    container_name: delta-ai-redis
+    container_name: delta-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - delta-network
+
+  backend:
+    image: ${BACKEND_IMAGE:-delta-admin:latest}
+    container_name: delta-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/delta_ai_customer_service?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-your-access-secret-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-secret-change-in-production}
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend_logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - delta-network
+
+  # --- Prometheus 时序数据采集服务 ---
+  # 从 Backend /actuator/prometheus 端点采集 JVM、HTTP、业务指标
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: delta-prometheus
+    depends_on:
+      - backend
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    restart: unless-stopped
+    networks:
+      - delta-network
+
+  # --- Grafana 可视化面板服务 ---
+  # 自动加载预先配置的 Prometheus 数据源和性能监控仪表盘
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: delta-grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: ""
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s/"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./config/grafana-dashboards/default.yml:/etc/grafana/provisioning/dashboards/default.yml:ro
+      - ./config/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+    restart: unless-stopped
+    networks:
+      - delta-network
+
+  # --- Loki 日志聚合服务 ---
+  # 接收 Promtail 推送的日志，提供 LogQL 查询接口供 Grafana 可视化
+  loki:
+    image: grafana/loki:2.9.10
+    container_name: delta-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+      - "-config.expand-env=true"
+      - "-target=all"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - delta-network
+
+  # --- Promtail 日志采集Agent ---
+  # 采集 Docker 容器日志、Backend JSON 日志、Nginx 日志并推送到 Loki
+  promtail:
+    image: grafana/promtail:2.9.10
+    container_name: delta-promtail
+    depends_on:
+      loki:
+        condition: service_healthy
+    ports:
+      - "9080:9080"
+    volumes:
+      - ./config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - backend_logs:/app/logs:ro
+      - nginx_logs:/var/log/nginx:ro
+      - promtail_positions:/tmp
+    command:
+      - "-config.file=/etc/promtail/promtail-config.yml"
+      - "-config.expand-env=true"
+    restart: unless-stopped
+    networks:
+      - delta-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: delta-nginx
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./delta-ui/dist:/usr/share/nginx/html:ro
+      - nginx_logs:/var/log/nginx
     restart: unless-stopped
     networks:
       - delta-network
@@ -64,6 +178,12 @@ services:
 volumes:
   mysql_data:
   redis_data:
+  backend_logs:
+  nginx_logs:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  promtail_positions:
 
 networks:
   delta-network:
