@@ -254,6 +254,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (!authStorage.hasAnyToken()) {
     ElMessage.warning('请先登录')
+    next(false)
     SessionManager.redirectToLogin(to.fullPath)
     return
   }
@@ -262,6 +263,7 @@ router.beforeEach(async (to, from, next) => {
     const refreshToken = authStorage.getRefreshToken()
     if (!refreshToken) {
       ElMessage.warning('登录已过期，请重新登录')
+      next(false)
       SessionManager.redirectToLogin(to.fullPath)
       return
     }
@@ -280,6 +282,7 @@ router.beforeEach(async (to, from, next) => {
         authStorage.setAuth(data)
       } else {
         ElMessage.warning('登录已过期，请重新登录')
+        next(false)
         SessionManager.redirectToLogin(to.fullPath)
         return
       }
@@ -291,6 +294,7 @@ router.beforeEach(async (to, from, next) => {
       } else {
         ElMessage.warning('登录已过期，请重新登录')
       }
+      next(false)
       SessionManager.redirectToLogin(to.fullPath)
       return
     } finally {

@@ -38,4 +38,10 @@ public interface CompanionScheduleService {
     void delete(Long id);
 
     void deleteByCompanionAndDate(Long companionId, LocalDate scheduleDate);
+
+    boolean checkSlotExists(Long companionId, LocalDate date, String slotName);
+
+    List<CompanionScheduleVO> getAvailableSlotsByCompanionId(Long companionId, String scheduleDate);
+
+    int batchUpdateStatus(List<Long> ids, String status);
 }

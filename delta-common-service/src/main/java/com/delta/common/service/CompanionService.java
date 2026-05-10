@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 陪玩师服务接口，管理陪玩师信息和状态
@@ -48,4 +49,7 @@ public interface CompanionService {
      * @return 导入结果
      */
     ImportResultDTO importCompanions(MultipartFile file);
+    Map<String, Object> getRatingDashboard(Long companionId);
+
+    List<Map<String, Object>> getAllCompanionRatings();
 }

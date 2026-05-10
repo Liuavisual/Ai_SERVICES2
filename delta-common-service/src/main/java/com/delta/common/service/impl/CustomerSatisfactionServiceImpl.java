@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.CustomerSatisfactionDTO;
 import com.delta.common.entity.Companion;
+import com.delta.common.entity.CompanionRatingSummary;
 import com.delta.common.entity.CustomerSatisfaction;
 import com.delta.common.entity.ServiceTrack;
 import com.delta.common.entity.User;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionMapper;
+import com.delta.common.mapper.CompanionRatingSummaryMapper;
 import com.delta.common.mapper.CustomerSatisfactionMapper;
 import com.delta.common.mapper.ServiceTrackMapper;
 import com.delta.common.mapper.UserMapper;
@@ -44,6 +46,9 @@ public class CustomerSatisfactionServiceImpl implements CustomerSatisfactionServ
 
     /** 用户Mapper */
     private final UserMapper userMapper;
+
+    /** 陪玩师评分汇总Mapper */
+    private final CompanionRatingSummaryMapper companionRatingSummaryMapper;
 
     /**
      * 提交满意度评价
@@ -193,6 +198,51 @@ public class CustomerSatisfactionServiceImpl implements CustomerSatisfactionServ
         LambdaQueryWrapper<CustomerSatisfaction> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CustomerSatisfaction::getCompanionId, companionId);
         return satisfactionMapper.selectCount(wrapper);
+    }
+
+    @Override
+    public CustomerSatisfactionVO submitOrderReview(Long userId, Long orderId, Long companionId, Integer rating, String feedback, String tags, Integer isAnonymous) {
+        LambdaQueryWrapper<CustomerSatisfaction> existWrapper = new LambdaQueryWrapper<>();
+        existWrapper.eq(CustomerSatisfaction::getUserId, userId);
+        existWrapper.eq(CustomerSatisfaction::getServiceTrackId, orderId);
+        if (satisfactionMapper.selectCount(existWrapper) > 0) {
+            throw new BusinessException("该订单已提交过评价");
+        }
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new BusinessException("评分必须在1-5之间");
+        }
+
+        CustomerSatisfaction satisfaction = new CustomerSatisfaction();
+        satisfaction.setUserId(userId);
+        satisfaction.setServiceTrackId(orderId);
+        satisfaction.setCompanionId(companionId);
+        satisfaction.setRating(rating);
+        satisfaction.setFeedback(feedback);
+        satisfaction.setTags(tags);
+        satisfaction.setIsAnonymous(isAnonymous != null ? isAnonymous : 0);
+
+        satisfactionMapper.insert(satisfaction);
+
+        CompanionRatingSummary summary = companionRatingSummaryMapper.selectByCompanionId(companionId);
+        if (summary == null) {
+            CompanionRatingSummary newSummary = new CompanionRatingSummary();
+            newSummary.setCompanionId(companionId);
+            newSummary.setTotalReviews(1);
+            newSummary.setAvgRating(java.math.BigDecimal.valueOf(rating));
+            newSummary.setRating1Count(rating == 1 ? 1 : 0);
+            newSummary.setRating2Count(rating == 2 ? 1 : 0);
+            newSummary.setRating3Count(rating == 3 ? 1 : 0);
+            newSummary.setRating4Count(rating == 4 ? 1 : 0);
+            newSummary.setRating5Count(rating == 5 ? 1 : 0);
+            newSummary.setLastReviewAt(java.time.LocalDateTime.now());
+            newSummary.setCreatedAt(java.time.LocalDateTime.now());
+            newSummary.setUpdatedAt(java.time.LocalDateTime.now());
+            companionRatingSummaryMapper.insert(newSummary);
+        } else {
+            companionRatingSummaryMapper.updateRatingByCompanionId(companionId, rating, java.time.LocalDateTime.now());
+        }
+
+        return convertToVO(satisfaction);
     }
 
     /**

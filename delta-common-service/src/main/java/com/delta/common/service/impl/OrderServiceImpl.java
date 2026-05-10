@@ -9,6 +9,7 @@ import com.delta.common.entity.Order;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.dto.WorkOrderCreateDTO;
 import com.delta.common.mapper.CompanionMapper;
+import com.delta.common.mapper.CompanionRatingSummaryMapper;
 import com.delta.common.mapper.OrderMapper;
 import com.delta.common.service.OrderService;
 import com.delta.common.service.WorkOrderService;
@@ -44,6 +45,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final WorkOrderService workOrderService;
 
+    private final CompanionRatingSummaryMapper companionRatingSummaryMapper;
+
     @Override
     public OrderVO getOrderById(Long id) {
         Order order = orderMapper.selectById(id);
@@ -78,6 +81,7 @@ public class OrderServiceImpl implements OrderService {
         order.setCompanionId(companionId);
         order.setCompanionName(companion.getNickname());
         order.setServiceType(serviceType);
+        order.setGameType(companion.getGameType());
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_PENDING);
         order.setScheduledStart(scheduledStart);
         order.setScheduledEnd(scheduledEnd);
@@ -137,6 +141,23 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CONFIRMED);
         orderMapper.updateById(order);
         log.info("订单确认成功: id={}", id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderVO submitReview(Long orderId, Integer rating, String reviewContent, Long reviewerId) {
+        Order order = getOrderOrThrow(orderId);
+        if (!BusinessStatusConstants.ORDER_STATUS_COMPLETED.equals(order.getOrderStatus())) {
+            throw new BusinessException("仅已完成订单可进行评价");
+        }
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new BusinessException("评分必须在1-5之间");
+        }
+        order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_PENDING_REVIEW);
+        order.setRemark((order.getRemark() != null ? order.getRemark() : "") + " | 评分:" + rating + "星 评价:" + (reviewContent != null ? reviewContent : ""));
+        orderMapper.updateById(order);
+        log.info("订单评价提交成功: orderId={}, rating={}", orderId, rating);
+        return convertToVO(order);
     }
 
     @Override

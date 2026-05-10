@@ -47,4 +47,6 @@ public interface CustomerSatisfactionService {
      * @return 评价数量
      */
     Long getRatingCount(Long companionId);
+
+    CustomerSatisfactionVO submitOrderReview(Long userId, Long orderId, Long companionId, Integer rating, String feedback, String tags, Integer isAnonymous);
 }

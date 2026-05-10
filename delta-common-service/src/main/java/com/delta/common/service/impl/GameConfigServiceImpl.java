@@ -74,6 +74,16 @@ public class GameConfigServiceImpl implements GameConfigService {
     }
 
     @Override
+    public List<GameConfigVO> getAllEnabled() {
+        LambdaQueryWrapper<GameConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(GameConfig::getEnabled, BusinessStatusConstants.ENABLED_INT);
+        wrapper.orderByAsc(GameConfig::getSortOrder);
+        return gameConfigMapper.selectList(wrapper).stream()
+                .map(this::convertToVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Page<GameConfigVO> getPage(Integer page, Integer size, Long clubConfigId) {
         LambdaQueryWrapper<GameConfig> wrapper = new LambdaQueryWrapper<>();
         if (clubConfigId != null) {

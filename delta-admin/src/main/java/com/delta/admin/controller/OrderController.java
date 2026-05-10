@@ -42,6 +42,16 @@ public class OrderController extends BaseController {
         return Result.success(pageResult);
     }
 
+    @Operation(summary = "提交订单评价")
+    @PostMapping("/{id}/review")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<OrderVO> submitReview(@PathVariable Long id,
+                                         @RequestParam Integer rating,
+                                         @RequestParam(required = false) String reviewContent,
+                                         @RequestParam Long reviewerId) {
+        return Result.success(orderService.submitReview(id, rating, reviewContent, reviewerId));
+    }
+
     @Operation(summary = "获取订单详情")
     @GetMapping("/{id}")
     public Result<OrderVO> getOrderById(@PathVariable String id) {

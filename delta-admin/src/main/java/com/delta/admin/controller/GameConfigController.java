@@ -30,6 +30,13 @@ public class GameConfigController extends BaseController {
 
     private final GameConfigService gameConfigService;
 
+    @Operation(summary = "获取所有启用的游戏类型")
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<List<GameConfigVO>> getAllEnabled() {
+        return Result.success(gameConfigService.getAllEnabled());
+    }
+
     @Operation(summary = "分页查询游戏配置")
     @GetMapping("/page")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")

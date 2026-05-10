@@ -113,7 +113,9 @@ export const companionApi = {
   getById: (id: string) => request({ url: `/companions/${id}`, method: 'get' }),
   create: (data: Record<string, unknown>) => request({ url: '/companions', method: 'post', data }),
   update: (data: Record<string, unknown>) => request({ url: '/companions', method: 'put', data }),
-  delete: (id: string) => request({ url: `/companions/${id}`, method: 'delete' })
+  delete: (id: string) => request({ url: `/companions/${id}`, method: 'delete' }),
+  getRatingDashboard: (companionId: string) => request({ url: `/companions/ratings/dashboard/${companionId}`, method: 'get' }),
+  getAllRatings: () => request({ url: '/companions/ratings/all', method: 'get' })
 }
 
 export const companionScheduleApi = {
@@ -121,6 +123,8 @@ export const companionScheduleApi = {
   getByCompanionDate: (params: Record<string, unknown>) => request({ url: '/companion-schedules/by-companion-date', method: 'get', params }),
   getByDate: (params: Record<string, unknown>) => request({ url: '/companion-schedules/by-date', method: 'get', params }),
   getById: (id: string) => request({ url: `/companion-schedules/${id}`, method: 'get' }),
+  getAvailableSlots: (companionId: string, scheduleDate?: string) =>
+    request({ url: `/companion-schedules/available/${companionId}`, method: 'get', params: { scheduleDate } }),
   create: (data: Record<string, unknown>) => request({ url: '/companion-schedules', method: 'post', data }),
   createBatch: (params: Record<string, unknown>, data: Record<string, unknown>) =>
     request({ url: '/companion-schedules/batch', method: 'post', params, data }),
@@ -155,6 +159,7 @@ export const customerProfileApi = {
 
 export const gameConfigApi = {
   getByClubId: (clubConfigId: string) => request({ url: `/game-configs/club/${clubConfigId}`, method: 'get' }),
+  getAll: () => request({ url: '/game-configs/all', method: 'get' }),
   getById: (id: string) => request({ url: `/game-configs/${id}`, method: 'get' }),
   create: (data: Record<string, unknown>) => request({ url: '/game-configs', method: 'post', data }),
   update: (data: Record<string, unknown>) => request({ url: '/game-configs', method: 'put', data }),
@@ -232,7 +237,8 @@ export const lifecycleApi = {
 export const satisfactionApi = {
   submit: (data: Record<string, unknown>) => request({ url: '/satisfaction', method: 'post', data }),
   getPage: (params: Record<string, unknown>) => request({ url: '/satisfaction/page', method: 'get', params }),
-  getAverage: (companionId: string) => request({ url: `/satisfaction/average/${companionId}`, method: 'get' })
+  getAverage: (companionId: string) => request({ url: `/satisfaction/average/${companionId}`, method: 'get' }),
+  submitOrderReview: (data: Record<string, unknown>) => request({ url: '/satisfaction/order-review', method: 'post', params: data })
 }
 
 export const pricingPlanApi = {

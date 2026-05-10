@@ -45,6 +45,9 @@ public class Order extends BaseEntity {
     /** 服务类型 */
     private String serviceType;
 
+    /** 游戏类型 */
+    private String gameType;
+
     /** 价格规则ID */
     private Long priceRuleId;
 

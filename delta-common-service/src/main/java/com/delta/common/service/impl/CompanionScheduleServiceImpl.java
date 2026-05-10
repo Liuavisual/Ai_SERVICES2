@@ -303,6 +303,49 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
     }
 
     @Override
+    public List<CompanionScheduleVO> getAvailableSlotsByCompanionId(Long companionId, String scheduleDate) {
+        LambdaQueryWrapper<CompanionSchedule> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CompanionSchedule::getCompanionId, companionId);
+        if (scheduleDate != null && !scheduleDate.isEmpty()) {
+            wrapper.eq(CompanionSchedule::getScheduleDate, LocalDate.parse(scheduleDate));
+        } else {
+            wrapper.eq(CompanionSchedule::getScheduleDate, LocalDate.now());
+        }
+        wrapper.eq(CompanionSchedule::getStatus, BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE);
+        wrapper.orderByAsc(CompanionSchedule::getStartTime);
+        return companionScheduleMapper.selectList(wrapper).stream()
+                .map(s -> BeanUtil.copyProperties(s, CompanionScheduleVO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean checkSlotExists(Long companionId, LocalDate date, String slotName) {
+        LambdaQueryWrapper<CompanionSchedule> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CompanionSchedule::getCompanionId, companionId);
+        wrapper.eq(CompanionSchedule::getScheduleDate, date);
+        wrapper.eq(CompanionSchedule::getTimeSlot, slotName);
+        return companionScheduleMapper.selectCount(wrapper) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int batchUpdateStatus(List<Long> ids, String status) {
+        if (ids == null || ids.isEmpty()) {
+            return 0;
+        }
+        List<CompanionSchedule> schedules = companionScheduleMapper.selectByIds(ids);
+        for (CompanionSchedule s : schedules) {
+            s.setStatus(status);
+        }
+        int count = 0;
+        for (CompanionSchedule s : schedules) {
+            companionScheduleMapper.updateById(s);
+            count++;
+        }
+        return count;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByCompanionAndDate(Long companionId, LocalDate scheduleDate) {
         LambdaQueryWrapper<CompanionSchedule> checkWrapper = new LambdaQueryWrapper<>();

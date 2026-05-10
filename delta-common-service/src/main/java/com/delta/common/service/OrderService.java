@@ -12,8 +12,10 @@ public interface OrderService {
     OrderVO getOrderById(Long id);
 
     OrderVO createOrder(Long userId, Long companionId, String serviceType,
-                        LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
-                        String remark);
+                         LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
+                         String remark);
+
+    OrderVO submitReview(Long orderId, Integer rating, String reviewContent, Long reviewerId);
 
     void confirmOrder(Long id);
 

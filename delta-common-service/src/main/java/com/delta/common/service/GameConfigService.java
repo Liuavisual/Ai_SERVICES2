@@ -19,4 +19,5 @@ public interface GameConfigService {
     void delete(Long id);
 
     Page<GameConfigVO> getPage(Integer page, Integer size, Long clubConfigId);
+    List<GameConfigVO> getAllEnabled();
 }

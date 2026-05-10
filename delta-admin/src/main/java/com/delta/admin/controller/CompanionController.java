@@ -116,4 +116,18 @@ public class CompanionController extends BaseController {
         ImportResultDTO result = companionService.importCompanions(file);
         return Result.success(result.toMap());
     }
+
+    @Operation(summary = "获取陪玩师综合评分数据看板")
+    @GetMapping("/ratings/dashboard/{companionId}")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<Map<String, Object>> getRatingDashboard(@PathVariable("companionId") String companionId) {
+        return Result.success(companionService.getRatingDashboard(decodeId(companionId)));
+    }
+
+    @Operation(summary = "获取所有陪玩师综合评分排名")
+    @GetMapping("/ratings/all")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<List<Map<String, Object>>> getAllCompanionRatings() {
+        return Result.success(companionService.getAllCompanionRatings());
+    }
 }

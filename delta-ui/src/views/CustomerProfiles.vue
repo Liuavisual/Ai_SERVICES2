@@ -285,9 +285,42 @@
       </div>
     </el-dialog>
 
-    <el-dialog v-model="orderDialogVisible" title="添加消费记录" width="550px">
+    <el-dialog v-model="orderDialogVisible" title="创建订单" width="580px" :close-on-click-modal="false">
       <el-form :model="orderForm" label-width="100px">
-        <el-form-item label="订单类型" required>
+        <el-form-item label="陪玩师" required>
+          <el-select v-model="orderForm.companionId" placeholder="请选择陪玩师" clearable filterable style="width: 100%" :teleported="false" @change="onCompanionChange">
+            <el-option v-for="c in companionList" :key="c.id" :label="c.nickname + ' (' + c.gameType + ')'" :value="c.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="游戏类型" required>
+          <el-select v-model="orderForm.gameType" placeholder="请选择游戏" clearable filterable style="width: 100%" :teleported="false">
+            <el-option v-for="g in gameTypeList" :key="g.id" :label="g.gameName + ' - ¥' + g.baseHourlyPrice + '/h'" :value="g.gameName" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="预约日期" required>
+          <el-date-picker v-model="orderForm.scheduleDate" type="date" placeholder="选择日期" style="width: 100%" :disabled-date="disabledDate" @change="onDateChange" />
+        </el-form-item>
+        <el-form-item label="可用时段">
+          <div v-if="availableSlots.length > 0" class="slot-radio-group">
+            <el-radio-group v-model="orderForm.selectedSlot" @change="onSlotChange">
+              <el-radio-button v-for="slot in availableSlots" :key="slot.id" :value="slot">
+                {{ slot.startTime?.substring(0, 5) }} - {{ slot.endTime?.substring(0, 5) }}
+              </el-radio-button>
+            </el-radio-group>
+          </div>
+          <el-empty v-else-if="orderForm.scheduleDate && orderForm.companionId" description="该日暂无可选时段" style="padding:0" />
+        </el-form-item>
+        <el-form-item label="自定义时间">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <el-time-picker v-model="orderForm.customStartTime" placeholder="开始时间" format="HH:mm" value-format="HH:mm" style="width: 130px" />
+            <span>至</span>
+            <el-time-picker v-model="orderForm.customEndTime" placeholder="结束时间" format="HH:mm" value-format="HH:mm" style="width: 130px" />
+            <el-tooltip content="自定义时间将生成人工客服预约处理工单">
+              <el-icon><InfoFilled /></el-icon>
+            </el-tooltip>
+          </div>
+        </el-form-item>
+        <el-form-item label="订单类型">
           <el-select v-model="orderForm.orderType" placeholder="请选择" style="width: 100%" :teleported="false">
             <el-option label="陪玩" value="ACCOMPANY_PLAY" />
             <el-option label="包夜" value="NIGHT_PACKAGE" />
@@ -295,41 +328,13 @@
             <el-option label="其他" value="OTHER" />
           </el-select>
         </el-form-item>
-        <el-form-item label="陪玩师">
-          <el-select v-model="orderForm.companionId" placeholder="请选择" clearable filterable style="width: 100%" :teleported="false">
-            <el-option v-for="c in companionList" :key="c.id" :label="c.nickname" :value="c.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="消费金额" required>
-          <el-input-number v-model="orderForm.amount" :min="0" :precision="2" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="服务时长">
-          <el-input-number v-model="orderForm.durationHours" :min="0" :precision="1" :step="0.5" style="width: 100%" />
-        </el-form-item>
-        <el-form-item label="游戏类型">
-          <el-input v-model="orderForm.gameType" placeholder="如：三角洲行动" />
-        </el-form-item>
-        <el-form-item label="时段">
-          <el-select v-model="orderForm.timeSlot" placeholder="请选择" clearable style="width: 100%" :teleported="false">
-            <el-option label="上午" value="上午" />
-            <el-option label="下午" value="下午" />
-            <el-option label="晚上" value="晚上" />
-            <el-option label="通宵" value="通宵" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="客户评价">
-          <el-rate v-model="orderForm.rating" />
-        </el-form-item>
-        <el-form-item label="评价内容">
-          <el-input v-model="orderForm.reviewContent" type="textarea" :rows="2" />
-        </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="orderForm.remark" type="textarea" :rows="2" />
+          <el-input v-model="orderForm.remark" type="textarea" :rows="2" placeholder="客户特殊需求或备注信息" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="orderDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirmOrder">确定</el-button>
+        <el-button type="primary" @click="handleConfirmOrder" :loading="orderSubmitting">提交订单</el-button>
       </template>
     </el-dialog>
   </div>
@@ -338,8 +343,27 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { customerProfileApi, companionApi } from '@/api'
+import { InfoFilled } from '@element-plus/icons-vue'
+import { customerProfileApi, companionApi, gameConfigApi, companionScheduleApi, orderApi } from '@/api'
 import type { Result, PageResult, CustomerProfileVO, CompanionVO } from '@/types'
+
+interface GameConfigVO {
+  id: number
+  gameName: string
+  gameCode: string
+  gameType: string
+  baseHourlyPrice: number
+} 
+
+interface CompanionScheduleSlot {
+  id: number
+  companionId: number
+  scheduleDate: string
+  timeSlot: string
+  startTime: string
+  endTime: string
+  status: string
+}
 
 interface OrderRecord {
   orderTime: string
@@ -379,31 +403,66 @@ const currentProfile = ref<CustomerProfileVO | null>(null)
 const orderRecords = ref<OrderRecord[]>([])
 
 const orderDialogVisible = ref<boolean>(false)
+const orderSubmitting = ref<boolean>(false)
 const orderForm = reactive<{
   userId: string | null
   companionId: number | null
   orderType: string
-  amount: number
-  durationHours: number | null
   gameType: string
-  timeSlot: string | null
-  rating: number
-  reviewContent: string
+  scheduleDate: string | null
+  selectedSlot: CompanionScheduleSlot | null
+  customStartTime: string | null
+  customEndTime: string | null
   remark: string
 }>({
   userId: null,
   companionId: null,
   orderType: 'ACCOMPANY_PLAY',
-  amount: 0,
-  durationHours: null,
   gameType: '',
-  timeSlot: null,
-  rating: 0,
-  reviewContent: '',
+  scheduleDate: null,
+  selectedSlot: null,
+  customStartTime: null,
+  customEndTime: null,
   remark: ''
 })
 
 const companionList = ref<CompanionVO[]>([])
+const gameTypeList = ref<GameConfigVO[]>([])
+const availableSlots = ref<CompanionScheduleSlot[]>([])
+
+const disabledDate = (date: Date): boolean => {
+  return date < new Date(new Date().setHours(0, 0, 0, 0))
+}
+
+const onCompanionChange = (): void => {
+  orderForm.selectedSlot = null
+  orderForm.scheduleDate = null
+  availableSlots.value = []
+}
+
+const onDateChange = async (): Promise<void> => {
+  orderForm.selectedSlot = null
+  if (!orderForm.companionId || !orderForm.scheduleDate) {
+    availableSlots.value = []
+    return
+  }
+  try {
+    const res: Result<CompanionScheduleSlot[]> = await companionScheduleApi.getAvailableSlots(String(orderForm.companionId), orderForm.scheduleDate)
+    if (res.code === 200) {
+      availableSlots.value = res.data || []
+    }
+  } catch {
+    availableSlots.value = []
+  }
+}
+
+const onSlotChange = (): void => {
+  // 选择可用时段后，自动清除自定义时间
+  if (orderForm.selectedSlot) {
+    orderForm.customStartTime = null
+    orderForm.customEndTime = null
+  }
+}
 
 const formatMoney = (val: number | null | undefined): string => {
   if (val == null) return '0.00'
@@ -532,36 +591,66 @@ const handleAddOrder = (row: CustomerProfileVO): void => {
   orderForm.userId = row.userId
   orderForm.companionId = null
   orderForm.orderType = 'ACCOMPANY_PLAY'
-  orderForm.amount = 0
-  orderForm.durationHours = null
   orderForm.gameType = ''
-  orderForm.timeSlot = null
-  orderForm.rating = 0
-  orderForm.reviewContent = ''
+  orderForm.scheduleDate = null
+  orderForm.selectedSlot = null
+  orderForm.customStartTime = null
+  orderForm.customEndTime = null
   orderForm.remark = ''
+  availableSlots.value = []
   orderDialogVisible.value = true
 }
 
 const handleConfirmOrder = async (): Promise<void> => {
-  if (!orderForm.orderType || orderForm.amount <= 0) {
-    ElMessage.warning('请填写订单类型和消费金额')
+  if (!orderForm.companionId) {
+    ElMessage.warning('请选择陪玩师')
+    return
+  }
+  if (!orderForm.gameType) {
+    ElMessage.warning('请选择游戏类型')
+    return
+  }
+  if (!orderForm.scheduleDate) {
+    ElMessage.warning('请选择预约日期')
+    return
+  }
+  let scheduledStart: string | null = null
+  let scheduledEnd: string | null = null
+  let isCustomTime = false
+  if (orderForm.selectedSlot) {
+    scheduledStart = orderForm.scheduleDate + ' ' + orderForm.selectedSlot.startTime
+    scheduledEnd = orderForm.scheduleDate + ' ' + orderForm.selectedSlot.endTime
+  } else if (orderForm.customStartTime && orderForm.customEndTime) {
+    scheduledStart = orderForm.scheduleDate + ' ' + orderForm.customStartTime + ':00'
+    scheduledEnd = orderForm.scheduleDate + ' ' + orderForm.customEndTime + ':00'
+    isCustomTime = true
+  } else {
+    ElMessage.warning('请选择可用时段或填写自定义时间')
     return
   }
   try {
+    orderSubmitting.value = true
     const data = {
-      ...orderForm,
-      orderTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      rating: orderForm.rating || null,
-      status: 'COMPLETED'
+      userId: Number(orderForm.userId) || 0,
+      companionId: orderForm.companionId,
+      serviceType: orderForm.orderType,
+      gameType: orderForm.gameType,
+      scheduledStart,
+      scheduledEnd,
+      remark: (isCustomTime ? '[自定义时间-待客服确认] ' : '') + (orderForm.remark || '')
     }
-    const res: Result<null> = await customerProfileApi.addOrder(data)
+    const res: Result<any> = await orderApi.create(data)
     if (res.code === 200) {
-      ElMessage.success('添加成功')
+      ElMessage.success(isCustomTime ? '订单已创建，自定义时间已生成人工客服预约工单' : '订单创建成功')
       orderDialogVisible.value = false
       handleQuery()
+    } else {
+      ElMessage.error(res.message || '创建失败')
     }
-  } catch (error) {
-    ElMessage.error('添加失败')
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || '创建订单失败')
+  } finally {
+    orderSubmitting.value = false
   }
 }
 
@@ -589,9 +678,21 @@ const loadCompanions = async (): Promise<void> => {
   }
 }
 
+const loadGameTypes = async (): Promise<void> => {
+  try {
+    const res: Result<GameConfigVO[]> = await gameConfigApi.getAll()
+    if (res.code === 200) {
+      gameTypeList.value = res.data || []
+    }
+  } catch (error) {
+    console.error('加载游戏类型失败', error)
+  }
+}
+
 onMounted(() => {
   handleQuery()
   loadCompanions()
+  loadGameTypes()
 })
 </script>
 
@@ -705,5 +806,14 @@ onMounted(() => {
 
 .remark-label {
   font-weight: bold;
+}
+
+.slot-radio-group {
+  margin-bottom: 4px;
+}
+
+.slot-radio-group .el-radio-button {
+  margin-right: 4px;
+  margin-bottom: 4px;
 }
 </style>

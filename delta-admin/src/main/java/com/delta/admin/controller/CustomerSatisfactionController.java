@@ -84,4 +84,19 @@ public class CustomerSatisfactionController extends BaseController {
     public Result<Double> getAverageRating(@PathVariable String companionId) {
         return Result.success(satisfactionService.getAverageRating(decodeId(companionId)));
     }
+
+    @Operation(summary = "通过订单提交评价(含陪玩师评分联动)")
+    @PostMapping("/order-review")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @AuditLog(module = "满意度评价", action = "订单评价")
+    public Result<CustomerSatisfactionVO> submitOrderReview(
+            @RequestParam Long userId,
+            @RequestParam Long orderId,
+            @RequestParam Long companionId,
+            @RequestParam Integer rating,
+            @RequestParam(required = false) String feedback,
+            @RequestParam(required = false) String tags,
+            @RequestParam(required = false, defaultValue = "0") Integer isAnonymous) {
+        return Result.success(satisfactionService.submitOrderReview(userId, orderId, companionId, rating, feedback, tags, isAnonymous));
+    }
 }

@@ -9,10 +9,12 @@ import com.delta.common.dto.CompanionDTO;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.entity.Companion;
 import com.delta.common.entity.CompanionLevel;
+import com.delta.common.entity.CompanionRatingSummary;
 import com.delta.common.entity.CompanionSchedule;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.mapper.CompanionMapper;
+import com.delta.common.mapper.CompanionRatingSummaryMapper;
 import com.delta.common.mapper.CompanionScheduleMapper;
 import com.delta.common.service.CompanionService;
 import com.delta.common.util.DesensitizeUtils;
@@ -51,6 +53,8 @@ public class CompanionServiceImpl implements CompanionService {
     private final CompanionLevelMapper companionLevelMapper;
 
     private final CompanionScheduleMapper companionScheduleMapper;
+
+    private final CompanionRatingSummaryMapper companionRatingSummaryMapper;
 
     @Override
     public Page<CompanionVO> getPage(Integer page, Integer size, Long levelId, String nickname, Integer enabled) {
@@ -323,5 +327,59 @@ public class CompanionServiceImpl implements CompanionService {
             }
         }
         return new ImportResultDTO(success, fail);
+    }
+
+    @Override
+    public Map<String, Object> getRatingDashboard(Long companionId) {
+        Companion companion = companionMapper.selectById(companionId);
+        if (companion == null) {
+            throw new BusinessException("陪玩师不存在");
+        }
+        CompanionRatingSummary summary = companionRatingSummaryMapper.selectByCompanionId(companionId);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("companionId", companionId);
+        result.put("companionName", companion.getRealName());
+        result.put("companionNickname", companion.getNickname());
+        if (summary != null) {
+            result.put("totalReviews", summary.getTotalReviews());
+            result.put("avgRating", summary.getAvgRating());
+            result.put("rating1Count", summary.getRating1Count());
+            result.put("rating2Count", summary.getRating2Count());
+            result.put("rating3Count", summary.getRating3Count());
+            result.put("rating4Count", summary.getRating4Count());
+            result.put("rating5Count", summary.getRating5Count());
+            result.put("lastReviewAt", summary.getLastReviewAt());
+        } else {
+            result.put("totalReviews", 0);
+            result.put("avgRating", java.math.BigDecimal.ZERO);
+            result.put("rating1Count", 0);
+            result.put("rating2Count", 0);
+            result.put("rating3Count", 0);
+            result.put("rating4Count", 0);
+            result.put("rating5Count", 0);
+            result.put("lastReviewAt", null);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getAllCompanionRatings() {
+        List<CompanionRatingSummary> summaries = companionRatingSummaryMapper.selectAllOrderByRating();
+        return summaries.stream().map(s -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("companionId", s.getCompanionId());
+            Companion companion = companionMapper.selectById(s.getCompanionId());
+            map.put("companionName", companion != null ? companion.getRealName() : "未知");
+            map.put("companionNickname", companion != null ? companion.getNickname() : "未知");
+            map.put("totalReviews", s.getTotalReviews());
+            map.put("avgRating", s.getAvgRating());
+            map.put("rating5Count", s.getRating5Count());
+            map.put("rating4Count", s.getRating4Count());
+            map.put("rating3Count", s.getRating3Count());
+            map.put("rating2Count", s.getRating2Count());
+            map.put("rating1Count", s.getRating1Count());
+            map.put("lastReviewAt", s.getLastReviewAt());
+            return map;
+        }).collect(Collectors.toList());
     }
 }

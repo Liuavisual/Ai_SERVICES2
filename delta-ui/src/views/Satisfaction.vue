@@ -21,6 +21,53 @@
           </div>
         </div>
       </el-card>
+
+    <el-card class="dashboard-card">
+      <template #header>
+        <div class="card-header">
+          <span>陪玩师综合评分看板</span>
+          <el-button link type="primary" size="small" @click="toggleDashboard">{{ dashboardExpanded ? '收起' : '展开' }}</el-button>
+        </div>
+      </template>
+      <div v-show="dashboardExpanded">
+        <el-table :data="ratingDashboard" stripe v-loading="dashboardLoading" max-height="400">
+          <el-table-column type="index" label="排名" width="60" />
+          <el-table-column prop="companionNickname" label="陪玩师" width="120" />
+          <el-table-column label="综合评分" width="160">
+            <template #default="{ row }">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:20px;font-weight:700;color:#f56c6c">{{ row.avgRating != null ? Number(row.avgRating).toFixed(1) : '0.0' }}</span>
+                <el-rate v-model="row.avgRatingNum" disabled :max="5" allow-half show-score size="small" />
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="评分分布" min-width="280">
+            <template #default="{ row }">
+              <div class="rating-distribution">
+                <div class="dist-item" v-for="star in 5" :key="star">
+                  <span class="dist-label">{{ star }}星</span>
+                  <el-progress
+                    :percentage="row.totalReviews > 0 ? Math.round((row['rating' + star + 'Count'] || 0) / row.totalReviews * 100) : 0"
+                    :stroke-width="8"
+                    :show-text="false"
+                    :color="starColor(star)"
+                    style="flex:1;margin:0 4px"
+                  />
+                  <span class="dist-count">{{ row['rating' + star + 'Count'] || 0 }}</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="totalReviews" label="评价数" width="70" align="center" />
+          <el-table-column label="最近评价" width="170">
+            <template #default="{ row }">
+              <span v-if="row.lastReviewAt">{{ formatSatisfactionDate(row.lastReviewAt) }}</span>
+              <span v-else style="color:var(--gu-text-muted)">暂无</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-card>
       <el-card class="stat-card">
         <div class="stat-content">
           <div class="stat-icon count-icon">
@@ -258,6 +305,46 @@ function handleReset(): void {
 /** 评价总数（计算属性，直接用total） */
 const totalCount = computed<number>(() => total.value)
 
+const dashboardExpanded = ref<boolean>(false)
+const dashboardLoading = ref<boolean>(false)
+const ratingDashboard = ref<any[]>([])
+
+function toggleDashboard(): void {
+  dashboardExpanded.value = !dashboardExpanded.value
+  if (dashboardExpanded.value && ratingDashboard.value.length === 0) {
+    loadRatingDashboard()
+  }
+}
+
+function starColor(star: number): string {
+  const colors = ['#F56C6C', '#E6A23C', '#F7BA2A', '#67C23A', '#409EFF']
+  return colors[star - 1] || '#909399'
+}
+
+function formatSatisfactionDate(val: string): string {
+  if (!val) return '-'
+  const d = new Date(val)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+async function loadRatingDashboard(): Promise<void> {
+  dashboardLoading.value = true
+  try {
+    const res = await companionApi.getAllRatings()
+    if (res.code === 200) {
+      ratingDashboard.value = (res.data || []).map((item: any) => ({
+        ...item,
+        avgRatingNum: Number(item.avgRating || 0)
+      }))
+    }
+  } catch (e) {
+    console.error('加载评分看板失败', e)
+  } finally {
+    dashboardLoading.value = false
+  }
+}
+
 onMounted(() => {
   fetchData()
   loadCompanions()
@@ -332,5 +419,33 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .stats-row { flex-direction: column; }
+}
+
+.dashboard-card {
+  flex-shrink: 0;
+}
+
+.rating-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dist-item {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.dist-label {
+  width: 24px;
+  color: var(--gu-text-muted);
+  text-align: right;
+}
+
+.dist-count {
+  width: 24px;
+  color: var(--gu-text-secondary);
+  text-align: left;
 }
 </style>

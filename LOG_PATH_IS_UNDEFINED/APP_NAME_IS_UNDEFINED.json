@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-10T12:05:01.5753098+08:00","level":"INFO","logger":"com.delta.common.task.CustomerWakeupTask","thread":"scheduling-1","message":"【客户唤醒】开始扫描AT_RISK客户..."}
+{"timestamp":"2026-05-10T12:05:02.0358826+08:00","level":"INFO","logger":"com.delta.common.task.CustomerWakeupTask","thread":"scheduling-1","message":"【客户唤醒】扫描完成，本次共唤醒 0 个客户"}

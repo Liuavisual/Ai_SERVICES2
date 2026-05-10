@@ -106,6 +106,11 @@
               link type="danger" size="small"
               @click="handleCancel(row)"
             >取消</el-button>
+            <el-button
+              v-if="row.orderStatus === 'COMPLETED'"
+              link type="warning" size="small"
+              @click="handleReview(row)"
+            >评价</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -167,6 +172,29 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="reviewVisible" title="订单评价" width="480px" destroy-on-close>
+      <div v-if="currentOrder" style="margin-bottom:16px">
+        <div style="margin-bottom:6px">订单号：<b>{{ currentOrder.orderNo }}</b></div>
+        <div style="margin-bottom:6px">陪玩师：{{ currentOrder.companionName || '-' }}</div>
+        <div>服务类型：{{ currentOrder.serviceType || '-' }}</div>
+      </div>
+      <el-form :model="reviewForm" label-width="80px">
+        <el-form-item label="评分" required>
+          <el-rate v-model="reviewForm.rating" :max="5" show-score />
+        </el-form-item>
+        <el-form-item label="评价内容">
+          <el-input v-model="reviewForm.feedback" type="textarea" :rows="3" placeholder="请输入评价内容（可选）" maxlength="500" show-word-limit />
+        </el-form-item>
+        <el-form-item label="标签">
+          <el-input v-model="reviewForm.tags" placeholder="多个标签用逗号分隔，如：技术好,耐心,声音好听" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="reviewVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmReview" :loading="reviewLoading">提交评价</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="cancelVisible" title="取消订单" width="420px" destroy-on-close>
       <el-form :model="cancelForm" label-width="80px">
         <el-form-item label="原因">
@@ -221,6 +249,14 @@ const queryParams = reactive<{
 })
 
 const cancelForm = reactive<{ reason: string }>({ reason: '' })
+
+const reviewVisible = ref<boolean>(false)
+const reviewLoading = ref<boolean>(false)
+const reviewForm = reactive<{ rating: number; feedback: string; tags: string }>({
+  rating: 0,
+  feedback: '',
+  tags: ''
+})
 
 const statusTagMap: Record<string, string> = {
   PENDING: 'info',
@@ -366,6 +402,50 @@ async function confirmCancel(): Promise<void> {
     console.error('取消订单失败', e)
   } finally {
     cancelLoading.value = false
+  }
+}
+
+function handleReview(row: OrderVO): void {
+  currentOrder.value = row
+  reviewForm.rating = 0
+  reviewForm.feedback = ''
+  reviewForm.tags = ''
+  reviewVisible.value = true
+}
+
+async function confirmReview(): Promise<void> {
+  if (!reviewForm.rating || reviewForm.rating < 1) {
+    ElMessage.warning('请选择评分')
+    return
+  }
+  reviewLoading.value = true
+  try {
+    const res: Result<null> = await orderApi.submitReview(currentOrder.value!.id, {
+      rating: reviewForm.rating,
+      reviewContent: reviewForm.feedback,
+      reviewerId: 1
+    })
+    if (res.code === 200) {
+      await satisfactionApi.submitOrderReview({
+        userId: currentOrder.value!.userId || 1,
+        orderId: Number(currentOrder.value!.id),
+        companionId: Number(currentOrder.value!.companionId || 0),
+        rating: reviewForm.rating,
+        feedback: reviewForm.feedback,
+        tags: reviewForm.tags,
+        isAnonymous: 0
+      })
+      ElMessage.success('评价提交成功，评分已同步至满意度系统')
+      reviewVisible.value = false
+      fetchData()
+    } else {
+      ElMessage.error(res.message || '评价提交失败')
+    }
+  } catch (e: any) {
+    console.error('评价失败', e)
+    ElMessage.error(e?.response?.data?.message || '评价提交失败')
+  } finally {
+    reviewLoading.value = false
   }
 }
 

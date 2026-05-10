@@ -70,6 +70,15 @@ public class CompanionScheduleController extends BaseController {
         return Result.success(list);
     }
 
+@Operation(summary = "获取陪玩师可用时段")
+    @GetMapping("/available/{companionId}")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<List<CompanionScheduleVO>> getAvailableSlots(
+            @PathVariable Long companionId,
+            @RequestParam(required = false) String scheduleDate) {
+        return Result.success(companionScheduleService.getAvailableSlotsByCompanionId(companionId, scheduleDate));
+    }
+
     @Operation(summary = "获取陪玩师时间详情")
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
