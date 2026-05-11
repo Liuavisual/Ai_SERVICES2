@@ -33,6 +33,31 @@ public final class BusinessStatusConstants {
     public static final String ORDER_STATUS_CANCELLED = "CANCELLED";
     public static final String ORDER_STATUS_REFUNDED = "REFUNDED";
     public static final String ORDER_STATUS_ABNORMAL = "ABNORMAL";
+
+    /** 时间选择方式：系统推荐 */
+    public static final String TIME_SOURCE_SYSTEM = "SYSTEM";
+
+    /** 时间选择方式：客户自定义 */
+    public static final String TIME_SOURCE_CUSTOM = "CUSTOM";
+
+    /** 通知类型：新订单 */
+    public static final String NOTIFY_TYPE_NEW_ORDER = "NEW_ORDER";
+
+    /** 通知类型：状态变更 */
+    public static final String NOTIFY_TYPE_STATUS_CHANGE = "STATUS_CHANGE";
+
+    /** 拒单原因：时间冲突 */
+    public static final String REJECT_REASON_TIME_CONFLICT = "时间冲突";
+
+    /** 拒单原因：个人原因 */
+    public static final String REJECT_REASON_PERSONAL = "个人原因";
+
+    /** 拒单原因：技能不符 */
+    public static final String REJECT_REASON_SKILL_MISMATCH = "技能不符";
+
+    /** 拒单原因：其他 */
+    public static final String REJECT_REASON_OTHER = "其他";
+
     public static final String ORDER_STATUS_ARCHIVED = "ARCHIVED";
 
     public static final String PAYMENT_STATUS_UNPAID = "UNPAID";

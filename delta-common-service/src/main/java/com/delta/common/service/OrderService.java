@@ -13,7 +13,34 @@ public interface OrderService {
 
     OrderVO createOrder(Long userId, Long companionId, String serviceType,
                          LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
-                         String remark);
+                         String remark, String timeSource, Long scheduleId);
+
+    /**
+     * 陪玩师接单
+     *
+     * @param orderId     订单ID
+     * @param companionId 陪玩师ID
+     * @return 更新后的订单视图
+     */
+    OrderVO acceptOrder(Long orderId, Long companionId);
+
+    /**
+     * 陪玩师拒单
+     *
+     * @param orderId     订单ID
+     * @param companionId 陪玩师ID
+     * @param reason      拒单原因
+     * @return 更新后的订单视图
+     */
+    OrderVO rejectOrder(Long orderId, Long companionId, String reason);
+
+    /**
+     * 获取陪玩师所有待处理订单
+     *
+     * @param companionId 陪玩师ID
+     * @return 待处理订单列表
+     */
+    List<OrderVO> getPendingOrdersByCompanionId(Long companionId);
 
     OrderVO submitReview(Long orderId, Integer rating, String reviewContent, Long reviewerId);
 

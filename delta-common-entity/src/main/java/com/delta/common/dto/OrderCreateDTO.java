@@ -34,6 +34,12 @@ public class OrderCreateDTO {
     @Schema(description = "备注", example = "希望选择擅长打野的陪玩师")
     private String remark;
 
+    @Schema(description = "时间选择方式", example = "SYSTEM", allowableValues = {"SYSTEM", "CUSTOM"})
+    private String timeSource;
+
+    @Schema(description = "关联排班记录ID，选择系统推荐时间时传入")
+    private Long scheduleId;
+
     @Schema(description = "来源", example = "微信", allowableValues = {"微信", "企微", "APP", "网页"})
     private String source;
 
@@ -57,6 +63,12 @@ public class OrderCreateDTO {
 
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+
+    public String getTimeSource() { return timeSource; }
+    public void setTimeSource(String timeSource) { this.timeSource = timeSource; }
+
+    public Long getScheduleId() { return scheduleId; }
+    public void setScheduleId(Long scheduleId) { this.scheduleId = scheduleId; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }

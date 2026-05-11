@@ -75,6 +75,15 @@ public class OrderVO extends BaseVO {
     @Schema(description = "备注", example = "希望选择擅长打野的陪玩师")
     private String remark;
 
+    @Schema(description = "时间选择方式", example = "SYSTEM", allowableValues = {"SYSTEM", "CUSTOM"})
+    private String timeSource;
+
+    @Schema(description = "取消/拒单原因", example = "时间冲突")
+    private String cancelReason;
+
+    @Schema(description = "关联排班记录ID")
+    private Long scheduleId;
+
     @Schema(description = "来源", example = "微信", allowableValues = {"微信", "企微", "APP", "网页"})
     private String source;
 

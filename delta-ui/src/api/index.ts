@@ -197,7 +197,11 @@ export const orderApi = {
   cancelOrder: (id: string, reason: string) => request({ url: `/orders/${id}/cancel`, method: 'put', params: { reason } }),
   getActiveByUser: (userId: string) => request({ url: `/orders/active/user/${userId}`, method: 'get' }),
   getByCompanion: (companionId: string) => request({ url: `/orders/companion/${companionId}`, method: 'get' }),
-  queryOrders: (params: Record<string, unknown>) => request({ url: '/orders/query', method: 'get', params })
+  queryOrders: (params: Record<string, unknown>) => request({ url: '/orders/query', method: 'get', params }),
+  accept: (id: string, companionId: number) => request({ url: `/orders/${id}/accept`, method: 'put', params: { companionId } }),
+  reject: (id: string, companionId: number, reason: string) => request({ url: `/orders/${id}/reject`, method: 'put', params: { companionId, reason } }),
+  getPendingByCompanion: (companionId: number) => request({ url: `/orders/companion/${companionId}/pending`, method: 'get' }),
+  getStatusHistory: (id: string) => request({ url: `/orders/${id}/status-history`, method: 'get' })
 }
 
 export const workOrderApi = {

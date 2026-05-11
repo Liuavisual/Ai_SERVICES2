@@ -312,9 +312,9 @@
         </el-form-item>
         <el-form-item label="自定义时间">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <el-time-picker v-model="orderForm.customStartTime" placeholder="开始时间" format="HH:mm" value-format="HH:mm" style="width: 130px" />
+            <el-time-picker v-model="orderForm.customStartTime" placeholder="开始时间" format="HH:mm" value-format="HH:mm" style="width: 130px" @change="onCustomTimeChange" />
             <span>至</span>
-            <el-time-picker v-model="orderForm.customEndTime" placeholder="结束时间" format="HH:mm" value-format="HH:mm" style="width: 130px" />
+            <el-time-picker v-model="orderForm.customEndTime" placeholder="结束时间" format="HH:mm" value-format="HH:mm" style="width: 130px" @change="onCustomTimeChange" />
             <el-tooltip content="自定义时间将生成人工客服预约处理工单">
               <el-icon><InfoFilled /></el-icon>
             </el-tooltip>
@@ -414,6 +414,8 @@ const orderForm = reactive<{
   customStartTime: string | null
   customEndTime: string | null
   remark: string
+  timeSource: string
+  scheduleId: number | null
 }>({
   userId: null,
   companionId: null,
@@ -423,7 +425,9 @@ const orderForm = reactive<{
   selectedSlot: null,
   customStartTime: null,
   customEndTime: null,
-  remark: ''
+  remark: '',
+  timeSource: '',
+  scheduleId: null
 })
 
 const companionList = ref<CompanionVO[]>([])
@@ -457,10 +461,22 @@ const onDateChange = async (): Promise<void> => {
 }
 
 const onSlotChange = (): void => {
-  // 选择可用时段后，自动清除自定义时间
   if (orderForm.selectedSlot) {
     orderForm.customStartTime = null
     orderForm.customEndTime = null
+    orderForm.timeSource = 'SYSTEM'
+    orderForm.scheduleId = orderForm.selectedSlot.id
+  } else {
+    orderForm.timeSource = ''
+    orderForm.scheduleId = null
+  }
+}
+
+const onCustomTimeChange = (): void => {
+  if (orderForm.customStartTime || orderForm.customEndTime) {
+    orderForm.selectedSlot = null
+    orderForm.timeSource = 'CUSTOM'
+    orderForm.scheduleId = null
   }
 }
 
@@ -597,6 +613,8 @@ const handleAddOrder = (row: CustomerProfileVO): void => {
   orderForm.customStartTime = null
   orderForm.customEndTime = null
   orderForm.remark = ''
+  orderForm.timeSource = ''
+  orderForm.scheduleId = null
   availableSlots.value = []
   orderDialogVisible.value = true
 }
@@ -628,16 +646,40 @@ const handleConfirmOrder = async (): Promise<void> => {
     ElMessage.warning('请选择可用时段或填写自定义时间')
     return
   }
+
+  const companionName = companionList.value.find(c => c.id === orderForm.companionId)?.nickname || '未选择'
+  const timeLabel = isCustomTime
+    ? `${orderForm.customStartTime} - ${orderForm.customEndTime}（自定义）`
+    : `${orderForm.selectedSlot?.startTime?.substring(0, 5)} - ${orderForm.selectedSlot?.endTime?.substring(0, 5)}（预设时段）`
+  try {
+    await ElMessageBox.confirm(
+      `陪玩师：${companionName}\n游戏类型：${orderForm.gameType}\n预约日期：${orderForm.scheduleDate}\n预约时间：${timeLabel}\n订单类型：${orderForm.orderType}`,
+      '确认订单信息',
+      {
+        confirmButtonText: '确认下单',
+        cancelButtonText: '返回修改',
+        type: 'info',
+        dangerouslyUseHTMLString: false
+      }
+    )
+  } catch {
+    return
+  }
+
   try {
     orderSubmitting.value = true
-    const data = {
+    const data: Record<string, unknown> = {
       userId: Number(orderForm.userId) || 0,
       companionId: orderForm.companionId,
       serviceType: orderForm.orderType,
       gameType: orderForm.gameType,
       scheduledStart,
       scheduledEnd,
+      timeSource: orderForm.timeSource || (isCustomTime ? 'CUSTOM' : 'SYSTEM'),
       remark: (isCustomTime ? '[自定义时间-待客服确认] ' : '') + (orderForm.remark || '')
+    }
+    if (orderForm.scheduleId) {
+      data.scheduleId = orderForm.scheduleId
     }
     const res: Result<any> = await orderApi.create(data)
     if (res.code === 200) {

@@ -64,8 +64,32 @@ public class OrderController extends BaseController {
     public Result<OrderVO> createOrder(@Valid @RequestBody OrderCreateDTO dto) {
         return Result.success(orderService.createOrder(
             decodeId(dto.getUserId()), decodeId(dto.getCompanionId()), dto.getServiceType(),
-            dto.getScheduledStart(), dto.getScheduledEnd(), dto.getRemark()
+            dto.getScheduledStart(), dto.getScheduledEnd(), dto.getRemark(),
+            dto.getTimeSource(), dto.getScheduleId()
         ));
+    }
+
+    @Operation(summary = "陪玩师接单")
+    @PutMapping("/{id}/accept")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @AuditLog(module = "订单管理", action = "陪玩师接单")
+    public Result<OrderVO> acceptOrder(@PathVariable String id, @RequestParam Long companionId) {
+        return Result.success(orderService.acceptOrder(decodeId(id), companionId));
+    }
+
+    @Operation(summary = "陪玩师拒单")
+    @PutMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @AuditLog(module = "订单管理", action = "陪玩师拒单")
+    public Result<OrderVO> rejectOrder(@PathVariable String id, @RequestParam Long companionId, @RequestParam(required = false) String reason) {
+        return Result.success(orderService.rejectOrder(decodeId(id), companionId, reason));
+    }
+
+    @Operation(summary = "获取陪玩师待处理订单")
+    @GetMapping("/companion/{companionId}/pending")
+    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    public Result<List<OrderVO>> getPendingOrdersByCompanionId(@PathVariable String companionId) {
+        return Result.success(orderService.getPendingOrdersByCompanionId(decodeId(companionId)));
     }
 
     @Operation(summary = "确认订单")

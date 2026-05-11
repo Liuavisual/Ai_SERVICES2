@@ -97,4 +97,13 @@ public class Order extends BaseEntity {
 
     /** 备注 */
     private String remark;
+
+    /** 时间选择方式:SYSTEM-系统推荐,CUSTOM-客户自定义 */
+    private String timeSource;
+
+    /** 取消/拒单原因 */
+    private String cancelReason;
+
+    /** 关联排班记录ID */
+    private Long scheduleId;
 }

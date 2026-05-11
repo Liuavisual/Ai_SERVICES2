@@ -1,0 +1,36 @@
+package com.delta.admin.controller;
+
+import com.delta.common.constant.ApiVersionConstants;
+import com.delta.common.entity.OrderStatusHistory;
+import com.delta.common.mapper.OrderStatusHistoryMapper;
+import com.delta.common.vo.Result;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 订单状态变更历史控制器
+ *
+ * @author 刘建国
+ */
+@RequiredArgsConstructor
+@Tag(name = "订单状态历史")
+@RestController
+@RequestMapping(ApiVersionConstants.V1 + "/orders")
+@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+public class OrderStatusHistoryController extends BaseController {
+
+    private final OrderStatusHistoryMapper orderStatusHistoryMapper;
+
+    @Operation(summary = "查询订单状态变更历史")
+    @GetMapping("/{id}/status-history")
+    public Result<List<OrderStatusHistory>> getStatusHistory(@PathVariable String id) {
+        Long orderId = decodeId(id);
+        List<OrderStatusHistory> histories = orderStatusHistoryMapper.selectByOrderId(orderId);
+        return Result.success(histories);
+    }
+}

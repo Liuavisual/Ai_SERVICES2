@@ -5,12 +5,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.dto.OrderQueryDTO;
 import com.delta.common.entity.Companion;
+import com.delta.common.entity.CompanionNotification;
+import com.delta.common.entity.CompanionSchedule;
 import com.delta.common.entity.Order;
+import com.delta.common.entity.OrderStatusHistory;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.dto.WorkOrderCreateDTO;
 import com.delta.common.mapper.CompanionMapper;
-import com.delta.common.mapper.CompanionRatingSummaryMapper;
+import com.delta.common.mapper.CompanionNotificationMapper;
+import com.delta.common.mapper.CompanionScheduleMapper;
 import com.delta.common.mapper.OrderMapper;
+import com.delta.common.mapper.OrderStatusHistoryMapper;
 import com.delta.common.service.OrderService;
 import com.delta.common.service.WorkOrderService;
 import com.delta.common.vo.OrderVO;
@@ -45,7 +50,11 @@ public class OrderServiceImpl implements OrderService {
 
     private final WorkOrderService workOrderService;
 
-    private final CompanionRatingSummaryMapper companionRatingSummaryMapper;
+    private final CompanionScheduleMapper companionScheduleMapper;
+
+    private final OrderStatusHistoryMapper orderStatusHistoryMapper;
+
+    private final CompanionNotificationMapper companionNotificationMapper;
 
     @Override
     public OrderVO getOrderById(Long id) {
@@ -60,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public OrderVO createOrder(Long userId, Long companionId, String serviceType,
                                 LocalDateTime scheduledStart, LocalDateTime scheduledEnd,
-                                String remark) {
+                                String remark, String timeSource, Long scheduleId) {
         Companion companion = companionMapper.selectById(companionId);
         if (companion == null) {
             throw new BusinessException("陪玩师不存在");
@@ -90,9 +99,22 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentStatus(BusinessStatusConstants.PAYMENT_STATUS_UNPAID);
         order.setPaidAmount(BigDecimal.ZERO);
         order.setRemark(remark);
+        order.setTimeSource(timeSource);
+        order.setScheduleId(scheduleId);
 
         orderMapper.insert(order);
         log.info("订单创建成功: orderNo={}, userId={}, companionId={}", orderNo, userId, companionId);
+
+        if (scheduleId != null) {
+            markScheduleAsBooked(scheduleId);
+        }
+
+        recordStatusHistory(order.getId(), null, BusinessStatusConstants.ORDER_STATUS_PENDING,
+                userId, "系统", "SYSTEM", "订单创建");
+
+        sendCompanionNotification(companionId, order.getId(),
+                BusinessStatusConstants.NOTIFY_TYPE_NEW_ORDER,
+                "新订单通知", "您有一个新的陪玩订单待处理，订单号：" + orderNo);
 
         createLinkedWorkOrder(order);
 
@@ -132,6 +154,64 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderVO acceptOrder(Long orderId, Long companionId) {
+        Order order = getOrderOrThrow(orderId);
+        if (!BusinessStatusConstants.ORDER_STATUS_PENDING.equals(order.getOrderStatus())) {
+            throw new BusinessException("仅待确认状态的订单可以接单");
+        }
+        if (!companionId.equals(order.getCompanionId())) {
+            throw new BusinessException("只能处理分配给您的订单");
+        }
+        String fromStatus = order.getOrderStatus();
+        order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CONFIRMED);
+        orderMapper.updateById(order);
+
+        recordStatusHistory(orderId, fromStatus, BusinessStatusConstants.ORDER_STATUS_CONFIRMED,
+                companionId, order.getCompanionName(), "COMPANION", "陪玩师接单");
+
+        sendCompanionNotification(companionId, orderId,
+                BusinessStatusConstants.NOTIFY_TYPE_STATUS_CHANGE,
+                "接单成功", "您已成功接单，订单号：" + order.getOrderNo());
+
+        log.info("陪玩师接单成功: orderId={}, companionId={}", orderId, companionId);
+        return convertToVO(order);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderVO rejectOrder(Long orderId, Long companionId, String reason) {
+        Order order = getOrderOrThrow(orderId);
+        if (!BusinessStatusConstants.ORDER_STATUS_PENDING.equals(order.getOrderStatus())) {
+            throw new BusinessException("仅待确认状态的订单可以拒单");
+        }
+        if (!companionId.equals(order.getCompanionId())) {
+            throw new BusinessException("只能处理分配给您的订单");
+        }
+        String fromStatus = order.getOrderStatus();
+        order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CANCELLED);
+        order.setCancelReason(reason);
+        orderMapper.updateById(order);
+
+        recordStatusHistory(orderId, fromStatus, BusinessStatusConstants.ORDER_STATUS_CANCELLED,
+                companionId, order.getCompanionName(), "COMPANION", "陪玩师拒单：" + (reason != null ? reason : ""));
+
+        releaseSchedule(order);
+
+        log.info("陪玩师拒单成功: orderId={}, companionId={}, reason={}", orderId, companionId, reason);
+        return convertToVO(order);
+    }
+
+    @Override
+    public List<OrderVO> getPendingOrdersByCompanionId(Long companionId) {
+        LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Order::getCompanionId, companionId);
+        wrapper.eq(Order::getOrderStatus, BusinessStatusConstants.ORDER_STATUS_PENDING);
+        wrapper.orderByAsc(Order::getScheduledStart);
+        List<Order> orders = orderMapper.selectList(wrapper);
+        return convertList(orders);
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void confirmOrder(Long id) {
@@ -199,11 +279,15 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("当前订单状态不允许取消");
         }
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CANCELLED);
+        order.setCancelReason(reason);
         if (reason != null && !reason.isEmpty()) {
             String existingRemark = order.getRemark();
             order.setRemark(existingRemark != null ? existingRemark + " | 取消原因:" + reason : "取消原因:" + reason);
         }
         orderMapper.updateById(order);
+
+        releaseSchedule(order);
+
         log.info("订单取消: id={}, reason={}", id, reason);
     }
 
@@ -370,5 +454,84 @@ public class OrderServiceImpl implements OrderService {
             case BusinessStatusConstants.PAYMENT_STATUS_PARTIAL: return "部分支付";
             default: return "已支付";
         }
+    }
+
+    /**
+     * 将排班记录标记为已预约状态
+     *
+     * @param scheduleId 排班记录ID
+     */
+    private void markScheduleAsBooked(Long scheduleId) {
+        CompanionSchedule schedule = companionScheduleMapper.selectById(scheduleId);
+        if (schedule != null && BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE.equals(schedule.getStatus())) {
+            schedule.setStatus(BusinessStatusConstants.SCHEDULE_STATUS_BOOKED);
+            companionScheduleMapper.updateById(schedule);
+            log.info("排班时段已标记为已预约: scheduleId={}", scheduleId);
+        }
+    }
+
+    /**
+     * 释放订单关联的时间资源
+     * 将排班记录从已预约恢复为可用状态
+     *
+     * @param order 订单实体
+     */
+    private void releaseSchedule(Order order) {
+        if (order.getScheduleId() != null) {
+            CompanionSchedule schedule = companionScheduleMapper.selectById(order.getScheduleId());
+            if (schedule != null && BusinessStatusConstants.SCHEDULE_STATUS_BOOKED.equals(schedule.getStatus())) {
+                schedule.setStatus(BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE);
+                companionScheduleMapper.updateById(schedule);
+                log.info("排班时段已释放: scheduleId={}, orderId={}", order.getScheduleId(), order.getId());
+            }
+        }
+    }
+
+    /**
+     * 记录订单状态变更历史
+     *
+     * @param orderId      订单ID
+     * @param fromStatus   变更前状态
+     * @param toStatus     变更后状态
+     * @param operatorId   操作人ID
+     * @param operatorName 操作人姓名
+     * @param operatorRole 操作人角色
+     * @param reason       变更原因
+     */
+    private void recordStatusHistory(Long orderId, String fromStatus, String toStatus,
+                                      Long operatorId, String operatorName,
+                                      String operatorRole, String reason) {
+        OrderStatusHistory history = new OrderStatusHistory();
+        history.setOrderId(orderId);
+        history.setFromStatus(fromStatus);
+        history.setToStatus(toStatus);
+        history.setOperatorId(operatorId);
+        history.setOperatorName(operatorName);
+        history.setOperatorRole(operatorRole);
+        history.setReason(reason);
+        history.setCreatedAt(LocalDateTime.now());
+        orderStatusHistoryMapper.insert(history);
+    }
+
+    /**
+     * 向陪玩师发送通知消息
+     *
+     * @param companionId 陪玩师ID
+     * @param orderId     订单ID
+     * @param type        通知类型
+     * @param title       通知标题
+     * @param content     通知内容
+     */
+    private void sendCompanionNotification(Long companionId, Long orderId,
+                                            String type, String title, String content) {
+        CompanionNotification notification = new CompanionNotification();
+        notification.setCompanionId(companionId);
+        notification.setOrderId(orderId);
+        notification.setType(type);
+        notification.setTitle(title);
+        notification.setContent(content);
+        notification.setIsRead(0);
+        notification.setCreatedAt(LocalDateTime.now());
+        companionNotificationMapper.insert(notification);
     }
 }

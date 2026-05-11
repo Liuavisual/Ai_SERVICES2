@@ -55,11 +55,13 @@ class OrderControllerTest {
         dto.setScheduledStart(LocalDateTime.of(2026, 1, 1, 10, 0));
         dto.setScheduledEnd(LocalDateTime.of(2026, 1, 1, 12, 0));
         dto.setRemark("测试订单");
+        dto.setTimeSource("SYSTEM");
+        dto.setScheduleId(null);
 
         OrderVO createdOrder = new OrderVO();
         createdOrder.setId(1L);
 
-        when(orderService.createOrder(eq(1L), eq(2L), eq("陪玩"), any(LocalDateTime.class), any(LocalDateTime.class), eq("测试订单"))).thenReturn(createdOrder);
+        when(orderService.createOrder(eq(1L), eq(2L), eq("陪玩"), any(LocalDateTime.class), any(LocalDateTime.class), eq("测试订单"), eq("SYSTEM"), isNull())).thenReturn(createdOrder);
 
         Result<OrderVO> result = orderController.createOrder(dto);
 

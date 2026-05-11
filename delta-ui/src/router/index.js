@@ -185,6 +185,12 @@ const routes = [
         meta: { title: '排班日历', roles: ['SYS_ADMIN', 'CS_LEADER'] }
       },
       {
+        path: 'companion-orders',
+        name: 'CompanionOrders',
+        component: () => import('@/views/CompanionOrders.vue'),
+        meta: { title: '我的订单', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
+      },
+      {
         path: 'orders',
         name: 'Orders',
         component: () => import('@/views/Orders.vue'),

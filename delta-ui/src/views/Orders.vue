@@ -107,10 +107,11 @@
               @click="handleCancel(row)"
             >取消</el-button>
             <el-button
-              v-if="row.orderStatus === 'COMPLETED'"
-              link type="warning" size="small"
-              @click="handleReview(row)"
-            >评价</el-button>
+                v-if="row.orderStatus === 'COMPLETED'"
+                link type="warning" size="small"
+                @click="handleReview(row)"
+              >评价</el-button>
+              <el-button link type="info" size="small" @click="handleStatusHistory(row)">状态历史</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -213,13 +214,39 @@
         <el-button type="danger" @click="confirmCancel" :loading="cancelLoading">确认取消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="statusHistoryVisible" title="状态变更历史" width="640px" destroy-on-close>
+      <el-timeline v-if="statusHistoryList.length > 0">
+        <el-timeline-item
+          v-for="item in statusHistoryList"
+          :key="item.id"
+          :timestamp="formatDateTime(item.createdAt)"
+          placement="top"
+          :color="statusTimelineColor(item.fromStatus)"
+        >
+          <div class="timeline-content">
+            <el-tag :type="statusTagType(item.fromStatus)" size="small" effect="plain">{{ item.fromStatus }}</el-tag>
+            <el-icon style="margin: 0 4px"><ArrowRight /></el-icon>
+            <el-tag :type="statusTagType(item.toStatus)" size="small" effect="plain">{{ item.toStatus }}</el-tag>
+            <span style="margin-left: 8px; color: #606266">{{ item.operatorName || '-' }}</span>
+            <span v-if="item.operatorRole" style="margin-left: 4px; color: #909399; font-size: 12px">({{ item.operatorRole }})</span>
+            <div v-if="item.reason" style="margin-top: 4px; color: #909399; font-size: 13px">原因：{{ item.reason }}</div>
+          </div>
+        </el-timeline-item>
+      </el-timeline>
+      <el-empty v-else description="暂无状态变更记录" />
+      <template #footer>
+        <el-button @click="statusHistoryVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { orderApi } from '@/api'
+import { ArrowRight } from '@element-plus/icons-vue'
+import { orderApi, satisfactionApi } from '@/api'
 import type { Result, PageResult, OrderVO, OrderStatus } from '@/types'
 
 const loading = ref<boolean>(false)
@@ -258,6 +285,9 @@ const reviewForm = reactive<{ rating: number; feedback: string; tags: string }>(
   tags: ''
 })
 
+const statusHistoryVisible = ref<boolean>(false)
+const statusHistoryList = ref<StatusHistoryItem[]>([])
+
 const statusTagMap: Record<string, string> = {
   PENDING: 'info',
   CONFIRMED: '',
@@ -279,6 +309,47 @@ function formatDateTime(val: string): string {
   const d = new Date(val)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function statusTimelineColor(status: string): string {
+  const colorMap: Record<string, string> = {
+    PENDING: '#909399',
+    CONFIRMED: '#409eff',
+    IN_PROGRESS: '#e6a23c',
+    COMPLETED: '#67c23a',
+    PENDING_REVIEW: '#409eff',
+    CANCELLED: '#f56c6c',
+    REFUNDED: '#909399',
+    ABNORMAL: '#f56c6c',
+    ARCHIVED: '#909399'
+  }
+  return colorMap[status] || '#909399'
+}
+
+async function handleStatusHistory(row: OrderVO): Promise<void> {
+  currentOrder.value = row
+  statusHistoryList.value = []
+  statusHistoryVisible.value = true
+  try {
+    const res: Result<StatusHistoryItem[]> = await orderApi.getStatusHistory(row.id)
+    if (res.code === 200) {
+      statusHistoryList.value = res.data || []
+    }
+  } catch (e) {
+    console.error('获取状态历史失败', e)
+  }
+}
+
+interface StatusHistoryItem {
+  id: number
+  orderId: number
+  fromStatus: string
+  toStatus: string
+  operatorId: number
+  operatorName: string
+  operatorRole: string
+  reason: string
+  createdAt: string
 }
 
 async function fetchData(): Promise<void> {

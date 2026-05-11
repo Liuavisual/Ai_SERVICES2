@@ -1,6 +1,7 @@
 package com.delta.admin.config;
 
 import com.delta.admin.websocket.AdminNotificationHandler;
+import com.delta.admin.websocket.OrderNotificationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +16,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final AdminNotificationHandler notificationHandler;
 
+    private final OrderNotificationWebSocketHandler orderNotificationHandler;
+
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
     @Value("${websocket.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:8080}")
@@ -23,6 +26,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(notificationHandler, "/v1/ws/notify")
+                .addInterceptors(webSocketAuthInterceptor)
+                .setAllowedOrigins(allowedOrigins.split(","));
+
+        registry.addHandler(orderNotificationHandler, "/v1/ws/order-notify")
                 .addInterceptors(webSocketAuthInterceptor)
                 .setAllowedOrigins(allowedOrigins.split(","));
     }
