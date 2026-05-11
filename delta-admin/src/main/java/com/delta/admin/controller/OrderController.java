@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.PermAuth;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.OrderCreateDTO;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "订单管理")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/orders")
-@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@PermAuth("order:view")
 public class OrderController extends BaseController {
 
     private final OrderService orderService;
@@ -44,7 +44,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "提交订单评价")
     @PostMapping("/{id}/review")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("order:review")
     public Result<OrderVO> submitReview(@PathVariable Long id,
                                          @RequestParam Integer rating,
                                          @RequestParam(required = false) String reviewContent,
@@ -71,7 +71,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "陪玩师接单")
     @PutMapping("/{id}/accept")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("order:edit")
     @AuditLog(module = "订单管理", action = "陪玩师接单")
     public Result<OrderVO> acceptOrder(@PathVariable String id, @RequestParam Long companionId) {
         return Result.success(orderService.acceptOrder(decodeId(id), companionId));
@@ -79,21 +79,24 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "陪玩师拒单")
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("order:edit")
     @AuditLog(module = "订单管理", action = "陪玩师拒单")
     public Result<OrderVO> rejectOrder(@PathVariable String id, @RequestParam Long companionId, @RequestParam(required = false) String reason) {
+        if (reason == null || reason.isBlank()) {
+            return Result.error(400, "拒单原因不能为空");
+        }
         return Result.success(orderService.rejectOrder(decodeId(id), companionId, reason));
     }
 
     @Operation(summary = "获取陪玩师待处理订单")
     @GetMapping("/companion/{companionId}/pending")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<OrderVO>> getPendingOrdersByCompanionId(@PathVariable String companionId) {
         return Result.success(orderService.getPendingOrdersByCompanionId(decodeId(companionId)));
     }
 
     @Operation(summary = "确认订单")
     @PutMapping("/{id}/confirm")
+    @PermAuth("order:edit")
     @AuditLog(module = "订单管理", action = "更新订单状态")
     public Result<Void> confirmOrder(@PathVariable String id) {
         orderService.confirmOrder(decodeId(id));
@@ -102,6 +105,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "开始服务")
     @PutMapping("/{id}/start")
+    @PermAuth("order:edit")
     public Result<Void> startService(@PathVariable String id) {
         orderService.startService(decodeId(id));
         return Result.success();
@@ -109,6 +113,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "完成服务(触发评价)")
     @PutMapping("/{id}/complete")
+    @PermAuth("order:edit")
     public Result<Void> completeOrder(@PathVariable String id) {
         orderService.completeOrder(decodeId(id));
         return Result.success();
@@ -116,6 +121,7 @@ public class OrderController extends BaseController {
 
     @Operation(summary = "取消订单")
     @PutMapping("/{id}/cancel")
+    @PermAuth("order:edit")
     public Result<Void> cancelOrder(@PathVariable String id, @RequestParam(required = false) String reason) {
         orderService.cancelOrder(decodeId(id), reason);
         return Result.success();

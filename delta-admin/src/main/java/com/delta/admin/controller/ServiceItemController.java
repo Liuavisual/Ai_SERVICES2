@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.ServiceItemDTO;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,13 +21,13 @@ import java.util.List;
 @Tag(name = "服务项目管理", description = "服务项目管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/service-items")
+@PermAuth("service_item:view")
 public class ServiceItemController extends BaseController {
 
     private final ServiceItemService serviceItemService;
 
     @Operation(summary = "分页查询服务项目")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<ServiceItemVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -41,28 +41,25 @@ public class ServiceItemController extends BaseController {
 
     @Operation(summary = "获取俱乐部的服务项目")
     @GetMapping("/club/{clubConfigId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<ServiceItemVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
         return Result.success(serviceItemService.getByClubId(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取游戏的服务项目")
     @GetMapping("/game/{gameConfigId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<ServiceItemVO>> getByGameId(@PathVariable("gameConfigId") String gameConfigId) {
         return Result.success(serviceItemService.getByGameId(decodeId(gameConfigId)));
     }
 
     @Operation(summary = "获取服务项目详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<ServiceItemVO> getById(@PathVariable("id") String id) {
         return Result.success(serviceItemService.getById(decodeId(id)));
     }
 
     @Operation(summary = "新增服务项目")
     @PostMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("service_item:edit")
     public Result<String> create(@Valid @RequestBody ServiceItemDTO dto) {
         serviceItemService.create(dto);
         return Result.success("添加成功");
@@ -70,7 +67,7 @@ public class ServiceItemController extends BaseController {
 
     @Operation(summary = "更新服务项目")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("service_item:edit")
     public Result<String> update(@Valid @RequestBody ServiceItemDTO dto) {
         serviceItemService.update(dto);
         return Result.success("更新成功");
@@ -78,7 +75,7 @@ public class ServiceItemController extends BaseController {
 
     @Operation(summary = "删除服务项目")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("service_item:edit")
     public Result<String> delete(@PathVariable("id") String id) {
         serviceItemService.delete(decodeId(id));
         return Result.success("删除成功");
@@ -86,14 +83,13 @@ public class ServiceItemController extends BaseController {
 
     @Operation(summary = "获取定价规则")
     @GetMapping("/{serviceItemId}/price-rules")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<ServicePriceRuleVO>> getPriceRules(@PathVariable("serviceItemId") String serviceItemId) {
         return Result.success(serviceItemService.getPriceRules(decodeId(serviceItemId)));
     }
 
     @Operation(summary = "保存定价规则")
     @PostMapping("/price-rules")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("service_item:edit")
     public Result<String> savePriceRule(@Valid @RequestBody ServicePriceRuleDTO dto) {
         serviceItemService.savePriceRule(dto);
         return Result.success("保存成功");
@@ -101,7 +97,7 @@ public class ServiceItemController extends BaseController {
 
     @Operation(summary = "删除定价规则")
     @DeleteMapping("/price-rules/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("service_item:edit")
     public Result<String> deletePriceRule(@PathVariable("id") String id) {
         serviceItemService.deletePriceRule(decodeId(id));
         return Result.success("删除成功");

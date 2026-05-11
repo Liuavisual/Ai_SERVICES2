@@ -97,6 +97,17 @@ public class JwtUtils {
         return claims.get("role", String.class);
     }
 
+    /**
+     * 从JWT中获取用户权限列表（逗号分隔字符串）
+     *
+     * @param token JWT Token
+     * @return 权限编码列表，逗号分隔
+     */
+    public String getPermissionsFromToken(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("permissions", String.class);
+    }
+
     public String getTypeFromToken(String token) {
         Claims claims = parseToken(token);
         return claims.get("type", String.class);

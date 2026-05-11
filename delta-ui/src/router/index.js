@@ -176,7 +176,7 @@ const routes = [
         path: 'companion-schedule',
         name: 'CompanionSchedule',
         component: () => import('@/views/CompanionSchedule.vue'),
-        meta: { title: '排班管理', roles: ['SYS_ADMIN', 'CS_LEADER'] }
+        meta: { title: '日程管理', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF', 'COMPANION'], keepAlive: true }
       },
       {
         path: 'companion-schedule-calendar',
@@ -188,7 +188,7 @@ const routes = [
         path: 'companion-orders',
         name: 'CompanionOrders',
         component: () => import('@/views/CompanionOrders.vue'),
-        meta: { title: '我的订单', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF'], keepAlive: true }
+        meta: { title: '我的订单', roles: ['SYS_ADMIN', 'CS_LEADER', 'CS_STAFF', 'COMPANION'], keepAlive: true }
       },
       {
         path: 'orders',

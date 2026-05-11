@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.dto.FaqItemDTO;
 import com.delta.common.service.CacheService;
 import com.delta.common.service.FaqItemService;
@@ -15,7 +16,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/faq-items")
 @RequiredArgsConstructor
+@PermAuth("faq_item:view")
 public class FaqItemController extends BaseController {
 
     private final FaqItemService faqItemService;
@@ -36,7 +37,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "获取FAQ列表")
     @GetMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("faq_item:edit")
     public Result<Page<FaqItemVO>> getFaqItems(
             @RequestParam(name = "page", defaultValue = "1") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
@@ -46,7 +47,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "新增FAQ")
     @PostMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("faq_item:edit")
     public Result<String> addFaqItem(@Valid @RequestBody FaqItemDTO dto) {
         faqItemService.addFaqItem(dto);
         cacheService.reloadFaqItems();
@@ -55,7 +56,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "更新FAQ")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("faq_item:edit")
     public Result<String> updateFaqItem(@Valid @RequestBody FaqItemDTO dto) {
         faqItemService.updateFaqItem(dto);
         cacheService.reloadFaqItems();
@@ -64,7 +65,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "删除FAQ")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("faq_item:edit")
     public Result<String> deleteFaqItem(@PathVariable("id") String id) {
         faqItemService.deleteFaqItem(decodeId(id));
         cacheService.reloadFaqItems();
@@ -73,7 +74,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "导出FAQ知识库Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("faq_item:edit")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "category", required = false) String category) throws IOException {
         Page<FaqItemVO> page = faqItemService.getFaqItems(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, category);
@@ -98,7 +99,7 @@ public class FaqItemController extends BaseController {
 
     @Operation(summary = "导入FAQ知识库Excel")
     @PostMapping("/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("faq_item:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
         List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
         int success = 0, fail = 0;

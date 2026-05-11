@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,7 +22,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.delta.common.constant.ExportConstants;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * JWT认证过滤器，拦截请求验证Token有效性并设置安全上下文
@@ -80,6 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = claims.getSubject();
                 Long userId = claims.get("userId", Long.class);
                 String role = claims.get("role", String.class);
+                String permissions = claims.get("permissions", String.class);
 
                 if (role == null) {
                     log.warn("JWT中role为null，拒绝认证: userId={}", userId);
@@ -87,22 +90,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                if (username != null && !jwtUtils.isTokenExpired(jwt)) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userId,
-                                    null,
-                                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role))
-                            );
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
 
-                    request.setAttribute("userId", userId);
-                    request.setAttribute("username", username);
-                    request.setAttribute("role", role);
-
-                    log.debug("用户认证成功: userId={}, username={}, role={}", userId, username, role);
+                List<String> permList = List.of();
+                if (permissions != null && !permissions.isEmpty()) {
+                    permList = Arrays.asList(permissions.split(","));
+                    for (String perm : permList) {
+                        String trimmed = perm.trim();
+                        if (!"*".equals(trimmed) && !trimmed.isEmpty()) {
+                            authorities.add(new SimpleGrantedAuthority("PERM_" + trimmed));
+                        }
+                    }
                 }
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userId, null, authorities);
+                authentication.setDetails(permList);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                request.setAttribute("userId", userId);
+                request.setAttribute("username", username);
+                request.setAttribute("role", role);
+
+                log.debug("用户认证成功: userId={}, username={}, role={}", userId, username, role);
             }
         } catch (Exception ex) {
             log.error("JWT认证失败", ex);

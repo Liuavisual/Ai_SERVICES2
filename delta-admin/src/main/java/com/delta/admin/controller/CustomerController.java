@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.service.CustomerService;
@@ -15,20 +16,19 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "客户管理", description = "客户管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/customers")
 @RequiredArgsConstructor
+@PermAuth("customer:view")
 public class CustomerController extends BaseController {
 
     private final CustomerService customerService;
 
     @Operation(summary = "分页查询客户")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CustomerVO>> getCustomerPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -48,7 +48,6 @@ public class CustomerController extends BaseController {
 
     @Operation(summary = "获取客户详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<CustomerVO> getCustomerById(@PathVariable("id") String id,
                                                HttpServletRequest request) {
         Long decodedId = decodeId(id);
@@ -60,7 +59,7 @@ public class CustomerController extends BaseController {
 
     @Operation(summary = "切换AI启用状态")
     @PutMapping("/{id}/ai-enabled")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("customer:edit")
     public Result<Void> toggleAiEnabled(
             @PathVariable("id") String id,
             @Valid @RequestBody ToggleAiEnabledDTO dto) {
@@ -70,7 +69,7 @@ public class CustomerController extends BaseController {
 
     @Operation(summary = "重新分配客服")
     @PutMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("customer:assign")
     @AuditLog(module = "客户管理", action = "分配客户")
     public Result<Void> assignCustomer(
             @PathVariable("id") String id,
@@ -101,7 +100,7 @@ public class CustomerController extends BaseController {
 
     @Operation(summary = "导出客户Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("customer:export")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "platform", required = false) String platform,
                             @RequestParam(name = "aiEnabled", required = false) Boolean aiEnabled,

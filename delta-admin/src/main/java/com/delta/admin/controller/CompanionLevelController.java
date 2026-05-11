@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CompanionLevelDTO;
 import com.delta.common.dto.ImportResultDTO;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,13 +28,13 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/companion-levels")
 @RequiredArgsConstructor
+@PermAuth("companion_level:view")
 public class CompanionLevelController extends BaseController {
 
     private final CompanionLevelService companionLevelService;
 
     @Operation(summary = "分页查询陪玩师等级")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CompanionLevelVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -45,7 +45,6 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "获取所有启用的陪玩师等级")
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionLevelVO>> getAllEnabled() {
         List<CompanionLevelVO> list = companionLevelService.getAllEnabled();
         return Result.success(list);
@@ -53,7 +52,6 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "获取陪玩师等级详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<CompanionLevelVO> getById(@PathVariable("id") String id) {
         CompanionLevelVO vo = companionLevelService.getById(decodeId(id));
         return Result.success(vo);
@@ -61,7 +59,7 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "创建陪玩师等级")
     @PostMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("companion_level:edit")
     public Result<Void> create(@Valid @RequestBody CompanionLevelDTO dto) {
         companionLevelService.create(dto);
         return Result.success();
@@ -69,7 +67,7 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "更新陪玩师等级")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("companion_level:edit")
     public Result<Void> update(@Valid @RequestBody CompanionLevelDTO dto) {
         companionLevelService.update(dto);
         return Result.success();
@@ -77,7 +75,7 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "删除陪玩师等级")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("companion_level:edit")
     public Result<Void> delete(@PathVariable("id") String id) {
         companionLevelService.delete(decodeId(id));
         return Result.success();
@@ -85,7 +83,6 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "导出陪玩师等级Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "levelName", required = false) String levelName) {
         companionLevelService.exportCompanionLevels(response, levelName);
@@ -93,7 +90,7 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "导入陪玩师等级Excel")
     @PostMapping("/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("companion_level:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
         ImportResultDTO result = companionLevelService.importCompanionLevels(file);
         return Result.success(result.toMap());

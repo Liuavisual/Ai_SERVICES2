@@ -111,6 +111,7 @@ export const companionApi = {
   getAll: () => request({ url: '/companions/all', method: 'get' }),
   getAvailable: (params: Record<string, unknown>) => request({ url: '/companions/available', method: 'get', params }),
   getById: (id: string) => request({ url: `/companions/${id}`, method: 'get' }),
+  getByUserId: (userId: string) => request({ url: `/companions/by-user/${userId}`, method: 'get' }),
   create: (data: Record<string, unknown>) => request({ url: '/companions', method: 'post', data }),
   update: (data: Record<string, unknown>) => request({ url: '/companions', method: 'put', data }),
   delete: (id: string) => request({ url: `/companions/${id}`, method: 'delete' }),
@@ -122,9 +123,12 @@ export const companionScheduleApi = {
   getPage: (params: Record<string, unknown>) => request({ url: '/companion-schedules/page', method: 'get', params }),
   getByCompanionDate: (params: Record<string, unknown>) => request({ url: '/companion-schedules/by-companion-date', method: 'get', params }),
   getByDate: (params: Record<string, unknown>) => request({ url: '/companion-schedules/by-date', method: 'get', params }),
+  getByDateRange: (params: Record<string, unknown>) => request({ url: '/companion-schedules/by-date-range', method: 'get', params }),
   getById: (id: string) => request({ url: `/companion-schedules/${id}`, method: 'get' }),
   getAvailableSlots: (companionId: string, scheduleDate?: string) =>
     request({ url: `/companion-schedules/available/${companionId}`, method: 'get', params: { scheduleDate } }),
+  getListByCompanionId: (companionId: number) =>
+    request({ url: `/companion-schedules/by-companion/${companionId}`, method: 'get' }),
   create: (data: Record<string, unknown>) => request({ url: '/companion-schedules', method: 'post', data }),
   createBatch: (params: Record<string, unknown>, data: Record<string, unknown>) =>
     request({ url: '/companion-schedules/batch', method: 'post', params, data }),

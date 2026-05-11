@@ -18,4 +18,6 @@ public class SysRoleVO {
     private Integer status;
     private Integer sortOrder;
     private List<SysPermissionVO> permissions;
+    /** 权限数量（非持久化字段，仅前端展示用） */
+    private Integer permissionCount;
 }

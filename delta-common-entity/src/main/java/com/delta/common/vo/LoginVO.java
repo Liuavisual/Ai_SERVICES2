@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
@@ -44,4 +46,7 @@ public class LoginVO extends BaseVO {
 
     @Schema(description = "2FA临时令牌")
     private String twoFactorToken;
+
+    @Schema(description = "用户权限编码列表", example = "[\"customer:view\", \"companion:edit\"]")
+    private List<String> permissions;
 }

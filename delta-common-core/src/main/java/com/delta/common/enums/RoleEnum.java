@@ -5,9 +5,10 @@ import lombok.Getter;
 @Getter
 public enum RoleEnum {
     
-    SYS_ADMIN("SYS_ADMIN", "系统管理员"),
-    CS_LEADER("CS_LEADER", "客服负责人"),
-    CS_STAFF("CS_STAFF", "普通客服");
+    SYS_ADMIN("SYS_ADMIN", "超级管理员"),
+    CS_LEADER("CS_LEADER", "客服主管"),
+    CS_STAFF("CS_STAFF", "客服人员"),
+    COMPANION("COMPANION", "陪玩师");
     
     private final String code;
     private final String desc;

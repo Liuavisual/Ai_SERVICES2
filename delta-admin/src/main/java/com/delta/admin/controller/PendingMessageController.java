@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
 import com.delta.common.dto.PendingMessageHandleDTO;
@@ -14,7 +15,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ import java.util.Map;
 @Tag(name = "待处理消息管理", description = "待处理消息管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/pending-messages")
-@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@PermAuth("pending_message:view")
 @RequiredArgsConstructor
 public class PendingMessageController extends BaseController {
 
@@ -62,7 +62,6 @@ public class PendingMessageController extends BaseController {
      */
     @Operation(summary = "分页查询待处理消息")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<PendingMessageVO>> getPendingMessagePage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "20") Integer size,
@@ -87,7 +86,7 @@ public class PendingMessageController extends BaseController {
      */
     @Operation(summary = "处理待处理消息")
     @PostMapping({"/handle", "/process"})
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("pending_message:edit")
     public Result<Void> handlePendingMessage(@Valid @RequestBody PendingMessageHandleDTO handleDTO,
                                               HttpServletRequest request) {
         Long currentUserId = getCurrentUserId(request);
@@ -105,7 +104,6 @@ public class PendingMessageController extends BaseController {
      */
     @Operation(summary = "查询待处理消息详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<PendingMessageVO> getPendingMessageById(@PathVariable Long id) {
         PendingMessageVO vo = pendingMessageService.getPendingMessageById(id);
         if (vo != null) {
@@ -138,7 +136,7 @@ public class PendingMessageController extends BaseController {
      */
     @Operation(summary = "导出待办事项Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("pending_message:export")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "status", required = false) String status,
                             @RequestParam(name = "platform", required = false) String platform,

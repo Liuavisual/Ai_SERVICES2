@@ -298,7 +298,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="预约日期" required>
-          <el-date-picker v-model="orderForm.scheduleDate" type="date" placeholder="选择日期" style="width: 100%" :disabled-date="disabledDate" @change="onDateChange" />
+          <el-date-picker v-model="orderForm.scheduleDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" :disabled-date="disabledDate" @change="onDateChange" />
         </el-form-item>
         <el-form-item label="可用时段">
           <div v-if="availableSlots.length > 0" class="slot-radio-group">
@@ -669,8 +669,8 @@ const handleConfirmOrder = async (): Promise<void> => {
   try {
     orderSubmitting.value = true
     const data: Record<string, unknown> = {
-      userId: Number(orderForm.userId) || 0,
-      companionId: orderForm.companionId,
+      userId: String(orderForm.userId),
+      companionId: String(orderForm.companionId),
       serviceType: orderForm.orderType,
       gameType: orderForm.gameType,
       scheduledStart,
@@ -678,8 +678,8 @@ const handleConfirmOrder = async (): Promise<void> => {
       timeSource: orderForm.timeSource || (isCustomTime ? 'CUSTOM' : 'SYSTEM'),
       remark: (isCustomTime ? '[自定义时间-待客服确认] ' : '') + (orderForm.remark || '')
     }
-    if (orderForm.scheduleId) {
-      data.scheduleId = orderForm.scheduleId
+    if (orderForm.selectedSlot?.id && orderForm.timeSource === 'schedule') {
+      data.scheduleId = orderForm.selectedSlot.id
     }
     const res: Result<any> = await orderApi.create(data)
     if (res.code === 200) {

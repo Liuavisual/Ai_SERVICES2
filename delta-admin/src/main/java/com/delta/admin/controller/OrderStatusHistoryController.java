@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.entity.OrderStatusHistory;
 import com.delta.common.mapper.OrderStatusHistoryMapper;
@@ -7,7 +8,6 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "订单状态历史")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/orders")
-@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@PermAuth("order_status_history:view")
 public class OrderStatusHistoryController extends BaseController {
 
     private final OrderStatusHistoryMapper orderStatusHistoryMapper;

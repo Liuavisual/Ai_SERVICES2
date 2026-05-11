@@ -253,6 +253,51 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncOrderRecord(Order order) {
+        if (order == null || order.getUserId() == null) {
+            log.warn("订单数据不完整，跳过画像同步: order={}", order);
+            return;
+        }
+
+        Companion companion = order.getCompanionId() != null ? companionMapper.selectById(order.getCompanionId()) : null;
+
+        CustomerOrderRecord record = new CustomerOrderRecord();
+        record.setUserId(order.getUserId());
+        record.setCustomerId(order.getUserId());
+        record.setOrderId(order.getId());
+        record.setCompanionId(order.getCompanionId());
+        record.setRecordType("ORDER");
+        record.setOrderType(order.getServiceType());
+        record.setOrderTime(order.getScheduledStart() != null ? order.getScheduledStart() : order.getCreatedAt());
+        record.setGameType(order.getGameType() != null ? order.getGameType() : (companion != null ? companion.getGameType() : null));
+        record.setCompanionLevel(companion != null ? companion.getRankLevel() : null);
+        record.setStatus(order.getOrderStatus());
+
+        if (order.getDurationMinutes() != null && order.getDurationMinutes() > 0) {
+            record.setDurationHours(BigDecimal.valueOf(order.getDurationMinutes())
+                    .divide(BigDecimal.valueOf(60), 1, RoundingMode.HALF_UP));
+        }
+        record.setAmount(order.getTotalAmount());
+
+        if (order.getScheduledStart() != null && order.getScheduledEnd() != null) {
+            String startStr = order.getScheduledStart().toLocalTime().toString().substring(0, 5);
+            String endStr = order.getScheduledEnd().toLocalTime().toString().substring(0, 5);
+            record.setTimeSlot(startStr + "-" + endStr);
+        }
+
+        record.setRemark(order.getRemark());
+        record.setContent("订单编号: " + order.getOrderNo());
+
+        customerOrderRecordMapper.insert(record);
+
+        refreshProfile(order.getUserId());
+
+        log.info("订单同步至客户画像成功: orderNo={}, userId={}, companionId={}, amount={}",
+                order.getOrderNo(), order.getUserId(), order.getCompanionId(), order.getTotalAmount());
+    }
+
+    @Override
     public Page<CustomerOrderRecordVO> getOrderRecordPage(Integer page, Integer size, Long userId, String orderType, String status) {
         Page<CustomerOrderRecord> recordPage = new Page<>(page, size);
         LambdaQueryWrapper<CustomerOrderRecord> wrapper = new LambdaQueryWrapper<>();

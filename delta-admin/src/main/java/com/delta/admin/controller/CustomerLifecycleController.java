@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.CustomerLifecycleService;
 import com.delta.common.vo.CustomerVO;
@@ -7,7 +8,6 @@ import com.delta.common.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/customer-lifecycle")
 @RequiredArgsConstructor
+@PermAuth("customer_lifecycle:view")
 public class CustomerLifecycleController extends BaseController {
 
     /** 客户生命周期服务 */
@@ -35,7 +36,6 @@ public class CustomerLifecycleController extends BaseController {
      */
     @Operation(summary = "获取流失风险客户列表")
     @GetMapping("/at-risk")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN','CS_LEADER')")
     public Result<List<CustomerVO>> getAtRiskCustomers() {
         return Result.success(lifecycleService.getAtRiskCustomers());
     }
@@ -47,7 +47,6 @@ public class CustomerLifecycleController extends BaseController {
      */
     @Operation(summary = "获取已流失客户列表")
     @GetMapping("/churned")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN','CS_LEADER')")
     public Result<List<CustomerVO>> getChurnedCustomers() {
         return Result.success(lifecycleService.getChurnedCustomers());
     }
@@ -60,7 +59,6 @@ public class CustomerLifecycleController extends BaseController {
      */
     @Operation(summary = "判断客户生命周期阶段")
     @GetMapping("/stage/{userId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN','CS_LEADER','CS_STAFF')")
     public Result<String> getLifecycleStage(@PathVariable String userId) {
         Long id = decodeId(userId);
         return Result.success(lifecycleService.determineLifecycleStage(id));
@@ -73,7 +71,7 @@ public class CustomerLifecycleController extends BaseController {
      */
     @Operation(summary = "手动触发更新客户生命周期标签")
     @PostMapping("/update-tags")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("customer_lifecycle:edit")
     public Result<Void> updateLifecycleTags() {
         lifecycleService.updateCustomerLifecycleTags();
         return Result.success();

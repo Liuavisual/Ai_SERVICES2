@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ClubConfigDTO;
 import com.delta.common.service.CacheService;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "俱乐部配置管理", description = "俱乐部配置管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/club-config")
+@PermAuth("club_config:view")
 public class ClubConfigController {
 
     private static final Logger log = LoggerFactory.getLogger(ClubConfigController.class);
@@ -41,7 +43,7 @@ public class ClubConfigController {
 
     @Operation(summary = "更新俱乐部配置")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("club_config:edit")
     public Result<String> updateClubConfig(@Valid @RequestBody ClubConfigDTO configDTO) {
         clubConfigService.updateClubConfig(configDTO);
         log.info("更新俱乐部配置，刷新俱乐部配置缓存");

@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ServiceTrackBookDTO;
 import com.delta.common.dto.ServiceTrackEndDTO;
@@ -8,7 +9,6 @@ import com.delta.common.vo.ServiceTrackVO;
 import com.delta.common.vo.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/service-tracks")
-@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@PermAuth("service_track:view")
 public class ServiceTrackController extends BaseController {
 
     private final ServiceTrackService serviceTrackService;

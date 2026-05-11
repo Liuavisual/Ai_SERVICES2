@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CustomerOrderRecordDTO;
 import com.delta.common.dto.CustomerProfileUpdateDTO;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -24,13 +24,13 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/customer-profiles")
 @RequiredArgsConstructor
+@PermAuth("customer_profile:view")
 public class CustomerProfileController extends BaseController {
 
     private final CustomerProfileService customerProfileService;
 
     @Operation(summary = "分页查询客户画像")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Page<CustomerProfileVO>> getProfilePage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -45,7 +45,6 @@ public class CustomerProfileController extends BaseController {
 
     @Operation(summary = "根据客户ID获取画像")
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<CustomerProfileVO> getProfileByUserId(@PathVariable("userId") String userId) {
         CustomerProfileVO vo = customerProfileService.getProfileByUserId(decodeId(userId));
         return Result.success(vo);
@@ -53,7 +52,7 @@ public class CustomerProfileController extends BaseController {
 
     @Operation(summary = "更新客户画像")
     @PutMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("customer_profile:edit")
     public Result<Void> updateProfile(@Valid @RequestBody CustomerProfileUpdateDTO dto) {
         customerProfileService.updateProfile(dto);
         return Result.success();
@@ -61,7 +60,7 @@ public class CustomerProfileController extends BaseController {
 
     @Operation(summary = "添加消费记录")
     @PostMapping("/orders")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("customer_profile:edit")
     public Result<Void> addOrderRecord(@Valid @RequestBody CustomerOrderRecordDTO dto) {
         customerProfileService.addOrderRecord(dto);
         return Result.success();
@@ -69,7 +68,6 @@ public class CustomerProfileController extends BaseController {
 
     @Operation(summary = "分页查询消费记录")
     @GetMapping("/orders/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CustomerOrderRecordVO>> getOrderRecordPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -83,7 +81,7 @@ public class CustomerProfileController extends BaseController {
 
     @Operation(summary = "刷新客户画像数据")
     @PostMapping("/refresh/{userId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("customer_profile:edit")
     public Result<Void> refreshProfile(@PathVariable("userId") String userId) {
         customerProfileService.refreshProfile(decodeId(userId));
         return Result.success();

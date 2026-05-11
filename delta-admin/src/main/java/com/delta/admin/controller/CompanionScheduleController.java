@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
@@ -16,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +31,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/companion-schedules")
 @RequiredArgsConstructor
+@PermAuth("schedule:view")
 public class CompanionScheduleController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(CompanionScheduleController.class);
@@ -39,7 +40,6 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "分页查询陪玩师时间")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CompanionScheduleVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "20") Integer size,
@@ -53,7 +53,6 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "获取陪玩师指定日期的时间")
     @GetMapping("/by-companion-date")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionScheduleVO>> getByCompanionAndDate(
             @RequestParam(name = "companionId") String companionId,
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate) {
@@ -63,25 +62,38 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "获取指定日期的所有时间")
     @GetMapping("/by-date")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionScheduleVO>> getByDate(
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate) {
         List<CompanionScheduleVO> list = companionScheduleService.getByDate(scheduleDate);
         return Result.success(list);
     }
 
-@Operation(summary = "获取陪玩师可用时段")
+@Operation(summary = "获取指定日期范围的所有时间")
+    @GetMapping("/by-date-range")
+    public Result<List<CompanionScheduleVO>> getByDateRange(
+            @RequestParam(required = false, name = "companionId") String companionId,
+            @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(name = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+        Long decodedCompanionId = companionId != null && !companionId.isEmpty() ? decodeId(companionId) : null;
+        return Result.success(companionScheduleService.getByDateRange(decodedCompanionId, startDate, endDate));
+    }
+
+    @Operation(summary = "获取陪玩师可用时段")
     @GetMapping("/available/{companionId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionScheduleVO>> getAvailableSlots(
-            @PathVariable Long companionId,
+            @PathVariable String companionId,
             @RequestParam(required = false) String scheduleDate) {
-        return Result.success(companionScheduleService.getAvailableSlotsByCompanionId(companionId, scheduleDate));
+        return Result.success(companionScheduleService.getAvailableSlotsByCompanionId(decodeId(companionId), scheduleDate));
+    }
+
+    @Operation(summary = "获取陪玩师全部日程列表")
+    @GetMapping("/by-companion/{companionId}")
+    public Result<List<CompanionScheduleVO>> getListByCompanionId(@PathVariable String companionId) {
+        return Result.success(companionScheduleService.getListByCompanionId(decodeId(companionId)));
     }
 
     @Operation(summary = "获取陪玩师时间详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<CompanionScheduleVO> getById(@PathVariable("id") String id) {
         CompanionScheduleVO vo = companionScheduleService.getById(decodeId(id));
         return Result.success(vo);
@@ -89,7 +101,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "创建陪玩师时间")
     @PostMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> create(@Valid @RequestBody CompanionScheduleDTO dto) {
         companionScheduleService.create(dto);
         return Result.success();
@@ -97,7 +109,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "批量创建陪玩师时间")
     @PostMapping("/batch")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> createBatch(
             @RequestParam(name = "companionId") String companionId,
             @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
@@ -109,7 +121,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "创建自由时间段(单日)")
     @PostMapping("/time-range")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> createTimeRange(
             @RequestParam(name = "companionId") String companionId,
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
@@ -121,7 +133,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "批量创建自由时间段(多日)")
     @PostMapping("/time-range-batch")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> createTimeRangeBatch(
             @RequestParam(name = "companionId") String companionId,
             @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
@@ -134,7 +146,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "更新陪玩师时间")
     @PutMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> update(@RequestBody CompanionScheduleDTO dto) {
         companionScheduleService.update(dto);
         return Result.success();
@@ -142,7 +154,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "更新陪玩师时间状态")
     @PutMapping("/status")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> updateStatus(
             @RequestParam(name = "id") String id,
             @RequestParam(name = "status") String status) {
@@ -152,7 +164,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "删除陪玩师时间")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> delete(@PathVariable("id") String id) {
         companionScheduleService.delete(decodeId(id));
         return Result.success();
@@ -160,7 +172,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "删除陪玩师指定日期的所有时间")
     @DeleteMapping("/by-companion-date")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:edit")
     public Result<Void> deleteByCompanionAndDate(
             @RequestParam(name = "companionId") String companionId,
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate) {
@@ -170,7 +182,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "导出排班Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("schedule:export")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "companionId", required = false) String companionId,
                             @RequestParam(name = "scheduleDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
@@ -210,7 +222,7 @@ public class CompanionScheduleController extends BaseController {
 
     @Operation(summary = "导入排班Excel")
     @PostMapping("/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("schedule:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
         List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
         int success = 0, fail = 0;

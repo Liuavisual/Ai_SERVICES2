@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.dto.ReplyDTO;
@@ -15,7 +16,6 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,6 +29,7 @@ import java.util.Map;
 @Tag(name = "回复话术管理", description = "回复话术管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/replies")
+@PermAuth("reply:view")
 @RequiredArgsConstructor
 public class ReplyController extends BaseController {
 
@@ -40,7 +41,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "分页查询回复话术")
     @GetMapping("/page")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("reply:edit")
     public Result<Page<ReplyVO>> getReplyPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -51,7 +52,6 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "获取回复话术详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<ReplyVO> getReplyById(@PathVariable("id") String id) {
         ReplyVO replyVO = replyService.getReplyById(decodeId(id));
         return Result.success(replyVO);
@@ -59,7 +59,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "创建回复话术")
     @PostMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("reply:edit")
     public Result<Void> createReply(@Valid @RequestBody ReplyDTO replyDTO) {
         replyService.createReply(replyDTO);
         log.info("创建回复话术，刷新回复话术缓存");
@@ -69,7 +69,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "更新回复话术")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("reply:edit")
     public Result<Void> updateReply(@Valid @RequestBody ReplyDTO replyDTO) {
         replyService.updateReply(replyDTO);
         log.info("更新回复话术，刷新回复话术缓存");
@@ -79,7 +79,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "删除回复话术")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("reply:edit")
     public Result<Void> deleteReply(@PathVariable("id") String id) {
         replyService.deleteReply(decodeId(id));
         log.info("删除回复话术，刷新回复话术缓存");
@@ -89,7 +89,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "导出回复话术Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("reply:edit")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "triggerType", required = false) String triggerType) {
         replyService.exportReplies(response, triggerType);
@@ -97,7 +97,7 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "导入回复话术Excel")
     @PostMapping("/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("reply:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
         ImportResultDTO result = replyService.importReplies(file);
         cacheService.reloadReplies();

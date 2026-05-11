@@ -78,6 +78,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { companionScheduleApi, companionApi } from '@/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { CompanionScheduleVO } from '@/types'
@@ -180,7 +181,7 @@ const statusLabel = (status: string): string => {
 
 const loadCompanions = async (): Promise<void> => {
   try {
-    const res = await companionApi.getList()
+    const res = await companionApi.getAll()
     if (res.code === 200 && res.data) {
       companions.value = Array.isArray(res.data)
         ? res.data.map((c: any) => ({ id: c.id, nickname: c.nickname || c.realName || `ID:${c.id}`, realName: c.realName }))
@@ -199,9 +200,9 @@ const loadSchedules = async (): Promise<void> => {
   try {
     const params: Record<string, unknown> = { startDate, endDate }
     if (selectedCompanionId.value) {
-      params.companionId = selectedCompanionId.value
+      params.companionId = String(selectedCompanionId.value)
     }
-    const res = await companionScheduleApi.getByDate(params)
+    const res = await companionScheduleApi.getByDateRange(params)
     if (res.code === 200 && res.data) {
       const list: CompanionScheduleVO[] = Array.isArray(res.data) ? res.data : []
       const map: Record<string, CompanionScheduleVO[]> = {}

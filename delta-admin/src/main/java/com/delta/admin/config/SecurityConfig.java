@@ -2,7 +2,7 @@ package com.delta.admin.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -27,8 +27,8 @@ import java.util.List;
  * <ul>
  *   <li>JWT无状态认证</li>
  *   <li>CSRF禁用（前后端分离架构，使用httpOnly Cookie + SameSite防护）</li>
- *   <li>方法级权限控制：@PreAuthorize</li>
- *   <li>角色权限分层：SYS_ADMIN > CS_LEADER > CS_STAFF</li>
+ *   <li>权限控制：@PermAuth AOP切面 + PermissionAspect</li>
+ *   <li>角色权限分层：SYS_ADMIN > CS_LEADER > CS_STAFF > COMPANION</li>
  *   <li>CORS配置：允许前端跨域携带Cookie</li>
  * </ul>
  * </p>
@@ -37,7 +37,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableAspectJAutoProxy
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -50,6 +50,13 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * 主安全过滤链，处理所有API请求
+     * <p>
+     * 角色权限分层：SYS_ADMIN > CS_LEADER > CS_STAFF > COMPANION
+     * 陪玩师(COMPANION)及其他角色通过 @PermAuth 注解在Controller层进行细粒度权限控制
+     * </p>
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         if (!jwtConfig.isEnabled()) {
@@ -64,7 +71,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/v1/auth/**", "/doc.html", "/webjars/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                 .requestMatchers("/v1/ws/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("SYS_ADMIN")
+                .requestMatchers("/admin/**").hasAnyRole("SYS_ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, AnonymousAuthenticationFilter.class);

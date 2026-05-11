@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ActivityPackageDTO;
 import com.delta.common.constant.BusinessStatusConstants;
@@ -14,7 +15,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +28,7 @@ import java.util.Map;
 @Tag(name = "活动套餐管理", description = "活动套餐管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/activity-packages")
+@PermAuth("activity_package:view")
 public class ActivityPackageController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(ActivityPackageController.class);
@@ -36,28 +37,25 @@ public class ActivityPackageController extends BaseController {
 
     @Operation(summary = "获取俱乐部的活动套餐")
     @GetMapping("/club/{clubConfigId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<ActivityPackageVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
         return Result.success(activityPackageService.getByClubId(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取当前有效的活动套餐")
     @GetMapping("/club/{clubConfigId}/active")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<ActivityPackageVO>> getActivePackages(@PathVariable("clubConfigId") String clubConfigId) {
         return Result.success(activityPackageService.getActivePackages(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取活动套餐详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<ActivityPackageVO> getById(@PathVariable("id") String id) {
         return Result.success(activityPackageService.getById(decodeId(id)));
     }
 
     @Operation(summary = "新增活动套餐")
     @PostMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("activity_package:edit")
     public Result<String> create(@Valid @RequestBody ActivityPackageDTO dto) {
         activityPackageService.create(dto);
         return Result.success("添加成功");
@@ -65,7 +63,7 @@ public class ActivityPackageController extends BaseController {
 
     @Operation(summary = "更新活动套餐")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("activity_package:edit")
     public Result<String> update(@Valid @RequestBody ActivityPackageDTO dto) {
         activityPackageService.update(dto);
         return Result.success("更新成功");
@@ -73,7 +71,7 @@ public class ActivityPackageController extends BaseController {
 
     @Operation(summary = "删除活动套餐")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("activity_package:edit")
     public Result<String> delete(@PathVariable("id") String id) {
         activityPackageService.delete(decodeId(id));
         return Result.success("删除成功");
@@ -81,7 +79,7 @@ public class ActivityPackageController extends BaseController {
 
     @Operation(summary = "导出活动套餐Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("activity_package:export")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "clubConfigId", required = false) String clubConfigId) throws IOException {
         Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
@@ -119,7 +117,7 @@ public class ActivityPackageController extends BaseController {
 
     @Operation(summary = "导入活动套餐Excel")
     @PostMapping("/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("activity_package:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file,
                                                     @RequestParam(name = "clubConfigId", required = false) String clubConfigId) throws IOException {
         Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;

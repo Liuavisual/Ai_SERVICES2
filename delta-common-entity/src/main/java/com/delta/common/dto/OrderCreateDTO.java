@@ -1,5 +1,6 @@
 package com.delta.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,10 +23,12 @@ public class OrderCreateDTO {
 
     @Schema(description = "预约开始时间", example = "2026-01-01T10:00:00")
     @NotNull(message = "预约开始时间不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime scheduledStart;
 
     @Schema(description = "预约结束时间", example = "2026-01-01T12:00:00")
     @NotNull(message = "预约结束时间不能为空")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime scheduledEnd;
 
     @Schema(description = "游戏类型", example = "王者荣耀")

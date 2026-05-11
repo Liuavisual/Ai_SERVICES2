@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.dto.GameConfigDTO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
@@ -13,7 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,20 +26,19 @@ import java.util.Map;
 @Tag(name = "游戏配置管理", description = "游戏配置管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/game-configs")
+@PermAuth("game_config:view")
 public class GameConfigController extends BaseController {
 
     private final GameConfigService gameConfigService;
 
     @Operation(summary = "获取所有启用的游戏类型")
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<GameConfigVO>> getAllEnabled() {
         return Result.success(gameConfigService.getAllEnabled());
     }
 
     @Operation(summary = "分页查询游戏配置")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Page<GameConfigVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -51,21 +50,19 @@ public class GameConfigController extends BaseController {
 
     @Operation(summary = "获取俱乐部的游戏配置")
     @GetMapping("/club/{clubConfigId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<List<GameConfigVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
         return Result.success(gameConfigService.getByClubId(decodeId(clubConfigId)));
     }
 
     @Operation(summary = "获取游戏配置详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<GameConfigVO> getById(@PathVariable("id") String id) {
         return Result.success(gameConfigService.getById(decodeId(id)));
     }
 
     @Operation(summary = "新增游戏配置")
     @PostMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("game_config:edit")
     public Result<String> create(@Valid @RequestBody GameConfigDTO dto) {
         gameConfigService.create(dto);
         return Result.success("添加成功");
@@ -73,7 +70,7 @@ public class GameConfigController extends BaseController {
 
     @Operation(summary = "更新游戏配置")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("game_config:edit")
     public Result<String> update(@Valid @RequestBody GameConfigDTO dto) {
         gameConfigService.update(dto);
         return Result.success("更新成功");
@@ -81,7 +78,7 @@ public class GameConfigController extends BaseController {
 
     @Operation(summary = "删除游戏配置")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("game_config:edit")
     public Result<String> delete(@PathVariable("id") String id) {
         gameConfigService.delete(decodeId(id));
         return Result.success("删除成功");
@@ -89,7 +86,7 @@ public class GameConfigController extends BaseController {
 
     @Operation(summary = "导出游戏配置Excel")
     @GetMapping("/club/{clubConfigId}/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("game_config:export")
     public void exportExcel(HttpServletResponse response,
                             @PathVariable("clubConfigId") String clubConfigId) throws IOException {
         List<GameConfigVO> list = gameConfigService.getByClubId(decodeId(clubConfigId));
@@ -118,7 +115,7 @@ public class GameConfigController extends BaseController {
 
     @Operation(summary = "导入游戏配置Excel")
     @PostMapping("/club/{clubConfigId}/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("game_config:edit")
     public Result<Map<String, Object>> importExcel(@PathVariable("clubConfigId") String clubConfigId,
                                                     @RequestParam("file") MultipartFile file) throws IOException {
         Long decodedClubConfigId = decodeId(clubConfigId);

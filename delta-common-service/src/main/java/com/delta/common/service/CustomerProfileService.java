@@ -3,6 +3,7 @@ package com.delta.common.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.CustomerOrderRecordDTO;
 import com.delta.common.dto.CustomerProfileUpdateDTO;
+import com.delta.common.entity.Order;
 import com.delta.common.vo.CustomerOrderRecordVO;
 import com.delta.common.vo.CustomerProfileVO;
 
@@ -33,4 +34,6 @@ public interface CustomerProfileService {
     void recordInteraction(Long userId, boolean isAi);
 
     void recordHandoffEvent(Long userId, String reason, boolean isEmotion, boolean isOrderIntent);
+
+    void syncOrderRecord(Order order);
 }

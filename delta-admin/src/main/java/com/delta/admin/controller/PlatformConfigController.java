@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.PlatformConfigDTO;
 import com.delta.common.service.PlatformConfigService;
@@ -9,7 +10,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +26,7 @@ import java.util.List;
 @Tag(name = "平台配置管理", description = "平台配置管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/platform-configs")
+@PermAuth("platform:manage")
 public class PlatformConfigController {
 
     private final PlatformConfigService platformConfigService;
@@ -37,7 +38,6 @@ public class PlatformConfigController {
      */
     @Operation(summary = "获取所有平台配置")
     @GetMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<List<PlatformConfigVO>> getAllPlatformConfigs() {
         List<PlatformConfigVO> configs = platformConfigService.getAllPlatformConfigs();
         return Result.success(configs);
@@ -51,7 +51,6 @@ public class PlatformConfigController {
      */
     @Operation(summary = "获取指定平台配置")
     @GetMapping("/{platform}")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<PlatformConfigVO> getPlatformConfigByPlatform(@PathVariable("platform") String platform) {
         PlatformConfigVO config = platformConfigService.getPlatformConfigByPlatform(platform);
         return Result.success(config);
@@ -65,7 +64,6 @@ public class PlatformConfigController {
      */
     @Operation(summary = "更新平台配置")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<Void> updatePlatformConfig(@Valid @RequestBody PlatformConfigDTO configDTO) {
         platformConfigService.updatePlatformConfig(configDTO);
         return Result.success();

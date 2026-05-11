@@ -10,9 +10,20 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.time.format.DateTimeParseException;
 import java.util.stream.Collectors;
 
+/**
+ * 全局异常处理器，统一处理系统各类异常
+ * <p>
+ * 注意：权限相关异常 (AccessDeniedException) 由 Spring Security 的 ExceptionTranslationFilter 处理，
+ * 无需在此处重复捕获；本模块不依赖 spring-security-core。
+ * </p>
+ *
+ * @author 刘建国
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -20,7 +31,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {
-        log.error("业务异常: {}", e.getMessage());
+        log.warn("业务异常: {}", e.getMessage());
         return Result.error(e.getCode(), e.getMessage());
     }
 
@@ -50,6 +61,20 @@ public class GlobalExceptionHandler {
     public Result<Void> handleIllegalArgumentException(IllegalArgumentException e) {
         log.warn("非法参数: {}", e.getMessage());
         return Result.error(400, e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.warn("参数类型不匹配: {} = {}", e.getName(), e.getValue());
+        return Result.error(400, "参数格式错误: " + e.getName());
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleDateTimeParseException(DateTimeParseException e) {
+        log.warn("日期格式解析失败: {}", e.getMessage());
+        return Result.error(400, "日期格式不正确，请使用 yyyy-MM-dd 格式");
     }
 
     @ExceptionHandler(Exception.class)

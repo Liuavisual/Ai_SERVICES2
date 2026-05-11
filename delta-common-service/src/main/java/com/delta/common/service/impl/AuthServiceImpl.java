@@ -127,7 +127,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole(),
                 roleEnum != null ? roleEnum.getDesc() : user.getRole(),
                 false,
-                null
+                null,
+                permList
         );
     }
 
@@ -237,7 +238,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole(),
                 roleEnum != null ? roleEnum.getDesc() : user.getRole(),
                 false,
-                null
+                null,
+                permList
         );
     }
 
@@ -299,7 +301,8 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole(),
                 roleEnum != null ? roleEnum.getDesc() : user.getRole(),
                 false,
-                null
+                null,
+                permList
         );
     }
 

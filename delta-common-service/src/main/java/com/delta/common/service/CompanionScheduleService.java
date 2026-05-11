@@ -21,6 +21,8 @@ public interface CompanionScheduleService {
 
     List<CompanionScheduleVO> getByDate(LocalDate scheduleDate);
 
+    List<CompanionScheduleVO> getByDateRange(Long companionId, LocalDate startDate, LocalDate endDate);
+
     CompanionScheduleVO getById(Long id);
 
     void create(CompanionScheduleDTO dto);
@@ -42,6 +44,8 @@ public interface CompanionScheduleService {
     boolean checkSlotExists(Long companionId, LocalDate date, String slotName);
 
     List<CompanionScheduleVO> getAvailableSlotsByCompanionId(Long companionId, String scheduleDate);
+
+    List<CompanionScheduleVO> getListByCompanionId(Long companionId);
 
     int batchUpdateStatus(List<Long> ids, String status);
 }

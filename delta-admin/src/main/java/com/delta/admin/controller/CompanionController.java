@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CompanionDTO;
 import com.delta.common.dto.ImportResultDTO;
@@ -14,7 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,13 +26,13 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/companions")
 @RequiredArgsConstructor
+@PermAuth("companion:view")
 public class CompanionController extends BaseController {
 
     private final CompanionService companionService;
 
     @Operation(summary = "分页查询陪玩师")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<Page<CompanionVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -46,7 +46,6 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "获取所有启用的陪玩师")
     @GetMapping("/all")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionVO>> getAllEnabled() {
         List<CompanionVO> list = companionService.getAllEnabled();
         return Result.success(list);
@@ -54,7 +53,6 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "获取指定日期和等级的可用陪玩师")
     @GetMapping("/available")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<List<CompanionVO>> getAvailable(
             @RequestParam(name = "date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @RequestParam(name = "levelId", required = false) String levelId) {
@@ -65,15 +63,20 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "获取陪玩师详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
     public Result<CompanionVO> getById(@PathVariable("id") String id) {
         CompanionVO vo = companionService.getById(decodeId(id));
         return Result.success(vo);
     }
 
+    @Operation(summary = "根据用户ID查找关联陪玩师信息")
+    @GetMapping("/by-user/{userId}")
+    public Result<CompanionVO> getByUserId(@PathVariable Long userId) {
+        return Result.success(companionService.getByUserId(userId));
+    }
+
     @Operation(summary = "创建陪玩师")
     @PostMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("companion:edit")
     @AuditLog(module = "陪玩师管理", action = "创建陪玩师")
     public Result<Void> create(@Valid @RequestBody CompanionDTO dto) {
         companionService.create(dto);
@@ -82,8 +85,8 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "更新陪玩师")
     @PutMapping
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
-    @AuditLog(module = "陪玩师管理", action = "更新陪玩师")
+    @PermAuth("companion:edit")
+    @AuditLog(module = "陪玩师管理", action = "编辑陪玩师")
     public Result<Void> update(@Valid @RequestBody CompanionDTO dto) {
         companionService.update(dto);
         return Result.success();
@@ -91,7 +94,7 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "删除陪玩师")
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("companion:edit")
     @AuditLog(module = "陪玩师管理", action = "删除陪玩师")
     public Result<Void> delete(@PathVariable("id") String id) {
         companionService.delete(decodeId(id));
@@ -100,7 +103,7 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "导出陪玩师Excel")
     @GetMapping("/export")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
+    @PermAuth("companion:export")
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "levelId", required = false) String levelId,
                             @RequestParam(name = "nickname", required = false) String nickname,
@@ -111,7 +114,7 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "导入陪玩师Excel")
     @PostMapping("/import")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("companion:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
         ImportResultDTO result = companionService.importCompanions(file);
         return Result.success(result.toMap());
@@ -119,14 +122,14 @@ public class CompanionController extends BaseController {
 
     @Operation(summary = "获取陪玩师综合评分数据看板")
     @GetMapping("/ratings/dashboard/{companionId}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("companion:rating")
     public Result<Map<String, Object>> getRatingDashboard(@PathVariable("companionId") String companionId) {
         return Result.success(companionService.getRatingDashboard(decodeId(companionId)));
     }
 
     @Operation(summary = "获取所有陪玩师综合评分排名")
     @GetMapping("/ratings/all")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("companion:rating")
     public Result<List<Map<String, Object>>> getAllCompanionRatings() {
         return Result.success(companionService.getAllCompanionRatings());
     }

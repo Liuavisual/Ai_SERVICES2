@@ -74,10 +74,12 @@ export interface LoginVO {
   phone?: string
   /** 邮箱 */
   email?: string
+  /** 权限编码列表 */
+  permissions?: string[]
 }
 
 /** 用户角色枚举 */
-export type UserRole = 'SYS_ADMIN' | 'CS_LEADER' | 'CS_STAFF'
+export type UserRole = 'SYS_ADMIN' | 'CS_LEADER' | 'CS_STAFF' | 'COMPANION'
 
 // ============ 用户相关 ============
 
@@ -559,6 +561,8 @@ export interface CompanionScheduleVO {
   companionId: string
   /** 陪玩师名称 */
   companionName?: string
+  /** 排班日期 */
+  scheduleDate?: string
   /** 开始时间 */
   startTime: string
   /** 结束时间 */

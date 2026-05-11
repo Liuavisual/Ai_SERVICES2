@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.RevenueDailyReportService;
 import com.delta.common.vo.RevenueDailyReportVO;
@@ -10,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -20,13 +20,13 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/reports")
 @RequiredArgsConstructor
+@PermAuth("revenue_report:view")
 public class RevenueDailyReportController extends BaseController {
 
     private final RevenueDailyReportService revenueDailyReportService;
 
     @Operation(summary = "分页查询营收日报")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<Page<RevenueDailyReportVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
@@ -40,14 +40,13 @@ public class RevenueDailyReportController extends BaseController {
 
     @Operation(summary = "获取营收日报详情")
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER')")
     public Result<RevenueDailyReportVO> getById(@PathVariable("id") String id) {
         return Result.success(revenueDailyReportService.getById(decodeId(id)));
     }
 
     @Operation(summary = "生成营收日报")
     @PostMapping("/generate")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("revenue_report:edit")
     @AuditLog(module = "营收报表", action = "生成日报")
     public Result<Void> generateReport(@RequestBody Map<String, String> params) {
         Long clubConfigId = decodeId(params.get("clubConfigId"));

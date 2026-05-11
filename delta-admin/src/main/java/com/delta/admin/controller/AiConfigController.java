@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.AiConfigUpdateDTO;
 import com.delta.common.service.AiConfigService;
@@ -12,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +26,7 @@ import java.util.List;
 @Tag(name = "AI配置管理", description = "AI配置管理接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/ai-config")
+@PermAuth("ai_config:view")
 public class AiConfigController {
 
     private static final Logger log = LoggerFactory.getLogger(AiConfigController.class);
@@ -36,7 +37,6 @@ public class AiConfigController {
 
     @Operation(summary = "获取所有AI配置")
     @GetMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
     public Result<List<AiConfigVO>> getAllConfigs() {
         List<AiConfigVO> configs = aiConfigService.getAllConfigs();
         return Result.success(configs);
@@ -44,7 +44,7 @@ public class AiConfigController {
 
     @Operation(summary = "更新AI配置")
     @PutMapping
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("ai_config:edit")
     public Result<String> updateConfigs(@Valid @RequestBody AiConfigUpdateDTO updateDTO) {
         aiConfigService.updateConfigs(updateDTO);
         log.info("更新AI配置，刷新AI配置缓存");

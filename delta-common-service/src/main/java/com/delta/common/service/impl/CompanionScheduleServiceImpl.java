@@ -128,6 +128,43 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
     }
 
     @Override
+    public List<CompanionScheduleVO> getByDateRange(Long companionId, LocalDate startDate, LocalDate endDate) {
+        LambdaQueryWrapper<CompanionSchedule> wrapper = new LambdaQueryWrapper<>();
+        if (companionId != null) {
+            wrapper.eq(CompanionSchedule::getCompanionId, companionId);
+        }
+        if (startDate != null) {
+            wrapper.ge(CompanionSchedule::getScheduleDate, startDate);
+        }
+        if (endDate != null) {
+            wrapper.le(CompanionSchedule::getScheduleDate, endDate);
+        }
+        wrapper.orderByAsc(CompanionSchedule::getScheduleDate);
+        wrapper.orderByAsc(CompanionSchedule::getStartTime);
+
+        List<CompanionSchedule> schedules = companionScheduleMapper.selectList(wrapper);
+
+        List<Long> companionIds = schedules.stream()
+                .map(CompanionSchedule::getCompanionId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Companion> companionMap = companionIds.isEmpty() ? Map.of() :
+                companionMapper.selectByIds(companionIds).stream()
+                        .collect(Collectors.toMap(Companion::getId, c -> c));
+
+        return schedules.stream().map(s -> {
+            CompanionScheduleVO vo = BeanUtil.copyProperties(s, CompanionScheduleVO.class);
+            Companion companion = companionMap.get(s.getCompanionId());
+            if (companion != null) {
+                vo.setCompanionName(companion.getRealName());
+                vo.setCompanionNickname(companion.getNickname());
+            }
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     public CompanionScheduleVO getById(Long id) {
         CompanionSchedule schedule = companionScheduleMapper.selectById(id);
         if (schedule == null) {
@@ -304,10 +341,22 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
 
     @Override
     public List<CompanionScheduleVO> getAvailableSlotsByCompanionId(Long companionId, String scheduleDate) {
+        Companion companion = companionMapper.selectById(companionId);
+        if (companion == null) {
+            throw new BusinessException("陪玩师不存在");
+        }
+        if (!Integer.valueOf(BusinessStatusConstants.ENABLED_INT).equals(companion.getEnabled())) {
+            return List.of();
+        }
+
         LambdaQueryWrapper<CompanionSchedule> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CompanionSchedule::getCompanionId, companionId);
         if (scheduleDate != null && !scheduleDate.isEmpty()) {
-            wrapper.eq(CompanionSchedule::getScheduleDate, LocalDate.parse(scheduleDate));
+            try {
+                wrapper.eq(CompanionSchedule::getScheduleDate, LocalDate.parse(scheduleDate));
+            } catch (Exception e) {
+                wrapper.eq(CompanionSchedule::getScheduleDate, LocalDate.now());
+            }
         } else {
             wrapper.eq(CompanionSchedule::getScheduleDate, LocalDate.now());
         }
@@ -315,6 +364,25 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
         wrapper.orderByAsc(CompanionSchedule::getStartTime);
         return companionScheduleMapper.selectList(wrapper).stream()
                 .map(s -> BeanUtil.copyProperties(s, CompanionScheduleVO.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CompanionScheduleVO> getListByCompanionId(Long companionId) {
+        Companion companion = companionMapper.selectById(companionId);
+        if (companion == null) {
+            throw new BusinessException("陪玩师不存在");
+        }
+        LambdaQueryWrapper<CompanionSchedule> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(CompanionSchedule::getCompanionId, companionId);
+        wrapper.orderByAsc(CompanionSchedule::getScheduleDate);
+        wrapper.orderByAsc(CompanionSchedule::getStartTime);
+        return companionScheduleMapper.selectList(wrapper).stream()
+                .map(s -> {
+                    CompanionScheduleVO vo = BeanUtil.copyProperties(s, CompanionScheduleVO.class);
+                    vo.setCompanionName(companion.getNickname());
+                    return vo;
+                })
                 .collect(Collectors.toList());
     }
 

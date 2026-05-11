@@ -26,6 +26,8 @@ public interface CompanionService {
 
     CompanionVO getById(Long id);
 
+    CompanionVO getByUserId(Long userId);
+
     void create(CompanionDTO dto);
 
     void update(CompanionDTO dto);

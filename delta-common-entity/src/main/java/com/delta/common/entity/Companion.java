@@ -29,6 +29,9 @@ import java.math.BigDecimal;
 })
 public class Companion extends BaseEntity {
 
+    /** 关联系统用户ID */
+    private Long userId;
+
     /** 真实姓名 */
     private String realName;
 

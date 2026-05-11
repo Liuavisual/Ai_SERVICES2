@@ -182,7 +182,28 @@ public class CompanionServiceImpl implements CompanionService {
 
         vo.setDisplayPrice(companion.getPrice() != null ? companion.getPrice() :
                 (vo.getLevelBasePrice() != null ? vo.getLevelBasePrice() : null));
+        return vo;
+    }
 
+    @Override
+    public CompanionVO getByUserId(Long userId) {
+        LambdaQueryWrapper<Companion> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Companion::getUserId, userId);
+        wrapper.last("LIMIT 1");
+        Companion companion = companionMapper.selectOne(wrapper);
+        if (companion == null) {
+            throw new BusinessException("未找到与当前用户关联的陪玩师信息");
+        }
+        CompanionVO vo = BeanUtil.copyProperties(companion, CompanionVO.class);
+        if (companion.getLevelId() != null) {
+            CompanionLevel level = companionLevelMapper.selectById(companion.getLevelId());
+            if (level != null) {
+                vo.setLevelName(level.getLevelName());
+                vo.setLevelBasePrice(level.getBasePrice());
+            }
+        }
+        vo.setDisplayPrice(companion.getPrice() != null ? companion.getPrice() :
+                (vo.getLevelBasePrice() != null ? vo.getLevelBasePrice() : null));
         return vo;
     }
 

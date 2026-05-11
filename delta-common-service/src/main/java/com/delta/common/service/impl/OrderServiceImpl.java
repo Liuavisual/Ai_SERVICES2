@@ -16,6 +16,7 @@ import com.delta.common.mapper.CompanionNotificationMapper;
 import com.delta.common.mapper.CompanionScheduleMapper;
 import com.delta.common.mapper.OrderMapper;
 import com.delta.common.mapper.OrderStatusHistoryMapper;
+import com.delta.common.service.CustomerProfileService;
 import com.delta.common.service.OrderService;
 import com.delta.common.service.WorkOrderService;
 import com.delta.common.vo.OrderVO;
@@ -56,6 +57,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final CompanionNotificationMapper companionNotificationMapper;
 
+    private final CustomerProfileService customerProfileService;
+
     @Override
     public OrderVO getOrderById(Long id) {
         Order order = orderMapper.selectById(id);
@@ -79,6 +82,19 @@ public class OrderServiceImpl implements OrderService {
         }
         if (scheduledStart.isAfter(scheduledEnd)) {
             throw new BusinessException("预约开始时间不能晚于结束时间");
+        }
+
+        if (scheduleId != null) {
+            CompanionSchedule schedule = companionScheduleMapper.selectById(scheduleId);
+            if (schedule == null) {
+                throw new BusinessException("指定的排班时段不存在");
+            }
+            if (!companionId.equals(schedule.getCompanionId())) {
+                throw new BusinessException("该时段不属于所选陪玩师");
+            }
+            if (!BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE.equals(schedule.getStatus())) {
+                throw new BusinessException("该时段已被预约或不可用");
+            }
         }
 
         String orderNo = generateOrderNo();
@@ -117,6 +133,8 @@ public class OrderServiceImpl implements OrderService {
                 "新订单通知", "您有一个新的陪玩订单待处理，订单号：" + orderNo);
 
         createLinkedWorkOrder(order);
+
+        customerProfileService.syncOrderRecord(order);
 
         return convertToVO(order);
     }
@@ -182,6 +200,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderVO rejectOrder(Long orderId, Long companionId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("拒单原因不能为空");
+        }
         Order order = getOrderOrThrow(orderId);
         if (!BusinessStatusConstants.ORDER_STATUS_PENDING.equals(order.getOrderStatus())) {
             throw new BusinessException("仅待确认状态的订单可以拒单");

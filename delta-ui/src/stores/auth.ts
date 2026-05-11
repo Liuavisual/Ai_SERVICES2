@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { authApi } from '@/api'
 import { authStorage } from '@/utils/storage'
 import type { LoginDTO, LoginVO, UserRole } from '@/types'
+import { usePermissionStore } from './permission'
 
 interface AuthState {
   token: string
@@ -35,6 +36,7 @@ export const useAuthStore = defineStore('auth', {
     role: (state): UserRole => (state.userInfo?.role as UserRole) || ('' as UserRole),
 
     isAdmin: (state): boolean => state.userInfo?.role === 'SYS_ADMIN',
+    isCompanion: (state): boolean => state.userInfo?.role === 'COMPANION',
 
     isLeader: (state): boolean => state.userInfo?.role === 'CS_LEADER',
 
@@ -53,6 +55,7 @@ export const useAuthStore = defineStore('auth', {
       this.tokenExpiry = String(Date.now() + (data.expiresIn || 900) * 1000)
       this.userInfo = data
       authStorage.setAuth(data as unknown as Record<string, unknown>)
+      usePermissionStore().initPermissions(data.permissions || [])
     },
 
     clearAuthData() {
@@ -62,6 +65,7 @@ export const useAuthStore = defineStore('auth', {
       this.tokenExpiry = ''
       this.userInfo = {}
       authStorage.clearAuth()
+      usePermissionStore().clearPermissions()
     },
 
     async login(loginDTO: LoginDTO) {

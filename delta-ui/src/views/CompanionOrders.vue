@@ -9,6 +9,7 @@
       <el-form :inline="true" class="filter-form">
         <el-form-item label="陪玩师" required>
           <el-select v-model="selectedCompanionId" placeholder="请选择陪玩师" clearable filterable style="width: 240px" :teleported="false" @change="onCompanionChange">
+            <el-option v-if="isAdmin" label="全部陪玩师" :value="0" />
             <el-option v-for="c in companionList" :key="c.id" :label="c.nickname + ' (' + c.gameType + ')'" :value="c.id" />
           </el-select>
         </el-form-item>
@@ -193,7 +194,11 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { orderApi, companionApi } from '@/api'
-import type { Result, OrderVO } from '@/types'
+import { useAuthStore } from '@/stores/auth'
+import type { Result, OrderVO, PageResult } from '@/types'
+
+const authStore = useAuthStore()
+const isAdmin = authStore.isAdmin
 
 const companionList = ref<Array<{ id: number; nickname: string; gameType: string }>>([])
 const selectedCompanionId = ref<number | null>(null)
@@ -291,13 +296,19 @@ function onTabChange(): void {
 }
 
 async function fetchPendingOrders(): Promise<void> {
-  if (!selectedCompanionId.value) return
+  if (!selectedCompanionId.value && selectedCompanionId.value !== 0) return
   pendingLoading.value = true
   try {
-    const res: Result<OrderVO[]> = await orderApi.getPendingByCompanion(selectedCompanionId.value)
-    if (res.code === 200) {
-      pendingTableData.value = res.data || []
-      pendingCount.value = (res.data || []).length
+    if (isAdmin && selectedCompanionId.value === 0) {
+      const res: Result<PageResult<OrderVO>> = await orderApi.getPage({ page: 1, size: 200, orderStatus: 'PENDING' })
+      pendingTableData.value = (res.data as any)?.records || []
+      pendingCount.value = (res.data as any)?.total || pendingTableData.value.length
+    } else {
+      const res: Result<OrderVO[]> = await orderApi.getPendingByCompanion(selectedCompanionId.value!)
+      if (res.code === 200) {
+        pendingTableData.value = res.data || []
+        pendingCount.value = (res.data || []).length
+      }
     }
   } catch (e) {
     console.error('获取待处理订单失败', e)
@@ -307,12 +318,17 @@ async function fetchPendingOrders(): Promise<void> {
 }
 
 async function fetchAllOrders(): Promise<void> {
-  if (!selectedCompanionId.value) return
+  if (!selectedCompanionId.value && selectedCompanionId.value !== 0) return
   allLoading.value = true
   try {
-    const res: Result<OrderVO[]> = await orderApi.getByCompanion(String(selectedCompanionId.value))
-    if (res.code === 200) {
-      allTableData.value = res.data || []
+    if (isAdmin && selectedCompanionId.value === 0) {
+      const res: Result<PageResult<OrderVO>> = await orderApi.getPage({ page: 1, size: 200 })
+      allTableData.value = (res.data as any)?.records || []
+    } else {
+      const res: Result<OrderVO[]> = await orderApi.getByCompanion(String(selectedCompanionId.value!))
+      if (res.code === 200) {
+        allTableData.value = res.data || []
+      }
     }
   } catch (e) {
     console.error('获取全部订单失败', e)
@@ -416,7 +432,29 @@ async function loadCompanions(): Promise<void> {
   }
 }
 
+async function loadCompanionByUser(): Promise<void> {
+  const userId = authStore.userInfo?.id
+  if (!userId) return
+  try {
+    const res: Result<{ id: number; nickname: string; gameType: string }> = await companionApi.getByUserId(userId)
+    if (res.code === 200 && res.data) {
+      selectedCompanionId.value = res.data.id
+      fetchPendingOrders()
+      fetchAllOrders()
+    }
+  } catch (e) {
+    console.error('自动加载陪玩师信息失败', e)
+  }
+}
+
 onMounted(() => {
+  if (isAdmin) {
+    selectedCompanionId.value = 0
+    fetchPendingOrders()
+    fetchAllOrders()
+  } else if (authStore.isCompanion) {
+    loadCompanionByUser()
+  }
   loadCompanions()
 })
 </script>

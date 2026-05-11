@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CustomerSatisfactionDTO;
 import com.delta.common.service.CustomerSatisfactionService;
@@ -11,7 +12,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -61,7 +61,6 @@ public class CustomerSatisfactionController extends BaseController {
      */
     @Operation(summary = "获取满意度评价列表")
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN','CS_LEADER')")
     public Result<Page<CustomerSatisfactionVO>> getSatisfactions(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -87,7 +86,7 @@ public class CustomerSatisfactionController extends BaseController {
 
     @Operation(summary = "通过订单提交评价(含陪玩师评分联动)")
     @PostMapping("/order-review")
-    @PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+    @PermAuth("customer_satisfaction:edit")
     @AuditLog(module = "满意度评价", action = "订单评价")
     public Result<CustomerSatisfactionVO> submitOrderReview(
             @RequestParam Long userId,

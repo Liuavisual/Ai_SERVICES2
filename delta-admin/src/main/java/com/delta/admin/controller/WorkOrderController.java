@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.*;
 import com.delta.common.vo.Result;
@@ -10,13 +11,12 @@ import com.delta.common.vo.WorkOrderVO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/work-orders")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@PermAuth("work_order:view")
 public class WorkOrderController extends BaseController {
 
     private final WorkOrderService workOrderService;
@@ -110,7 +110,7 @@ public class WorkOrderController extends BaseController {
     }
 
     @PutMapping("/{id}/reopen")
-    @PreAuthorize("hasRole('SYS_ADMIN')")
+    @PermAuth("work_order:edit")
     public Result<Void> reopenWorkOrder(@PathVariable String id, @RequestParam String reopenReason, HttpServletRequest request) {
         Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);

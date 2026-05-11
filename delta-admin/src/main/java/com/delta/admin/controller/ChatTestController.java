@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ChatTestSendDTO;
 import com.delta.common.entity.GameKnowledge;
@@ -11,7 +12,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.List;
 @Tag(name = "对话测试与知识库", description = "AI对话测试接口及游戏知识库接口")
 @RestController
 @RequestMapping(ApiVersionConstants.V1)
-@PreAuthorize("hasAnyRole('SYS_ADMIN', 'CS_LEADER', 'CS_STAFF')")
+@PermAuth("chat:view")
 public class ChatTestController {
 
     private final ChatTestService chatTestService;

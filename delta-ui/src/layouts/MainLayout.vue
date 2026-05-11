@@ -133,7 +133,7 @@ const allMenus = [
   // ==================== 陪玩管理 ====================
   { path: '/companions',          title: '陪玩师',       icon: 'UserFilled' },
   { path: '/companion-levels',    title: '陪玩等级',     icon: 'Medal',           roles: ['SYS_ADMIN', 'CS_LEADER'] },
-  { path: '/companion-schedule',  title: '排班管理',     icon: 'Calendar',        roles: ['SYS_ADMIN', 'CS_LEADER'] },
+  { path: '/companion-schedule',  title: '日程管理',     icon: 'Calendar',        roles: ['SYS_ADMIN', 'CS_LEADER', 'COMPANION'] },
   { path: '/companion-schedule-calendar', title: '排班日历', icon: 'Date', roles: ['SYS_ADMIN', 'CS_LEADER'] },
   { path: '/companion-orders',  title: '我的订单',     icon: 'Tickets' },
   { divider: true },
