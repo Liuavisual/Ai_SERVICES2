@@ -1,5 +1,26 @@
 spring:
+  application:
+    name: delta-ai-customer-service
   profiles:
     active: dev
   autoconfigure:
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+logging:
+  file:
+    path: logs
+
+server:
+  shutdown: graceful
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
+    min-response-size: 1024

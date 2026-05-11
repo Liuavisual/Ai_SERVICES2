@@ -1,8 +1,4 @@
 spring:
-  application:
-    name: delta-ai-customer-service
-  lifecycle:
-    timeout-per-shutdown-phase: 30s
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -80,13 +76,6 @@ knife4j:
 
 server:
   port: 8080
-  shutdown: graceful
-  servlet:
-    context-path: /api
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   tomcat:
     threads:
       max: 300
@@ -97,10 +86,6 @@ server:
     max-keep-alive-requests: 100
     max-connections: 10000
     processor-cache: 300
-  compression:
-    enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css
-    min-response-size: 1024
 
 management:
   endpoints:

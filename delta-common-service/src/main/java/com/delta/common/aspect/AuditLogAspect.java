@@ -1,6 +1,7 @@
 package com.delta.common.aspect;
 
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.util.ClientIpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -56,7 +57,7 @@ public class AuditLogAspect {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
-            ip = getClientIp(request);
+            ip = ClientIpUtils.getClientIp(request);
             method = request.getMethod();
             uri = request.getRequestURI();
             Object userIdAttr = request.getAttribute("userId");
@@ -115,33 +116,5 @@ public class AuditLogAspect {
                 AuditLogAspect.auditLog.info(logMsg.toString());
             }
         }
-    }
-
-    /**
-     * 获取客户端真实IP地址
-     * <p>
-     * 优先从代理头X-Forwarded-For和X-Real-IP获取，
-     * 最后回退到request.getRemoteAddr()。
-     * </p>
-     *
-     * @param request HTTP请求
-     * @return 客户端IP地址
-     */
-    private String getClientIp(HttpServletRequest request) {
-        // 尝试从X-Forwarded-For头获取IP
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            // 尝试从X-Real-IP头获取IP
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            // 使用远程地址作为备选
-            ip = request.getRemoteAddr();
-        }
-        // 如果存在多个IP（经过多层代理），取第一个
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 }

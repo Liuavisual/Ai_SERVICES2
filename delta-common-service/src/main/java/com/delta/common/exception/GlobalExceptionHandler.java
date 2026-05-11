@@ -77,7 +77,39 @@ public class GlobalExceptionHandler {
         return Result.error(400, "日期格式不正确，请使用 yyyy-MM-dd 格式");
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleHttpMessageNotReadableException(org.springframework.http.converter.HttpMessageNotReadableException e) {
+        log.warn("请求体解析失败: {}", e.getMessage());
+        return Result.error(400, "请求体格式错误，请检查JSON格式");
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleMissingParameterException(org.springframework.web.bind.MissingServletRequestParameterException e) {
+        log.warn("缺少必填参数: {}", e.getParameterName());
+        return Result.error(400, "缺少必填参数: " + e.getParameterName());
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleConstraintViolationException(jakarta.validation.ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .collect(Collectors.joining(", "));
+        log.warn("参数校验失败: {}", message);
+        return Result.error(400, "参数校验失败: " + message);
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Result<Void> handleMaxUploadSizeExceededException(org.springframework.web.multipart.MaxUploadSizeExceededException e) {
+        log.warn("文件上传超过大小限制: {}", e.getMessage());
+        return Result.error(400, "上传文件大小超过限制");
+    }
+
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleException(Exception e) {
         log.error("系统异常", e);
         return Result.error("系统异常，请联系管理员");

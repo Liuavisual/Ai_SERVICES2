@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.admin.config.TokenCookieService;
 import com.delta.common.annotation.AuditLog;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
@@ -9,12 +10,12 @@ import com.delta.common.dto.RegisterDTO;
 import com.delta.common.service.AuthService;
 import com.delta.common.service.RedisService;
 import com.delta.common.service.impl.TokenBlacklistService;
+import com.delta.common.util.ClientIpUtils;
 import com.delta.common.util.JwtUtils;
 import com.delta.common.util.RateLimiter;
 import com.delta.common.vo.LoginVO;
 import com.delta.common.vo.Result;
 import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -45,6 +46,8 @@ public class AuthController {
 
     private static final int LOGIN_WINDOW_SECONDS = 300;
 
+    private final TokenCookieService tokenCookieService;
+
     private final AuthService authService;
 
     private final RateLimiter rateLimiter;
@@ -69,7 +72,7 @@ public class AuthController {
     @AuditLog(module = "认证", action = "用户登录")
     public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO, HttpServletRequest request, HttpServletResponse response) {
         // 登录接口限流保护，防止暴力破解
-        String clientIp = getClientIp(request);
+        String clientIp = ClientIpUtils.getClientIp(request);
         String loginRateLimitKey = "login:" + clientIp;
         if (!rateLimiter.isAllowed(loginRateLimitKey, LOGIN_MAX_REQUESTS, LOGIN_WINDOW_SECONDS)) {
             log.warn("登录请求过于频繁, IP={}", clientIp);
@@ -81,7 +84,7 @@ public class AuthController {
             return Result.success(loginVO);
         }
         // 将Token设置到httpOnly Cookie中，防止XSS攻击窃取
-        setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
+        tokenCookieService.setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
         return Result.success(loginVO);
     }
 
@@ -106,7 +109,7 @@ public class AuthController {
         }
 
         LoginVO loginVO = authService.verifyTwoFactor(twoFactorToken, code);
-        setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
+        tokenCookieService.setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
         return Result.success(loginVO);
     }
 
@@ -119,8 +122,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     public Result<Void> register(@Valid @RequestBody RegisterDTO registerDTO, HttpServletRequest request) {
-        // 获取客户端IP并构建限流Key
-        String clientIp = getClientIp(request);
+        String clientIp = ClientIpUtils.getClientIp(request);
         String rateLimitKey = "register:" + clientIp;
         // 检查是否超过限流阈值
         if (!rateLimiter.isAllowed(rateLimitKey, REGISTER_MAX_REQUESTS, REGISTER_WINDOW_SECONDS)) {
@@ -141,7 +143,7 @@ public class AuthController {
     public Result<LoginVO> refreshToken(@Valid @RequestBody RefreshTokenDTO dto, HttpServletResponse response) {
         LoginVO loginVO = authService.refreshToken(dto.getRefreshToken());
         // 刷新Token时同步更新httpOnly Cookie
-        setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
+        tokenCookieService.setTokenCookie(response, loginVO.getToken(), loginVO.getRefreshToken(), loginVO.getExpiresIn());
         return Result.success(loginVO);
     }
 
@@ -184,7 +186,7 @@ public class AuthController {
         }
         request.getSession().invalidate();
         // 清除httpOnly Cookie
-        clearTokenCookie(response);
+        tokenCookieService.clearTokenCookie(response);
         response.setStatus(HttpServletResponse.SC_OK);
         return Result.success(null);
     }
@@ -270,79 +272,5 @@ public class AuthController {
         }
 
         return Result.success();
-    }
-
-    /**
-     * 获取客户端真实IP地址
-     *
-     * @param request HTTP请求
-     * @return 客户端IP地址
-     */
-    private String getClientIp(HttpServletRequest request) {
-        // 尝试从X-Forwarded-For头获取IP
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            // 尝试从X-Real-IP头获取IP
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            // 使用远程地址作为备选
-            ip = request.getRemoteAddr();
-        }
-        // 如果存在多个IP，取第一个
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
-    }
-
-    /**
-     * 将Token设置到httpOnly Cookie中，防止XSS攻击窃取
-     *
-     * @param response    HTTP响应
-     * @param token       访问令牌
-     * @param refreshToken 刷新令牌
-     * @param expiresIn   过期时间（秒）
-     */
-    private void setTokenCookie(HttpServletResponse response, String token, String refreshToken, Long expiresIn) {
-        int maxAge = expiresIn != null ? expiresIn.intValue() : 7200;
-
-        Cookie tokenCookie = new Cookie("access_token", token);
-        tokenCookie.setHttpOnly(true);
-        tokenCookie.setSecure(true);
-        tokenCookie.setPath("/api");
-        tokenCookie.setMaxAge(maxAge);
-        response.addCookie(tokenCookie);
-
-        // 设置刷新令牌Cookie，路径限制为refresh接口，过期时间为访问令牌的两倍
-        Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/api" + ApiVersionConstants.V1 + "/auth/refresh");
-        refreshCookie.setMaxAge(maxAge * 2);
-        response.addCookie(refreshCookie);
-    }
-
-    /**
-     * 清除httpOnly Cookie（登出时调用）
-     *
-     * @param response HTTP响应
-     */
-    private void clearTokenCookie(HttpServletResponse response) {
-        // 清除访问令牌Cookie
-        Cookie tokenCookie = new Cookie("access_token", "");
-        tokenCookie.setHttpOnly(true);
-        tokenCookie.setSecure(true);
-        tokenCookie.setPath("/api");
-        tokenCookie.setMaxAge(0);
-        response.addCookie(tokenCookie);
-
-        // 清除刷新令牌Cookie
-        Cookie refreshCookie = new Cookie("refresh_token", "");
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true);
-        refreshCookie.setPath("/api" + ApiVersionConstants.V1 + "/auth/refresh");
-        refreshCookie.setMaxAge(0);
-        response.addCookie(refreshCookie);
     }
 }

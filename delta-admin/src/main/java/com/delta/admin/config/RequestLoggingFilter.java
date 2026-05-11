@@ -1,5 +1,6 @@
 package com.delta.admin.config;
 
+import com.delta.common.util.ClientIpUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,7 +48,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
         long startTime = System.currentTimeMillis();
         String method = request.getMethod();
-        String clientIp = getClientIp(request);
+        String clientIp = ClientIpUtils.getClientIp(request);
 
         ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request, 0);
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
@@ -68,25 +69,5 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
             responseWrapper.copyBodyToResponse();
         }
-    }
-
-    /**
-     * 获取客户端真实IP地址
-     *
-     * @param request HTTP请求
-     * @return 客户端IP地址
-     */
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 }

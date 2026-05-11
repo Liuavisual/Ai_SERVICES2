@@ -67,7 +67,7 @@ jobs:
           path: '**/target/surefire-reports/**'
 
       - name: 代码质量检查
-        run: mvn checkstyle:check -pl delta-common,delta-admin -am || true
+        run: mvn checkstyle:check -pl delta-common-core,delta-common-entity,delta-common-service,delta-admin -am || true
 
   frontend-build:
     name: 前端构建与测试
