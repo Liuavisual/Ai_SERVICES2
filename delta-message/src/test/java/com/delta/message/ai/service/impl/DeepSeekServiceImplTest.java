@@ -2,7 +2,6 @@ package com.delta.message.ai.service.impl;
 
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
-import com.delta.common.constant.AiCustomerServiceConstants;
 import com.delta.common.entity.ClubConfig;
 import com.delta.common.entity.FaqItem;
 import com.delta.common.service.AiConfigService;

@@ -11,7 +11,6 @@ import com.delta.common.util.JwtUtils;
 import com.delta.common.util.RateLimiter;
 import com.delta.common.vo.LoginVO;
 import com.delta.common.vo.Result;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;

@@ -59,7 +59,7 @@ public class SecurityUtils {
      *
      * @return 权限编码列表
      */
-    @SuppressWarnings("null")
+    @SuppressWarnings("unchecked")
     public static List<String> getCurrentUserPermissions() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth.getDetails() == null) {
