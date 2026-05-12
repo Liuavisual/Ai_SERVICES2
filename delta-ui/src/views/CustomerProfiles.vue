@@ -20,7 +20,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="生命周期">
-          <el-select v-model="queryForm.lifecycleStage" placeholder="全部阶段" clearable style="width: 120px" :teleported="false">
+          <el-select id="filter-lifecycle" name="lifecycleStage" v-model="queryForm.lifecycleStage" placeholder="全部阶段" clearable style="width: 120px" :teleported="false">
             <el-option label="新客户" value="NEW" />
             <el-option label="活跃" value="ACTIVE" />
             <el-option label="沉默" value="SILENT" />
@@ -29,7 +29,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="会员等级">
-          <el-select v-model="queryForm.memberLevel" placeholder="全部等级" clearable style="width: 120px" :teleported="false">
+          <el-select id="filter-level" name="memberLevel" v-model="queryForm.memberLevel" placeholder="全部等级" clearable style="width: 120px" :teleported="false">
             <el-option label="普通" value="NORMAL" />
             <el-option label="青铜" value="BRONZE" />
             <el-option label="白银" value="SILVER" />
@@ -39,14 +39,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="风险等级">
-          <el-select v-model="queryForm.riskLevel" placeholder="全部" clearable style="width: 100px" :teleported="false">
+          <el-select id="filter-risk" name="riskLevel" v-model="queryForm.riskLevel" placeholder="全部" clearable style="width: 100px" :teleported="false">
             <el-option label="低" value="LOW" />
             <el-option label="中" value="MEDIUM" />
             <el-option label="高" value="HIGH" />
           </el-select>
         </el-form-item>
         <el-form-item label="搜索">
-          <el-input v-model="queryForm.keyword" placeholder="昵称/标签" clearable style="width: 140px" />
+          <el-input id="filter-keyword" name="keyword" v-model="queryForm.keyword" placeholder="昵称/标签" clearable style="width: 140px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">查询</el-button>
@@ -288,22 +288,22 @@
     <el-dialog v-model="orderDialogVisible" title="创建订单" width="580px" :close-on-click-modal="false">
       <el-form :model="orderForm" label-width="100px">
         <el-form-item label="陪玩师" required>
-          <el-select v-model="orderForm.companionId" placeholder="请选择陪玩师" clearable filterable style="width: 100%" :teleported="false" @change="onCompanionChange">
+          <el-select id="order-companion" name="companionId" v-model="orderForm.companionId" placeholder="请选择陪玩师" clearable filterable style="width: 100%" :teleported="false" @change="onCompanionChange">
             <el-option v-for="c in companionList" :key="c.id" :label="c.nickname + ' (' + c.gameType + ')'" :value="c.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="游戏类型" required>
-          <el-select v-model="orderForm.gameType" placeholder="请选择游戏" clearable filterable style="width: 100%" :teleported="false">
+          <el-select id="order-game-type" name="gameType" v-model="orderForm.gameType" placeholder="请选择游戏" clearable filterable style="width: 100%" :teleported="false">
             <el-option v-for="g in gameTypeList" :key="g.id" :label="g.gameName + ' - ¥' + g.baseHourlyPrice + '/h'" :value="g.gameName" />
           </el-select>
         </el-form-item>
         <el-form-item label="预约日期" required>
-          <el-date-picker v-model="orderForm.scheduleDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" :disabled-date="disabledDate" @change="onDateChange" />
+          <el-date-picker id="order-schedule-date" name="scheduleDate" v-model="orderForm.scheduleDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" :disabled-date="disabledDate" @change="onDateChange" />
         </el-form-item>
         <el-form-item label="可用时段">
           <div v-if="availableSlots.length > 0" class="slot-radio-group">
             <el-radio-group v-model="orderForm.selectedSlot" @change="onSlotChange">
-              <el-radio-button v-for="slot in availableSlots" :key="slot.id" :value="slot">
+              <el-radio-button v-for="slot in availableSlots" :key="slot.id" :value="slot.id">
                 {{ slot.startTime?.substring(0, 5) }} - {{ slot.endTime?.substring(0, 5) }}
               </el-radio-button>
             </el-radio-group>
@@ -312,16 +312,16 @@
         </el-form-item>
         <el-form-item label="自定义时间">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <el-time-picker v-model="orderForm.customStartTime" placeholder="开始时间" format="HH:mm" value-format="HH:mm" style="width: 130px" @change="onCustomTimeChange" />
+            <el-time-picker id="order-custom-start" name="customStartTime" v-model="orderForm.customStartTime" placeholder="开始时间" format="HH:mm" value-format="HH:mm" style="width: 130px" @change="onCustomTimeChange" />
             <span>至</span>
-            <el-time-picker v-model="orderForm.customEndTime" placeholder="结束时间" format="HH:mm" value-format="HH:mm" style="width: 130px" @change="onCustomTimeChange" />
+            <el-time-picker id="order-custom-end" name="customEndTime" v-model="orderForm.customEndTime" placeholder="结束时间" format="HH:mm" value-format="HH:mm" style="width: 130px" @change="onCustomTimeChange" />
             <el-tooltip content="自定义时间将生成人工客服预约处理工单">
               <el-icon><InfoFilled /></el-icon>
             </el-tooltip>
           </div>
         </el-form-item>
         <el-form-item label="订单类型">
-          <el-select v-model="orderForm.orderType" placeholder="请选择" style="width: 100%" :teleported="false">
+          <el-select id="order-type" name="orderType" v-model="orderForm.orderType" placeholder="请选择" style="width: 100%" :teleported="false">
             <el-option label="陪玩" value="ACCOMPANY_PLAY" />
             <el-option label="包夜" value="NIGHT_PACKAGE" />
             <el-option label="指定游戏" value="SPECIFIC_GAME" />
@@ -329,7 +329,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="orderForm.remark" type="textarea" :rows="2" placeholder="客户特殊需求或备注信息" />
+          <el-input id="order-remark" name="remark" v-model="orderForm.remark" type="textarea" :rows="2" placeholder="客户特殊需求或备注信息" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -410,7 +410,7 @@ const orderForm = reactive<{
   orderType: string
   gameType: string
   scheduleDate: string | null
-  selectedSlot: CompanionScheduleSlot | null
+  selectedSlot: number | null
   customStartTime: string | null
   customEndTime: string | null
   remark: string
@@ -462,10 +462,11 @@ const onDateChange = async (): Promise<void> => {
 
 const onSlotChange = (): void => {
   if (orderForm.selectedSlot) {
+    const slot = availableSlots.value.find(s => s.id === orderForm.selectedSlot)
     orderForm.customStartTime = null
     orderForm.customEndTime = null
     orderForm.timeSource = 'SYSTEM'
-    orderForm.scheduleId = orderForm.selectedSlot.id
+    orderForm.scheduleId = slot ? slot.id : null
   } else {
     orderForm.timeSource = ''
     orderForm.scheduleId = null
@@ -635,9 +636,10 @@ const handleConfirmOrder = async (): Promise<void> => {
   let scheduledStart: string | null = null
   let scheduledEnd: string | null = null
   let isCustomTime = false
-  if (orderForm.selectedSlot) {
-    scheduledStart = orderForm.scheduleDate + ' ' + orderForm.selectedSlot.startTime
-    scheduledEnd = orderForm.scheduleDate + ' ' + orderForm.selectedSlot.endTime
+  const selectedSlot = orderForm.selectedSlot ? availableSlots.value.find(s => s.id === orderForm.selectedSlot) : null
+  if (selectedSlot) {
+    scheduledStart = orderForm.scheduleDate + ' ' + selectedSlot.startTime
+    scheduledEnd = orderForm.scheduleDate + ' ' + selectedSlot.endTime
   } else if (orderForm.customStartTime && orderForm.customEndTime) {
     scheduledStart = orderForm.scheduleDate + ' ' + orderForm.customStartTime + ':00'
     scheduledEnd = orderForm.scheduleDate + ' ' + orderForm.customEndTime + ':00'
@@ -650,7 +652,7 @@ const handleConfirmOrder = async (): Promise<void> => {
   const companionName = companionList.value.find(c => c.id === orderForm.companionId)?.nickname || '未选择'
   const timeLabel = isCustomTime
     ? `${orderForm.customStartTime} - ${orderForm.customEndTime}（自定义）`
-    : `${orderForm.selectedSlot?.startTime?.substring(0, 5)} - ${orderForm.selectedSlot?.endTime?.substring(0, 5)}（预设时段）`
+    : `${selectedSlot?.startTime?.substring(0, 5)} - ${selectedSlot?.endTime?.substring(0, 5)}（预设时段）`
   try {
     await ElMessageBox.confirm(
       `陪玩师：${companionName}\n游戏类型：${orderForm.gameType}\n预约日期：${orderForm.scheduleDate}\n预约时间：${timeLabel}\n订单类型：${orderForm.orderType}`,
@@ -678,8 +680,8 @@ const handleConfirmOrder = async (): Promise<void> => {
       timeSource: orderForm.timeSource || (isCustomTime ? 'CUSTOM' : 'SYSTEM'),
       remark: (isCustomTime ? '[自定义时间-待客服确认] ' : '') + (orderForm.remark || '')
     }
-    if (orderForm.selectedSlot?.id && orderForm.timeSource === 'schedule') {
-      data.scheduleId = orderForm.selectedSlot.id
+    if (selectedSlot?.id && orderForm.timeSource === 'SYSTEM') {
+      data.scheduleId = selectedSlot.id
     }
     const res: Result<any> = await orderApi.create(data)
     if (res.code === 200) {

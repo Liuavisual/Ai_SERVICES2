@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.admin.config.TokenCookieService;
 import com.delta.common.dto.LoginDTO;
 import com.delta.common.dto.RefreshTokenDTO;
 import com.delta.common.dto.RegisterDTO;
@@ -51,6 +52,9 @@ class AuthControllerTest {
     private RedisService redisService;
 
     @Mock
+    private TokenCookieService tokenCookieService;
+
+    @Mock
     private HttpServletRequest request;
 
     @Mock
@@ -80,6 +84,7 @@ class AuthControllerTest {
         LoginDTO dto = new LoginDTO();
         dto.setUsername("admin");
         dto.setPassword("password");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), anyInt())).thenReturn(true);
         when(authService.login(any(LoginDTO.class))).thenReturn(testLoginVO);
         when(request.getCookies()).thenReturn(null);
 
@@ -88,7 +93,6 @@ class AuthControllerTest {
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
         assertEquals("test-token", result.getData().getToken());
-        verify(response, atLeastOnce()).addCookie(any(Cookie.class));
     }
 
     @Test
@@ -97,6 +101,7 @@ class AuthControllerTest {
         LoginDTO dto = new LoginDTO();
         dto.setUsername("");
         dto.setPassword("password");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), anyInt())).thenReturn(true);
         when(authService.login(any(LoginDTO.class))).thenReturn(testLoginVO);
         when(request.getCookies()).thenReturn(null);
 
@@ -110,6 +115,7 @@ class AuthControllerTest {
     void login_withoutPassword_shouldReturnOk() {
         LoginDTO dto = new LoginDTO();
         dto.setUsername("admin");
+        when(rateLimiter.isAllowed(anyString(), anyInt(), anyInt())).thenReturn(true);
         when(authService.login(any(LoginDTO.class))).thenReturn(testLoginVO);
         when(request.getCookies()).thenReturn(null);
 

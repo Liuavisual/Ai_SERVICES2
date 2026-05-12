@@ -59,18 +59,37 @@ public class CustomerWakeupTask {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     /**
-     * 定时扫描AT_RISK客户并执行唤醒策略
+     * 定时扫描并唤醒处于 AT_RISK 状态的客户
      * <p>
+     * 使用 Redis 分布式锁防止多实例并发执行。
      * 执行流程：
-     * 1. 查询所有启用的AT_RISK预警规则（按优先级排序）
-     * 2. 分页查询处于AT_RISK阶段的客户画像
-     * 3. 检查Redis冷却状态，跳过今日已唤醒客户
+     * 1. 获取分布式锁，失败则跳过本次执行
+     * 2. 加载所有已启用的 AT_RISK 预警规则
+     * 3. 从缓存中按规则类型获取触达客户列表
      * 4. 根据规则动作类型执行唤醒操作
      * 5. 记录唤醒日志供审计追溯
      * </p>
      */
     @Scheduled(fixedRate = 1800000)
-    public void scanAndWakeupAtRiskCustomers() {
+    public void execute() {
+        String lockKey = "task:lock:customer_wakeup";
+        Boolean locked = redisService.setIfAbsent(lockKey, "1", 300, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(locked)) {
+            return;
+        }
+        try {
+            scanAndWakeupAtRiskCustomers();
+        } catch (Throwable t) {
+            log.error("【客户唤醒】执行异常", t);
+        } finally {
+            redisService.delete(lockKey);
+        }
+    }
+
+    /**
+     * 扫描并唤醒风险客户
+     */
+    private void scanAndWakeupAtRiskCustomers() {
         log.info("【客户唤醒】开始扫描AT_RISK客户...");
 
         try {

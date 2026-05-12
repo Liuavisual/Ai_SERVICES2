@@ -2,6 +2,8 @@ package com.delta.common.service.impl;
 
 import com.delta.common.service.RedisService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
@@ -19,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService {
+
+    private static final Logger log = LoggerFactory.getLogger(RedisServiceImpl.class);
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -88,7 +92,12 @@ public class RedisServiceImpl implements RedisService {
     public Boolean expire(@NonNull String key, long timeout, @NonNull TimeUnit unit) {
         Objects.requireNonNull(key, "Redis key不能为空");
         Objects.requireNonNull(unit, "TimeUnit不能为空");
-        return redisTemplate.expire(key, timeout, unit);
+        try {
+            return redisTemplate.expire(key, timeout, unit);
+        } catch (Throwable t) {
+            log.warn("【Redis】expire操作异常 | key={} | error={}", key, t.getMessage());
+            return false;
+        }
     }
 
     @Override

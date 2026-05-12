@@ -138,7 +138,7 @@
       </div>
       <el-form label-width="80px">
         <el-form-item label="拒单原因">
-          <el-radio-group v-model="rejectForm.reasonTemplate" @change="onReasonTemplateChange">
+          <el-radio-group id="reject-reason-template" name="reasonTemplate" v-model="rejectForm.reasonTemplate" @change="onReasonTemplateChange">
             <el-radio value="TIME_CONFLICT">时间冲突</el-radio>
             <el-radio value="PERSONAL">个人原因</el-radio>
             <el-radio value="SKILL_MISMATCH">技能不匹配</el-radio>
@@ -147,6 +147,8 @@
         </el-form-item>
         <el-form-item label="补充说明">
           <el-input
+            id="reject-custom-reason"
+            name="customReason"
             v-model="rejectForm.customReason"
             type="textarea"
             :rows="3"

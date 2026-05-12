@@ -6,15 +6,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.entity.Order;
 import com.delta.common.mapper.OrderMapper;
+import com.delta.common.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 订单超时自动取消定时任务
@@ -35,8 +36,15 @@ public class OrderTimeoutTask {
     /** 订单Mapper */
     private final OrderMapper orderMapper;
 
+    /** Redis服务 */
+    private final RedisService redisService;
+
     /**
      * 定时扫描超时未支付订单并自动取消
+     * <p>
+     * 使用 Redis 分布式锁防止多实例并发执行。
+     * 锁有效期 120 秒，确保任务有足够时间完成。
+     * </p>
      * <p>
      * 取消条件：
      * 1. 订单状态为 PENDING
@@ -45,8 +53,25 @@ public class OrderTimeoutTask {
      * </p>
      */
     @Scheduled(fixedRate = 60000)
-    @Transactional(rollbackFor = Exception.class)
-    public void scanAndCancelTimeoutOrders() {
+    public void execute() {
+        String lockKey = "task:lock:order_timeout";
+        Boolean locked = redisService.setIfAbsent(lockKey, "1", 120, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(locked)) {
+            return;
+        }
+        try {
+            scanAndCancelTimeoutOrders();
+        } catch (Throwable t) {
+            log.error("【订单超时】执行异常", t);
+        } finally {
+            redisService.delete(lockKey);
+        }
+    }
+
+    /**
+     * 扫描并取消超时订单
+     */
+    private void scanAndCancelTimeoutOrders() {
         try {
             LocalDateTime now = LocalDateTime.now();
             LocalDateTime timeoutThreshold = now.minusMinutes(BusinessStatusConstants.ORDER_TIMEOUT_CANCEL_MINUTES);
@@ -70,8 +95,12 @@ public class OrderTimeoutTask {
                 }
 
                 for (Order order : timeoutOrders) {
-                    cancelOrderAutomatically(order);
-                    cancelledCount++;
+                    try {
+                        cancelOrderAutomatically(order);
+                        cancelledCount++;
+                    } catch (Exception e) {
+                        log.error("【订单超时】自动取消单条订单失败 | orderNo={} | error={}", order.getOrderNo(), e.getMessage());
+                    }
                 }
 
                 if (!pageResult.hasNext()) {

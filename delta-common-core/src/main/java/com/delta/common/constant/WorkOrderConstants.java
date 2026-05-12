@@ -36,6 +36,7 @@ public final class WorkOrderConstants {
     public static final String TRACK_STATUS_SERVICING = "SERVICING";
     public static final String TRACK_STATUS_SERVICE_DONE = "SERVICE_DONE";
     public static final String TRACK_STATUS_CONFIRMED = "CONFIRMED";
+    public static final String TRACK_STATUS_TERMINATED = "TERMINATED";
 
     public static final String ORDER_STATUS_PENDING = "PENDING";
     public static final String ORDER_STATUS_CONFIRMED = "CONFIRMED";

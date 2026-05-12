@@ -82,10 +82,10 @@
     <el-dialog title="结算申诉" v-model="disputeDialogVisible" width="500px">
       <el-form label-width="100px">
         <el-form-item label="陪玩师ID">
-          <el-input v-model="disputeForm.companionId" placeholder="请输入陪玩师ID" />
+          <el-input id="dispute-companion-id" name="companionId" v-model="disputeForm.companionId" placeholder="请输入陪玩师ID" />
         </el-form-item>
         <el-form-item label="申诉内容">
-          <el-input v-model="disputeForm.disputeContent" type="textarea" :rows="4" placeholder="请描述申诉原因" />
+          <el-input id="dispute-content" name="disputeContent" v-model="disputeForm.disputeContent" type="textarea" :rows="4" placeholder="请描述申诉原因" />
         </el-form-item>
       </el-form>
       <template #footer>

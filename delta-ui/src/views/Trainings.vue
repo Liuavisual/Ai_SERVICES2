@@ -63,13 +63,13 @@
     <el-dialog :title="form.id ? '编辑课程' : '新增课程'" v-model="dialogVisible" width="600px" @close="resetForm">
       <el-form :model="form" label-width="120px">
         <el-form-item label="课程名称" required>
-          <el-input v-model="form.courseName" placeholder="请输入课程名称" />
+          <el-input id="training-course-name" name="courseName" v-model="form.courseName" placeholder="请输入课程名称" />
         </el-form-item>
         <el-form-item label="陪玩师ID">
-          <el-input v-model="form.companionId" placeholder="请输入陪玩师ID" />
+          <el-input id="training-companion-id" name="companionId" v-model="form.companionId" placeholder="请输入陪玩师ID" />
         </el-form-item>
         <el-form-item label="培训类型">
-          <el-select v-model="form.courseType" style="width: 100%">
+          <el-select id="training-course-type" name="courseType" v-model="form.courseType" style="width: 100%">
             <el-option label="服务规范" value="SERVICE_STANDARD" />
             <el-option label="话术模板" value="SCRIPT_TEMPLATE" />
             <el-option label="合规培训" value="COMPLIANCE" />
@@ -77,7 +77,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="培训内容">
-          <el-input v-model="form.courseContent" type="textarea" :rows="6" placeholder="培训内容（支持Markdown）" />
+          <el-input id="training-course-content" name="courseContent" v-model="form.courseContent" type="textarea" :rows="6" placeholder="培训内容（支持Markdown）" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -89,7 +89,7 @@
     <el-dialog title="完成学习" v-model="completeDialogVisible" width="400px">
       <el-form label-width="100px">
         <el-form-item label="考核得分">
-          <el-input-number v-model="completeScore" :min="0" :max="100" style="width: 100%" />
+          <el-input-number id="training-complete-score" name="completeScore" v-model="completeScore" :min="0" :max="100" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>

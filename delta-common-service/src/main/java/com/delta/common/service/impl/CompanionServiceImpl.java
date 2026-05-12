@@ -11,11 +11,13 @@ import com.delta.common.entity.Companion;
 import com.delta.common.entity.CompanionLevel;
 import com.delta.common.entity.CompanionRatingSummary;
 import com.delta.common.entity.CompanionSchedule;
+import com.delta.common.entity.Order;
 import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.mapper.CompanionMapper;
 import com.delta.common.mapper.CompanionRatingSummaryMapper;
 import com.delta.common.mapper.CompanionScheduleMapper;
+import com.delta.common.mapper.OrderMapper;
 import com.delta.common.service.CompanionService;
 import com.delta.common.util.DesensitizeUtils;
 import com.delta.common.util.ExcelUtils;
@@ -55,6 +57,8 @@ public class CompanionServiceImpl implements CompanionService {
     private final CompanionScheduleMapper companionScheduleMapper;
 
     private final CompanionRatingSummaryMapper companionRatingSummaryMapper;
+
+    private final OrderMapper orderMapper;
 
     @Override
     public Page<CompanionVO> getPage(Integer page, Integer size, Long levelId, String nickname, Integer enabled) {
@@ -266,6 +270,15 @@ public class CompanionServiceImpl implements CompanionService {
         Companion companion = companionMapper.selectById(id);
         if (companion == null) {
             throw new BusinessException("陪玩师不存在");
+        }
+
+        long activeOrders = orderMapper.selectCount(new LambdaQueryWrapper<Order>()
+                .eq(Order::getCompanionId, id)
+                .in(Order::getOrderStatus, BusinessStatusConstants.ORDER_STATUS_PENDING,
+                        BusinessStatusConstants.ORDER_STATUS_CONFIRMED,
+                        BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS));
+        if (activeOrders > 0) {
+            throw new BusinessException("该陪玩师存在进行中的订单（待确认/已确认/服务中），请先处理完毕后再删除");
         }
 
         companionMapper.deleteById(id);

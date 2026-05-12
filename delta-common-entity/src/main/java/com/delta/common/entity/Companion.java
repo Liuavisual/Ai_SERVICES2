@@ -60,7 +60,7 @@ public class Companion extends BaseEntity {
     /** 价格（元/小时） */
     private BigDecimal price;
 
-    /** 是否启用：1-启用，0-禁用 */
+    /** 账号状态：1-启用（可正常登录和接单），0-禁用（暂停所有服务）。与 status 的区别：enabled 是管理开关，status 是实时在线状态 */
     private Integer enabled;
 
     /** 服务标签 */

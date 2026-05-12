@@ -214,6 +214,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         workOrderMapper.updateById(order);
 
         addStatusChangeRecord(order.getId(), currentUserId, null, "工单关闭" + (closeReason != null ? "：" + closeReason : ""), oldStatus, WorkOrderConstants.STATUS_CLOSED);
+
+        terminateServiceTrackIfExists(id);
     }
 
     @Override
@@ -233,6 +235,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         workOrderMapper.updateById(order);
 
         addStatusChangeRecord(order.getId(), currentUserId, null, "工单取消：" + cancelReason, oldStatus, WorkOrderConstants.STATUS_CANCELLED);
+
+        terminateServiceTrackIfExists(id);
     }
 
     @Override
@@ -379,9 +383,15 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     public String generateOrderNo() {
         String dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String key = WorkOrderConstants.ORDER_NO_SEQ_KEY_PREFIX + dateStr;
-        Long seq = redisTemplate.opsForValue().increment(key);
-        redisTemplate.expire(key, 25, TimeUnit.HOURS);
-        return WorkOrderConstants.ORDER_NO_PREFIX + dateStr + String.format("%04d", seq);
+        try {
+            Long seq = redisTemplate.opsForValue().increment(key);
+            return WorkOrderConstants.ORDER_NO_PREFIX + dateStr + String.format("%04d", seq);
+        } catch (Throwable t) {
+            log.warn("【工单号生成】Redis不可用，降级使用时间戳+UUID | error={}", t.getMessage());
+            long timeComponent = System.currentTimeMillis() % 100000;
+            String shortUuid = UUID.randomUUID().toString().replace("-", "").substring(0, 4);
+            return WorkOrderConstants.ORDER_NO_PREFIX + dateStr + String.format("%05d", timeComponent) + shortUuid.toUpperCase();
+        }
     }
 
     private LambdaQueryWrapper<WorkOrder> buildQueryWrapper(String status, String orderType, String priority, String platform, String keyword) {
@@ -509,6 +519,18 @@ public class WorkOrderServiceImpl implements WorkOrderService {
             throw new BusinessException("服务追踪记录不存在");
         }
         return track;
+    }
+
+    private void terminateServiceTrackIfExists(Long workOrderId) {
+        ServiceTrack track = serviceTrackMapper.selectOne(
+                new LambdaQueryWrapper<ServiceTrack>().eq(ServiceTrack::getWorkOrderId, workOrderId));
+        if (track != null
+                && !WorkOrderConstants.TRACK_STATUS_CONFIRMED.equals(track.getTrackStatus())
+                && !WorkOrderConstants.TRACK_STATUS_TERMINATED.equals(track.getTrackStatus())) {
+            track.setTrackStatus(WorkOrderConstants.TRACK_STATUS_TERMINATED);
+            serviceTrackMapper.updateById(track);
+            log.info("【工单联动】工单 {} 关闭/取消，关联ServiceTrack({})状态同步为TERMINATED", workOrderId, track.getId());
+        }
     }
 
     private void addSystemRecord(Long workOrderId, String content) {

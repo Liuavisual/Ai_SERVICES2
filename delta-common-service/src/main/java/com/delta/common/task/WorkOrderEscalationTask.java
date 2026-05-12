@@ -53,6 +53,21 @@ public class WorkOrderEscalationTask {
 
     @Scheduled(fixedRate = 60000)
     public void checkWorkOrderTimeout() {
+        String lockKey = "task:lock:work_order_escalation";
+        Boolean locked = redisService.setIfAbsent(lockKey, "1", 120, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(locked)) {
+            return;
+        }
+        try {
+            scanAndEscalateTimeoutOrders();
+        } catch (Throwable t) {
+            log.error("【工单升级】执行异常", t);
+        } finally {
+            redisService.delete(lockKey);
+        }
+    }
+
+    private void scanAndEscalateTimeoutOrders() {
         int pageNum = 1;
 
         while (true) {

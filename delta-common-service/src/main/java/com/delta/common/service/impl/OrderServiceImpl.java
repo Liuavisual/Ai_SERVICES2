@@ -23,8 +23,9 @@ import com.delta.common.vo.OrderVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +36,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,8 +50,6 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
 
     private final CompanionMapper companionMapper;
-
-    private final StringRedisTemplate redisTemplate;
 
     private final WorkOrderService workOrderService;
 
@@ -99,14 +101,20 @@ public class OrderServiceImpl implements OrderService {
 
         String orderNo = generateOrderNo();
         int durationMins = Math.toIntExact(Duration.between(scheduledStart, scheduledEnd).toMinutes());
+        if (durationMins < 30) {
+            throw new BusinessException("最小服务时长为30分钟");
+        }
+        if (durationMins > 1440) {
+            throw new BusinessException("单次服务时长不能超过24小时");
+        }
 
         Order order = new Order();
         order.setOrderNo(orderNo);
         order.setUserId(userId);
         order.setCompanionId(companionId);
-        order.setCompanionName(companion.getNickname());
+        order.setCompanionName(companion.getNickname() != null ? companion.getNickname() : companion.getRealName());
         order.setServiceType(serviceType);
-        order.setGameType(companion.getGameType());
+        order.setGameType(companion.getGameType() != null ? companion.getGameType() : "");
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_PENDING);
         order.setScheduledStart(scheduledStart);
         order.setScheduledEnd(scheduledEnd);
@@ -134,7 +142,12 @@ public class OrderServiceImpl implements OrderService {
 
         createLinkedWorkOrder(order);
 
-        customerProfileService.syncOrderRecord(order);
+        try {
+            customerProfileService.syncOrderRecord(order);
+        } catch (Exception e) {
+            log.warn("【客户画像同步】同步订单记录失败，订单已正常创建 | orderNo={} | error={}",
+                    orderNo, e.getMessage());
+        }
 
         return convertToVO(order);
     }
@@ -212,11 +225,11 @@ public class OrderServiceImpl implements OrderService {
         }
         String fromStatus = order.getOrderStatus();
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CANCELLED);
-        order.setCancelReason(reason);
+        order.setCancelReason("【陪玩师拒单】" + reason);
         orderMapper.updateById(order);
 
         recordStatusHistory(orderId, fromStatus, BusinessStatusConstants.ORDER_STATUS_CANCELLED,
-                companionId, order.getCompanionName(), "COMPANION", "陪玩师拒单：" + (reason != null ? reason : ""));
+                companionId, order.getCompanionName(), "COMPANION", "陪玩师拒单：" + reason);
 
         releaseSchedule(order);
 
@@ -237,10 +250,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public void confirmOrder(Long id) {
         Order order = getOrderOrThrow(id);
-        validateTransition(order.getOrderStatus(), BusinessStatusConstants.ORDER_STATUS_PENDING,
+        String fromStatus = order.getOrderStatus();
+        validateTransition(fromStatus, BusinessStatusConstants.ORDER_STATUS_PENDING,
             BusinessStatusConstants.ORDER_STATUS_CONFIRMED);
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CONFIRMED);
         orderMapper.updateById(order);
+
+        Long operatorId = getCurrentUserId();
+        recordStatusHistory(id, fromStatus, BusinessStatusConstants.ORDER_STATUS_CONFIRMED,
+                operatorId, "系统管理员", "SYS_ADMIN", "确认订单");
+
         log.info("订单确认成功: id={}", id);
     }
 
@@ -255,9 +274,8 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException("评分必须在1-5之间");
         }
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_PENDING_REVIEW);
-        order.setRemark((order.getRemark() != null ? order.getRemark() : "") + " | 评分:" + rating + "星 评价:" + (reviewContent != null ? reviewContent : ""));
         orderMapper.updateById(order);
-        log.info("订单评价提交成功: orderId={}, rating={}", orderId, rating);
+        log.info("订单评价提交成功: orderId={}, rating={}, content={}", orderId, rating, reviewContent);
         return convertToVO(order);
     }
 
@@ -265,11 +283,17 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public void startService(Long id) {
         Order order = getOrderOrThrow(id);
-        validateTransition(order.getOrderStatus(), BusinessStatusConstants.ORDER_STATUS_CONFIRMED,
+        String fromStatus = order.getOrderStatus();
+        validateTransition(fromStatus, BusinessStatusConstants.ORDER_STATUS_CONFIRMED,
             BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS);
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS);
         order.setActualStart(LocalDateTime.now());
         orderMapper.updateById(order);
+
+        Long operatorId = getCurrentUserId();
+        recordStatusHistory(id, fromStatus, BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS,
+                operatorId, "系统管理员", "SYS_ADMIN", "开始服务");
+
         log.info("服务开始: id={}", id);
     }
 
@@ -277,7 +301,8 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public void completeOrder(Long id) {
         Order order = getOrderOrThrow(id);
-        validateTransition(order.getOrderStatus(), BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS,
+        String fromStatus = order.getOrderStatus();
+        validateTransition(fromStatus, BusinessStatusConstants.ORDER_STATUS_IN_PROGRESS,
             BusinessStatusConstants.ORDER_STATUS_COMPLETED);
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_COMPLETED);
         order.setActualEnd(LocalDateTime.now());
@@ -286,6 +311,11 @@ public class OrderServiceImpl implements OrderService {
             order.setDurationMinutes((int) Math.min(actualMinutes, Integer.MAX_VALUE));
         }
         orderMapper.updateById(order);
+
+        Long operatorId = getCurrentUserId();
+        recordStatusHistory(id, fromStatus, BusinessStatusConstants.ORDER_STATUS_COMPLETED,
+                operatorId, "系统管理员", "SYS_ADMIN", "完成服务");
+
         log.info("服务完成: id={}", id);
     }
 
@@ -299,6 +329,7 @@ public class OrderServiceImpl implements OrderService {
                 || BusinessStatusConstants.ORDER_STATUS_ARCHIVED.equals(currentStatus)) {
             throw new BusinessException("当前订单状态不允许取消");
         }
+        String fromStatus = currentStatus;
         order.setOrderStatus(BusinessStatusConstants.ORDER_STATUS_CANCELLED);
         order.setCancelReason(reason);
         if (reason != null && !reason.isEmpty()) {
@@ -306,6 +337,11 @@ public class OrderServiceImpl implements OrderService {
             order.setRemark(existingRemark != null ? existingRemark + " | 取消原因:" + reason : "取消原因:" + reason);
         }
         orderMapper.updateById(order);
+
+        Long operatorId = getCurrentUserId();
+        recordStatusHistory(id, fromStatus, BusinessStatusConstants.ORDER_STATUS_CANCELLED,
+                operatorId, "系统管理员", "SYS_ADMIN",
+                "管理员取消：" + (reason != null ? reason : "无"));
 
         releaseSchedule(order);
 
@@ -418,16 +454,30 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 获取当前登录用户ID
+     */
+    private Long getCurrentUserId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof Long) {
+                return (Long) auth.getPrincipal();
+            }
+        } catch (Exception e) {
+            log.debug("获取当前用户ID失败: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
      * 生成订单号
-     * 使用 Redis 自增序列 + 日期前缀，避免高并发时时间戳碰撞
-     * 格式：ORD + yyyyMMdd + 6位序列号（如 ORD20260508000001）
+     * 使用本地时间戳 + 随机数方案，避免 Redis 连接问题导致的 StackOverflowError。
+     * 格式：ORD + yyyyMMdd + 纳秒后6位 + 3位随机数（如 ORD20260512987654888）
      */
     private String generateOrderNo() {
         String datePrefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String redisKey = "order:seq:" + datePrefix;
-        Long seq = redisTemplate.opsForValue().increment(redisKey);
-        redisTemplate.expire(redisKey, 2, TimeUnit.DAYS);
-        return "ORD" + datePrefix + String.format("%06d", seq);
+        String nanoPart = String.format("%09d", System.nanoTime() % 1000000000);
+        String randomPart = String.format("%03d", ThreadLocalRandom.current().nextInt(1000));
+        return "ORD" + datePrefix + nanoPart.substring(nanoPart.length() - 6) + randomPart;
     }
 
     private BigDecimal calculateAmount(Companion companion, int durationMinutes) {
@@ -510,6 +560,10 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 记录订单状态变更历史
+     * <p>
+     * 使用 try-catch 确保记录历史失败不影响订单核心流程，
+     * 订单状态历史可在后续补录。
+     * </p>
      *
      * @param orderId      订单ID
      * @param fromStatus   变更前状态
@@ -522,20 +576,28 @@ public class OrderServiceImpl implements OrderService {
     private void recordStatusHistory(Long orderId, String fromStatus, String toStatus,
                                       Long operatorId, String operatorName,
                                       String operatorRole, String reason) {
-        OrderStatusHistory history = new OrderStatusHistory();
-        history.setOrderId(orderId);
-        history.setFromStatus(fromStatus);
-        history.setToStatus(toStatus);
-        history.setOperatorId(operatorId);
-        history.setOperatorName(operatorName);
-        history.setOperatorRole(operatorRole);
-        history.setReason(reason);
-        history.setCreatedAt(LocalDateTime.now());
-        orderStatusHistoryMapper.insert(history);
+        try {
+            OrderStatusHistory history = new OrderStatusHistory();
+            history.setOrderId(orderId);
+            history.setFromStatus(fromStatus);
+            history.setToStatus(toStatus);
+            history.setOperatorId(operatorId);
+            history.setOperatorName(operatorName);
+            history.setOperatorRole(operatorRole);
+            history.setReason(reason);
+            history.setCreatedAt(LocalDateTime.now());
+            orderStatusHistoryMapper.insert(history);
+        } catch (Exception e) {
+            log.warn("【订单状态历史】记录失败，订单已正常创建 | orderId={} | from={} | to={} | error={}",
+                    orderId, fromStatus, toStatus, e.getMessage());
+        }
     }
 
     /**
      * 向陪玩师发送通知消息
+     * <p>
+     * 使用 try-catch 确保通知发送失败不影响订单核心流程。
+     * </p>
      *
      * @param companionId 陪玩师ID
      * @param orderId     订单ID
@@ -545,14 +607,19 @@ public class OrderServiceImpl implements OrderService {
      */
     private void sendCompanionNotification(Long companionId, Long orderId,
                                             String type, String title, String content) {
-        CompanionNotification notification = new CompanionNotification();
-        notification.setCompanionId(companionId);
-        notification.setOrderId(orderId);
-        notification.setType(type);
-        notification.setTitle(title);
-        notification.setContent(content);
-        notification.setIsRead(0);
-        notification.setCreatedAt(LocalDateTime.now());
-        companionNotificationMapper.insert(notification);
+        try {
+            CompanionNotification notification = new CompanionNotification();
+            notification.setCompanionId(companionId);
+            notification.setOrderId(orderId);
+            notification.setType(type);
+            notification.setTitle(title);
+            notification.setContent(content);
+            notification.setIsRead(0);
+            notification.setCreatedAt(LocalDateTime.now());
+            companionNotificationMapper.insert(notification);
+        } catch (Exception e) {
+            log.warn("【陪玩师通知】发送失败，订单已正常创建 | companionId={} | orderId={} | error={}",
+                    companionId, orderId, e.getMessage());
+        }
     }
 }

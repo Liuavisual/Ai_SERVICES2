@@ -20,23 +20,14 @@
         <span style="font-weight: 600">批量设置</span>
       </template>
       <el-form :model="batchForm" label-width="100px" inline>
-        <el-form-item label="起止日期">
-          <el-date-picker
-            v-model="batchForm.dateRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            value-format="YYYY-MM-DD"
-            style="width: 260px"
-            :disabled-date="disabledPastDate"
-          />
+        <el-form-item label="起止日期" required>
+          <el-date-picker id="batch-date-range" name="dateRange" v-model="batchForm.dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 260px" :disabled-date="disabledPastDate" />
         </el-form-item>
-        <el-form-item label="每日开始">
-          <el-time-picker v-model="batchForm.dailyStart" format="HH:mm" value-format="HH:mm:00" placeholder="每天开始时间" />
+        <el-form-item label="每日开始" required>
+          <el-time-picker id="batch-start" name="dailyStart" v-model="batchForm.dailyStart" format="HH:mm" value-format="HH:mm:00" placeholder="每天开始时间" />
         </el-form-item>
-        <el-form-item label="每日结束">
-          <el-time-picker v-model="batchForm.dailyEnd" format="HH:mm" value-format="HH:mm:00" placeholder="每天结束时间" />
+        <el-form-item label="每日结束" required>
+          <el-time-picker id="batch-end" name="dailyEnd" v-model="batchForm.dailyEnd" format="HH:mm" value-format="HH:mm:00" placeholder="每天结束时间" />
         </el-form-item>
         <el-form-item>
           <el-button type="success" @click="handleBatchCreate" :loading="batchLoading">批量生成</el-button>
@@ -76,6 +67,8 @@
       <el-form :model="scheduleForm" label-width="90px">
         <el-form-item label="日期" required>
           <el-date-picker
+            id="schedule-date"
+            name="scheduleDate"
             v-model="scheduleForm.scheduleDate"
             type="date"
             placeholder="选择日期"
@@ -86,6 +79,8 @@
         </el-form-item>
         <el-form-item label="开始时间" required>
           <el-time-select
+            id="schedule-start"
+            name="startTime"
             v-model="scheduleForm.startTime"
             :max-time="scheduleForm.endTime"
             placeholder="选择开始时间"
@@ -97,6 +92,8 @@
         </el-form-item>
         <el-form-item label="结束时间" required>
           <el-time-select
+            id="schedule-end"
+            name="endTime"
             v-model="scheduleForm.endTime"
             :min-time="scheduleForm.startTime"
             placeholder="选择结束时间"
@@ -107,7 +104,7 @@
           />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="scheduleForm.note" placeholder="可选备注" maxlength="100" show-word-limit />
+          <el-input id="schedule-note" name="note" v-model="scheduleForm.note" placeholder="可选备注" maxlength="100" show-word-limit />
         </el-form-item>
       </el-form>
       <template #footer>

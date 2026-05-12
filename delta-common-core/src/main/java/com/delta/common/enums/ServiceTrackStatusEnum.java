@@ -8,7 +8,8 @@ public enum ServiceTrackStatusEnum {
     BOOKED(WorkOrderConstants.TRACK_STATUS_BOOKED, "已预约"),
     SERVICING(WorkOrderConstants.TRACK_STATUS_SERVICING, "服务中"),
     SERVICE_DONE(WorkOrderConstants.TRACK_STATUS_SERVICE_DONE, "服务完成"),
-    CONFIRMED(WorkOrderConstants.TRACK_STATUS_CONFIRMED, "已确认");
+    CONFIRMED(WorkOrderConstants.TRACK_STATUS_CONFIRMED, "已确认"),
+    TERMINATED(WorkOrderConstants.TRACK_STATUS_TERMINATED, "已终止");
 
     private final String code;
     private final String desc;
@@ -35,11 +36,14 @@ public enum ServiceTrackStatusEnum {
 
     public static boolean isValidTransition(String from, String to) {
         if (from == null || to == null || from.equals(to)) return false;
+        if (WorkOrderConstants.TRACK_STATUS_TERMINATED.equals(to)) return true;
         return switch (from) {
             case "CONSULTING" -> "BOOKED".equals(to);
             case "BOOKED" -> "SERVICING".equals(to);
             case "SERVICING" -> "SERVICE_DONE".equals(to);
             case "SERVICE_DONE" -> "CONFIRMED".equals(to);
+            case "TERMINATED" -> false;
+            case "CONFIRMED" -> false;
             default -> false;
         };
     }

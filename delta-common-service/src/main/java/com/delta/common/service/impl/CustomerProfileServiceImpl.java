@@ -18,7 +18,9 @@ import com.delta.common.vo.CustomerProfileVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -58,6 +60,15 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
     private final CompanionMapper companionMapper;
 
     private final SysUserMapper sysUserMapper;
+
+    @Value("${delta.rfm.recency.thresholds:7,14,30,60}")
+    private String recencyThresholdsConfig;
+
+    @Value("${delta.rfm.frequency.thresholds:3.0,2.0,1.0,0.5}")
+    private String frequencyThresholdsConfig;
+
+    @Value("${delta.rfm.monetary.thresholds:5000,2000,500,100}")
+    private String monetaryThresholdsConfig;
 
     @Override
     public Page<CustomerProfileVO> getProfilePage(Integer page, Integer size, String memberLevel, String riskLevel, String lifecycleStage, String rfmSegment, String keyword) {
@@ -253,7 +264,7 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void syncOrderRecord(Order order) {
         if (order == null || order.getUserId() == null) {
             log.warn("订单数据不完整，跳过画像同步: order={}", order);
@@ -628,13 +639,17 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
      * M(Monetary): 5=累计5000+, 4=2000+, 3=500+, 2=100+, 1=100以下
      */
     private void calculateRfmScores(CustomerProfile p, LocalDateTime now) {
+        double[] recencyThresholds = parseThresholds(recencyThresholdsConfig);
+        double[] frequencyThresholds = parseThresholds(frequencyThresholdsConfig);
+        BigDecimal[] monetaryThresholds = parseMonetaryThresholds(monetaryThresholdsConfig);
+
         int rScore = 1;
         if (p.getLastOrderAt() != null) {
             long daysSinceLastOrder = ChronoUnit.DAYS.between(p.getLastOrderAt(), now);
-            if (daysSinceLastOrder <= 7) rScore = 5;
-            else if (daysSinceLastOrder <= 14) rScore = 4;
-            else if (daysSinceLastOrder <= 30) rScore = 3;
-            else if (daysSinceLastOrder <= 60) rScore = 2;
+            if (daysSinceLastOrder <= recencyThresholds[0]) rScore = 5;
+            else if (daysSinceLastOrder <= recencyThresholds[1]) rScore = 4;
+            else if (daysSinceLastOrder <= recencyThresholds[2]) rScore = 3;
+            else if (daysSinceLastOrder <= recencyThresholds[3]) rScore = 2;
         }
         p.setRfmRecencyScore(rScore);
 
@@ -642,19 +657,19 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
         if (p.getFirstContactAt() != null && p.getTotalOrders() > 0) {
             long monthsActive = Math.max(1, ChronoUnit.MONTHS.between(p.getFirstContactAt(), now));
             double monthlyAvg = (double) p.getTotalOrders() / monthsActive;
-            if (monthlyAvg >= 3) fScore = 5;
-            else if (monthlyAvg >= 2) fScore = 4;
-            else if (monthlyAvg >= 1) fScore = 3;
-            else if (monthlyAvg >= 0.5) fScore = 2;
+            if (monthlyAvg >= frequencyThresholds[0]) fScore = 5;
+            else if (monthlyAvg >= frequencyThresholds[1]) fScore = 4;
+            else if (monthlyAvg >= frequencyThresholds[2]) fScore = 3;
+            else if (monthlyAvg >= frequencyThresholds[3]) fScore = 2;
         }
         p.setRfmFrequencyScore(fScore);
 
         int mScore = 1;
         BigDecimal spent = p.getTotalSpent();
-        if (spent.compareTo(BigDecimal.valueOf(5000)) >= 0) mScore = 5;
-        else if (spent.compareTo(BigDecimal.valueOf(2000)) >= 0) mScore = 4;
-        else if (spent.compareTo(BigDecimal.valueOf(500)) >= 0) mScore = 3;
-        else if (spent.compareTo(BigDecimal.valueOf(100)) >= 0) mScore = 2;
+        if (spent.compareTo(monetaryThresholds[0]) >= 0) mScore = 5;
+        else if (spent.compareTo(monetaryThresholds[1]) >= 0) mScore = 4;
+        else if (spent.compareTo(monetaryThresholds[2]) >= 0) mScore = 3;
+        else if (spent.compareTo(monetaryThresholds[3]) >= 0) mScore = 2;
         p.setRfmMonetaryScore(mScore);
 
         int totalScore = rScore + fScore + mScore;
@@ -682,6 +697,24 @@ public class CustomerProfileServiceImpl implements CustomerProfileService {
         if (r <= 2 && f <= 2 && m >= 3) return CustomerProfileConstants.RFM_SEGMENT_HIBERNATE;
         if (r <= 1 && f <= 1) return CustomerProfileConstants.RFM_SEGMENT_LOST;
         return CustomerProfileConstants.RFM_SEGMENT_POTENTIAL;
+    }
+
+    private double[] parseThresholds(String config) {
+        String[] parts = config.split(",");
+        double[] thresholds = new double[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            thresholds[i] = Double.parseDouble(parts[i].trim());
+        }
+        return thresholds;
+    }
+
+    private BigDecimal[] parseMonetaryThresholds(String config) {
+        String[] parts = config.split(",");
+        BigDecimal[] thresholds = new BigDecimal[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            thresholds[i] = new BigDecimal(parts[i].trim());
+        }
+        return thresholds;
     }
 
     /**

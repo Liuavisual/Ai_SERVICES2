@@ -2,6 +2,7 @@ package com.delta.common.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.dto.CompanionScheduleDTO;
@@ -318,9 +319,25 @@ public class CompanionScheduleServiceImpl implements CompanionScheduleService {
             log.info("将已预约状态改回可预约: id={}", id);
         }
 
-        schedule.setStatus(status);
-        companionScheduleMapper.updateById(schedule);
-        log.info("更新陪玩师时间状态成功: id={}, status={}", id, status);
+        if (BusinessStatusConstants.SCHEDULE_STATUS_BOOKED.equals(status)) {
+            int affected = bookSlotAtomically(id);
+            if (affected == 0) {
+                throw new BusinessException("该时段已被其他人抢先预约，请刷新后重试");
+            }
+            log.info("预约陪玩师时间成功（CAS）: id={}", id);
+        } else {
+            schedule.setStatus(status);
+            companionScheduleMapper.updateById(schedule);
+            log.info("更新陪玩师时间状态成功: id={}, status={}", id, status);
+        }
+    }
+
+    private int bookSlotAtomically(Long id) {
+        LambdaUpdateWrapper<CompanionSchedule> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(CompanionSchedule::getId, id);
+        updateWrapper.eq(CompanionSchedule::getStatus, BusinessStatusConstants.SCHEDULE_STATUS_AVAILABLE);
+        updateWrapper.set(CompanionSchedule::getStatus, BusinessStatusConstants.SCHEDULE_STATUS_BOOKED);
+        return companionScheduleMapper.update(null, updateWrapper);
     }
 
     @Override

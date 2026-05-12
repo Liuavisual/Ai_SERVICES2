@@ -90,7 +90,7 @@ public class SecurityConfig {
         // 允许携带Cookie的跨域请求必须指定具体源，不能使用*
         configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "https://localhost:*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         // 允许携带Cookie
         configuration.setAllowCredentials(true);
         // 预检请求缓存时间（秒）

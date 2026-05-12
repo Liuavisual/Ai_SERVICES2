@@ -1,5 +1,6 @@
 package com.delta.common.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
  * @author 刘建国
  */
 @Data
+@TableName("companion_notifications")
 public class CompanionNotification {
 
     /** 主键ID */
