@@ -9,6 +9,7 @@ import com.delta.common.exception.BusinessException;
 import com.delta.common.mapper.CompanionLevelMapper;
 import com.delta.common.mapper.CompanionMapper;
 import com.delta.common.mapper.CompanionScheduleMapper;
+import com.delta.common.mapper.OrderMapper;
 import com.delta.common.vo.CompanionVO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,9 @@ class CompanionServiceImplTest {
 
     @Mock
     private CompanionScheduleMapper companionScheduleMapper;
+
+    @Mock
+    private OrderMapper orderMapper;
 
     @InjectMocks
     private CompanionServiceImpl companionService;
@@ -198,6 +202,7 @@ class CompanionServiceImplTest {
         Companion companion = new Companion();
         companion.setId(1L);
         when(companionMapper.selectById(1L)).thenReturn(companion);
+        when(orderMapper.selectCount(any(LambdaQueryWrapper.class))).thenReturn(0L);
         when(companionMapper.deleteById(1L)).thenReturn(1);
 
         companionService.delete(1L);

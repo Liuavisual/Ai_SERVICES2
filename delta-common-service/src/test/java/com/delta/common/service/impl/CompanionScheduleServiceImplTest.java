@@ -209,7 +209,7 @@ class CompanionScheduleServiceImplTest {
         when(companionScheduleMapper.selectById(1L)).thenReturn(schedule);
         when(companionScheduleMapper.updateById(any(CompanionSchedule.class))).thenReturn(1);
 
-        companionScheduleService.updateStatus(1L, BusinessStatusConstants.SCHEDULE_STATUS_BOOKED);
+        companionScheduleService.updateStatus(1L, BusinessStatusConstants.SCHEDULE_STATUS_UNAVAILABLE);
 
         verify(companionScheduleMapper).updateById(any(CompanionSchedule.class));
     }
