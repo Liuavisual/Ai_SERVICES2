@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.entity.OrderStatusHistory;
@@ -22,15 +23,14 @@ import java.util.List;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/orders")
 @PermAuth("order_status_history:view")
-public class OrderStatusHistoryController extends BaseController {
+public class OrderStatusHistoryController {
 
     private final OrderStatusHistoryMapper orderStatusHistoryMapper;
 
     @Operation(summary = "查询订单状态变更历史")
     @GetMapping("/{id}/status-history")
-    public Result<List<OrderStatusHistory>> getStatusHistory(@PathVariable String id) {
-        Long orderId = decodeId(id);
-        List<OrderStatusHistory> histories = orderStatusHistoryMapper.selectByOrderId(orderId);
+    public Result<List<OrderStatusHistory>> getStatusHistory(@PathVariable @DecodeId Long id) {
+        List<OrderStatusHistory> histories = orderStatusHistoryMapper.selectByOrderId(id);
         return Result.success(histories);
     }
 }

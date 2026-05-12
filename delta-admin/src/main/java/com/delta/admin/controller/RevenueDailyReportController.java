@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.RevenueDailyReportService;
@@ -30,18 +31,17 @@ public class RevenueDailyReportController extends BaseController {
     public Result<Page<RevenueDailyReportVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "clubConfigId", required = false) String clubConfigId,
+            @RequestParam(name = "clubConfigId", required = false) @DecodeId(required = false) Long clubConfigId,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(name = "gameType", required = false) String gameType) {
-        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
-        return Result.success(revenueDailyReportService.getPage(page, size, decodedClubConfigId, startDate, endDate, gameType));
+        return Result.success(revenueDailyReportService.getPage(page, size, clubConfigId, startDate, endDate, gameType));
     }
 
     @Operation(summary = "获取营收日报详情")
     @GetMapping("/{id}")
-    public Result<RevenueDailyReportVO> getById(@PathVariable("id") String id) {
-        return Result.success(revenueDailyReportService.getById(decodeId(id)));
+    public Result<RevenueDailyReportVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(revenueDailyReportService.getById(id));
     }
 
     @Operation(summary = "生成营收日报")

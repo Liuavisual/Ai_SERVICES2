@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.QualityCheckRecordService;
@@ -28,26 +29,25 @@ public class QualityCheckRecordController extends BaseController {
     public Result<Page<QualityCheckRecordVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "companionId", required = false) String companionId,
+            @RequestParam(name = "companionId", required = false) @DecodeId(required = false) Long companionId,
             @RequestParam(name = "riskLevel", required = false) String riskLevel,
             @RequestParam(name = "handleStatus", required = false) String handleStatus) {
-        Long decodedCompanionId = companionId != null ? decodeId(companionId) : null;
-        return Result.success(qualityCheckRecordService.getPage(page, size, decodedCompanionId, riskLevel, handleStatus));
+        return Result.success(qualityCheckRecordService.getPage(page, size, companionId, riskLevel, handleStatus));
     }
 
     @Operation(summary = "获取质检记录详情")
     @GetMapping("/{id}")
-    public Result<QualityCheckRecordVO> getById(@PathVariable("id") String id) {
-        return Result.success(qualityCheckRecordService.getById(decodeId(id)));
+    public Result<QualityCheckRecordVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(qualityCheckRecordService.getById(id));
     }
 
     @Operation(summary = "处理质检记录")
     @PutMapping("/{id}/handle")
     @PermAuth("quality_check:edit")
     @AuditLog(module = "质检管理", action = "处理质检记录")
-    public Result<Void> handle(@PathVariable("id") String id, @RequestBody Map<String, String> params) {
+    public Result<Void> handle(@PathVariable("id") @DecodeId Long id, @RequestBody Map<String, String> params) {
         qualityCheckRecordService.handleCheck(
-                decodeId(id),
+                id,
                 params.get("handleStatus"),
                 params.get("handleRemark"),
                 decodeId(params.get("handlerId"))

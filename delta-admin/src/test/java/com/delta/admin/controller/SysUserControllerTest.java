@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.AuditUserDTO;
 import com.delta.common.dto.SysUserDTO;
 import com.delta.common.service.SysUserService;
-import com.delta.common.util.IdObfuscateUtils;
+
 import com.delta.common.vo.Result;
 import com.delta.common.vo.SysUserVO;
 import org.junit.jupiter.api.DisplayName;
@@ -70,14 +70,13 @@ class SysUserControllerTest {
     @Test
     @DisplayName("获取用户详情 - 成功返回用户信息")
     void getUserById_shouldReturnUserInfo() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         SysUserVO vo = new SysUserVO();
         vo.setId(1L);
         vo.setUsername("admin");
 
         when(sysUserService.getUserById(1L)).thenReturn(vo);
 
-        Result<SysUserVO> result = sysUserController.getUserById(obfuscatedId);
+        Result<SysUserVO> result = sysUserController.getUserById(1L);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -123,11 +122,9 @@ class SysUserControllerTest {
     @Test
     @DisplayName("删除用户 - 成功删除")
     void deleteUser_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(sysUserService).deleteUser(anyLong());
 
-        Result<Void> result = sysUserController.deleteUser(obfuscatedId);
+        Result<Void> result = sysUserController.deleteUser(1L);
 
         assertEquals(200, result.getCode());
         verify(sysUserService).deleteUser(1L);

@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
@@ -34,26 +35,24 @@ public class CustomerController extends BaseController {
             @RequestParam(name = "size", defaultValue = "10") Integer size,
             @RequestParam(name = "platform", required = false) String platform,
             @RequestParam(name = "aiEnabled", required = false) Boolean aiEnabled,
-            @RequestParam(name = "csUserId", required = false) String csUserId,
+            @RequestParam(name = "csUserId", required = false) @DecodeId(required = false) Long csUserId,
             @RequestParam(name = "keyword", required = false) String keyword,
             HttpServletRequest request) {
-        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
         String role = getCurrentUserRole(request);
         if (BusinessStatusConstants.ROLE_CS_STAFF.equals(role)) {
-            decodedCsUserId = getCurrentUserId(request);
+            csUserId = getCurrentUserId(request);
         }
-        Page<CustomerVO> pageResult = customerService.getCustomerPage(page, size, platform, aiEnabled, decodedCsUserId, keyword);
+        Page<CustomerVO> pageResult = customerService.getCustomerPage(page, size, platform, aiEnabled, csUserId, keyword);
         return Result.success(pageResult);
     }
 
     @Operation(summary = "获取客户详情")
     @GetMapping("/{id}")
-    public Result<CustomerVO> getCustomerById(@PathVariable("id") String id,
+    public Result<CustomerVO> getCustomerById(@PathVariable("id") @DecodeId Long id,
                                                HttpServletRequest request) {
-        Long decodedId = decodeId(id);
         Long currentUserId = getCurrentUserId(request);
         String currentUserRole = getCurrentUserRole(request);
-        CustomerVO customerVO = customerService.getCustomerById(decodedId, currentUserId, currentUserRole);
+        CustomerVO customerVO = customerService.getCustomerById(id, currentUserId, currentUserRole);
         return Result.success(customerVO);
     }
 
@@ -61,9 +60,9 @@ public class CustomerController extends BaseController {
     @PutMapping("/{id}/ai-enabled")
     @PermAuth("customer:edit")
     public Result<Void> toggleAiEnabled(
-            @PathVariable("id") String id,
+            @PathVariable("id") @DecodeId Long id,
             @Valid @RequestBody ToggleAiEnabledDTO dto) {
-        customerService.toggleAiEnabled(decodeId(id), dto.getAiEnabled());
+        customerService.toggleAiEnabled(id, dto.getAiEnabled());
         return Result.success();
     }
 
@@ -72,9 +71,9 @@ public class CustomerController extends BaseController {
     @PermAuth("customer:assign")
     @AuditLog(module = "客户管理", action = "分配客户")
     public Result<Void> assignCustomer(
-            @PathVariable("id") String id,
+            @PathVariable("id") @DecodeId Long id,
             @Valid @RequestBody AssignCustomerDTO dto) {
-        customerService.assignCustomer(decodeId(id), dto.getDecodedCsUserId(), dto.getAssignType(), dto.getRemark());
+        customerService.assignCustomer(id, dto.getDecodedCsUserId(), dto.getAssignType(), dto.getRemark());
         return Result.success();
     }
 
@@ -104,14 +103,13 @@ public class CustomerController extends BaseController {
     public void exportExcel(HttpServletResponse response,
                             @RequestParam(name = "platform", required = false) String platform,
                             @RequestParam(name = "aiEnabled", required = false) Boolean aiEnabled,
-                            @RequestParam(name = "csUserId", required = false) String csUserId,
+                            @RequestParam(name = "csUserId", required = false) @DecodeId(required = false) Long csUserId,
                             @RequestParam(name = "keyword", required = false) String keyword,
                             HttpServletRequest request) {
-        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
         String role = getCurrentUserRole(request);
         if (BusinessStatusConstants.ROLE_CS_STAFF.equals(role)) {
-            decodedCsUserId = getCurrentUserId(request);
+            csUserId = getCurrentUserId(request);
         }
-        customerService.exportCustomers(response, platform, aiEnabled, decodedCsUserId, keyword);
+        customerService.exportCustomers(response, platform, aiEnabled, csUserId, keyword);
     }
 }

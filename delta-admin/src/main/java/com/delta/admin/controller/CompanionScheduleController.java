@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
@@ -32,7 +33,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConstants.V1 + "/companion-schedules")
 @RequiredArgsConstructor
 @PermAuth("schedule:view")
-public class CompanionScheduleController extends BaseController {
+public class CompanionScheduleController {
 
     private static final Logger log = LoggerFactory.getLogger(CompanionScheduleController.class);
 
@@ -43,20 +44,19 @@ public class CompanionScheduleController extends BaseController {
     public Result<Page<CompanionScheduleVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "20") Integer size,
-            @RequestParam(name = "companionId", required = false) String companionId,
+            @RequestParam(name = "companionId", required = false) @DecodeId(required = false) Long companionId,
             @RequestParam(name = "scheduleDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
             @RequestParam(name = "status", required = false) String status) {
-        Long decodedCompanionId = companionId != null ? decodeId(companionId) : null;
-        Page<CompanionScheduleVO> pageResult = companionScheduleService.getPage(page, size, decodedCompanionId, scheduleDate, status);
+        Page<CompanionScheduleVO> pageResult = companionScheduleService.getPage(page, size, companionId, scheduleDate, status);
         return Result.success(pageResult);
     }
 
     @Operation(summary = "获取陪玩师指定日期的时间")
     @GetMapping("/by-companion-date")
     public Result<List<CompanionScheduleVO>> getByCompanionAndDate(
-            @RequestParam(name = "companionId") String companionId,
+            @RequestParam(name = "companionId") @DecodeId Long companionId,
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate) {
-        List<CompanionScheduleVO> list = companionScheduleService.getByCompanionAndDate(decodeId(companionId), scheduleDate);
+        List<CompanionScheduleVO> list = companionScheduleService.getByCompanionAndDate(companionId, scheduleDate);
         return Result.success(list);
     }
 
@@ -71,31 +71,30 @@ public class CompanionScheduleController extends BaseController {
 @Operation(summary = "获取指定日期范围的所有时间")
     @GetMapping("/by-date-range")
     public Result<List<CompanionScheduleVO>> getByDateRange(
-            @RequestParam(required = false, name = "companionId") String companionId,
+            @RequestParam(required = false, name = "companionId") @DecodeId(required = false) Long companionId,
             @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(name = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-        Long decodedCompanionId = companionId != null && !companionId.isEmpty() ? decodeId(companionId) : null;
-        return Result.success(companionScheduleService.getByDateRange(decodedCompanionId, startDate, endDate));
+        return Result.success(companionScheduleService.getByDateRange(companionId, startDate, endDate));
     }
 
     @Operation(summary = "获取陪玩师可用时段")
     @GetMapping("/available/{companionId}")
     public Result<List<CompanionScheduleVO>> getAvailableSlots(
-            @PathVariable String companionId,
+            @PathVariable @DecodeId Long companionId,
             @RequestParam(required = false) String scheduleDate) {
-        return Result.success(companionScheduleService.getAvailableSlotsByCompanionId(decodeId(companionId), scheduleDate));
+        return Result.success(companionScheduleService.getAvailableSlotsByCompanionId(companionId, scheduleDate));
     }
 
     @Operation(summary = "获取陪玩师全部日程列表")
     @GetMapping("/by-companion/{companionId}")
-    public Result<List<CompanionScheduleVO>> getListByCompanionId(@PathVariable String companionId) {
-        return Result.success(companionScheduleService.getListByCompanionId(decodeId(companionId)));
+    public Result<List<CompanionScheduleVO>> getListByCompanionId(@PathVariable("companionId") @DecodeId Long companionId) {
+        return Result.success(companionScheduleService.getListByCompanionId(companionId));
     }
 
     @Operation(summary = "获取陪玩师时间详情")
     @GetMapping("/{id}")
-    public Result<CompanionScheduleVO> getById(@PathVariable("id") String id) {
-        CompanionScheduleVO vo = companionScheduleService.getById(decodeId(id));
+    public Result<CompanionScheduleVO> getById(@PathVariable("id") @DecodeId Long id) {
+        CompanionScheduleVO vo = companionScheduleService.getById(id);
         return Result.success(vo);
     }
 
@@ -111,11 +110,11 @@ public class CompanionScheduleController extends BaseController {
     @PostMapping("/batch")
     @PermAuth("schedule:edit")
     public Result<Void> createBatch(
-            @RequestParam(name = "companionId") String companionId,
+            @RequestParam(name = "companionId") @DecodeId Long companionId,
             @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(name = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestBody(required = false) List<String> timeSlots) {
-        companionScheduleService.createBatch(decodeId(companionId), startDate, endDate, timeSlots);
+        companionScheduleService.createBatch(companionId, startDate, endDate, timeSlots);
         return Result.success();
     }
 
@@ -123,11 +122,11 @@ public class CompanionScheduleController extends BaseController {
     @PostMapping("/time-range")
     @PermAuth("schedule:edit")
     public Result<Void> createTimeRange(
-            @RequestParam(name = "companionId") String companionId,
+            @RequestParam(name = "companionId") @DecodeId Long companionId,
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
             @RequestParam(name = "rangeStart") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime rangeStart,
             @RequestParam(name = "rangeEnd") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime rangeEnd) {
-        companionScheduleService.createTimeRange(decodeId(companionId), scheduleDate, rangeStart, rangeEnd);
+        companionScheduleService.createTimeRange(companionId, scheduleDate, rangeStart, rangeEnd);
         return Result.success();
     }
 
@@ -135,12 +134,12 @@ public class CompanionScheduleController extends BaseController {
     @PostMapping("/time-range-batch")
     @PermAuth("schedule:edit")
     public Result<Void> createTimeRangeBatch(
-            @RequestParam(name = "companionId") String companionId,
+            @RequestParam(name = "companionId") @DecodeId Long companionId,
             @RequestParam(name = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(name = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @RequestParam(name = "dailyStart") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime dailyStart,
             @RequestParam(name = "dailyEnd") @DateTimeFormat(pattern = "HH:mm:ss") LocalTime dailyEnd) {
-        companionScheduleService.createTimeRangeBatch(decodeId(companionId), startDate, endDate, dailyStart, dailyEnd);
+        companionScheduleService.createTimeRangeBatch(companionId, startDate, endDate, dailyStart, dailyEnd);
         return Result.success();
     }
 
@@ -156,17 +155,17 @@ public class CompanionScheduleController extends BaseController {
     @PutMapping("/status")
     @PermAuth("schedule:edit")
     public Result<Void> updateStatus(
-            @RequestParam(name = "id") String id,
+            @RequestParam(name = "id") @DecodeId Long id,
             @RequestParam(name = "status") String status) {
-        companionScheduleService.updateStatus(decodeId(id), status);
+        companionScheduleService.updateStatus(id, status);
         return Result.success();
     }
 
     @Operation(summary = "删除陪玩师时间")
     @DeleteMapping("/{id}")
     @PermAuth("schedule:edit")
-    public Result<Void> delete(@PathVariable("id") String id) {
-        companionScheduleService.delete(decodeId(id));
+    public Result<Void> delete(@PathVariable("id") @DecodeId Long id) {
+        companionScheduleService.delete(id);
         return Result.success();
     }
 
@@ -174,9 +173,9 @@ public class CompanionScheduleController extends BaseController {
     @DeleteMapping("/by-companion-date")
     @PermAuth("schedule:edit")
     public Result<Void> deleteByCompanionAndDate(
-            @RequestParam(name = "companionId") String companionId,
+            @RequestParam(name = "companionId") @DecodeId Long companionId,
             @RequestParam(name = "scheduleDate") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate) {
-        companionScheduleService.deleteByCompanionAndDate(decodeId(companionId), scheduleDate);
+        companionScheduleService.deleteByCompanionAndDate(companionId, scheduleDate);
         return Result.success();
     }
 
@@ -184,11 +183,10 @@ public class CompanionScheduleController extends BaseController {
     @GetMapping("/export")
     @PermAuth("schedule:export")
     public void exportExcel(HttpServletResponse response,
-                            @RequestParam(name = "companionId", required = false) String companionId,
+                            @RequestParam(name = "companionId", required = false) @DecodeId(required = false) Long companionId,
                             @RequestParam(name = "scheduleDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate scheduleDate,
                             @RequestParam(name = "status", required = false) String status) throws IOException {
-        Long decodedCompanionId = companionId != null ? decodeId(companionId) : null;
-        Page<CompanionScheduleVO> page = companionScheduleService.getPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, decodedCompanionId, scheduleDate, status);
+        Page<CompanionScheduleVO> page = companionScheduleService.getPage(ExportConstants.EXPORT_PAGE_NUM, ExportConstants.EXPORT_PAGE_SIZE, companionId, scheduleDate, status);
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("companionName", "陪玩师姓名");

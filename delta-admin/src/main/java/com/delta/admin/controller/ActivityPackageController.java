@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ActivityPackageDTO;
@@ -29,7 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/activity-packages")
 @PermAuth("activity_package:view")
-public class ActivityPackageController extends BaseController {
+public class ActivityPackageController {
 
     private static final Logger log = LoggerFactory.getLogger(ActivityPackageController.class);
 
@@ -37,20 +38,20 @@ public class ActivityPackageController extends BaseController {
 
     @Operation(summary = "获取俱乐部的活动套餐")
     @GetMapping("/club/{clubConfigId}")
-    public Result<List<ActivityPackageVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
-        return Result.success(activityPackageService.getByClubId(decodeId(clubConfigId)));
+    public Result<List<ActivityPackageVO>> getByClubId(@PathVariable("clubConfigId") @DecodeId Long clubConfigId) {
+        return Result.success(activityPackageService.getByClubId(clubConfigId));
     }
 
     @Operation(summary = "获取当前有效的活动套餐")
     @GetMapping("/club/{clubConfigId}/active")
-    public Result<List<ActivityPackageVO>> getActivePackages(@PathVariable("clubConfigId") String clubConfigId) {
-        return Result.success(activityPackageService.getActivePackages(decodeId(clubConfigId)));
+    public Result<List<ActivityPackageVO>> getActivePackages(@PathVariable("clubConfigId") @DecodeId Long clubConfigId) {
+        return Result.success(activityPackageService.getActivePackages(clubConfigId));
     }
 
     @Operation(summary = "获取活动套餐详情")
     @GetMapping("/{id}")
-    public Result<ActivityPackageVO> getById(@PathVariable("id") String id) {
-        return Result.success(activityPackageService.getById(decodeId(id)));
+    public Result<ActivityPackageVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(activityPackageService.getById(id));
     }
 
     @Operation(summary = "新增活动套餐")
@@ -72,8 +73,8 @@ public class ActivityPackageController extends BaseController {
     @Operation(summary = "删除活动套餐")
     @DeleteMapping("/{id}")
     @PermAuth("activity_package:edit")
-    public Result<String> delete(@PathVariable("id") String id) {
-        activityPackageService.delete(decodeId(id));
+    public Result<String> delete(@PathVariable("id") @DecodeId Long id) {
+        activityPackageService.delete(id);
         return Result.success("删除成功");
     }
 
@@ -81,9 +82,8 @@ public class ActivityPackageController extends BaseController {
     @GetMapping("/export")
     @PermAuth("activity_package:export")
     public void exportExcel(HttpServletResponse response,
-                            @RequestParam(name = "clubConfigId", required = false) String clubConfigId) throws IOException {
-        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
-        List<ActivityPackageVO> list = decodedClubConfigId != null ? activityPackageService.getByClubId(decodedClubConfigId) : List.of();
+                            @RequestParam(name = "clubConfigId", required = false) @DecodeId(required = false) Long clubConfigId) throws IOException {
+        List<ActivityPackageVO> list = clubConfigId != null ? activityPackageService.getByClubId(clubConfigId) : List.of();
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("title", "活动标题");
@@ -119,15 +119,14 @@ public class ActivityPackageController extends BaseController {
     @PostMapping("/import")
     @PermAuth("activity_package:import")
     public Result<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file,
-                                                    @RequestParam(name = "clubConfigId", required = false) String clubConfigId) throws IOException {
-        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
+                                                    @RequestParam(name = "clubConfigId", required = false) @DecodeId(required = false) Long clubConfigId) throws IOException {
         List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
         int success = 0, fail = 0;
         for (Map<String, String> row : rows) {
             try {
                 ActivityPackageDTO dto = new ActivityPackageDTO();
-                if (decodedClubConfigId != null) {
-                    dto.setClubConfigId(decodedClubConfigId);
+                if (clubConfigId != null) {
+                    dto.setClubConfigId(clubConfigId);
                 }
                 dto.setTitle(row.getOrDefault("活动标题", row.getOrDefault("title", "")));
                 dto.setActivityType(row.getOrDefault("活动类型", row.getOrDefault("activityType", "SEASON")));

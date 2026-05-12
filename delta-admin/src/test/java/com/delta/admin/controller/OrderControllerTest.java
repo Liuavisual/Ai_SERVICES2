@@ -32,13 +32,12 @@ class OrderControllerTest {
     @Test
     @DisplayName("获取订单详情 - 成功返回订单信息")
     void getOrderById_shouldReturnOrderInfo() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         OrderVO vo = new OrderVO();
         vo.setId(1L);
 
         when(orderService.getOrderById(1L)).thenReturn(vo);
 
-        Result<OrderVO> result = orderController.getOrderById(obfuscatedId);
+        Result<OrderVO> result = orderController.getOrderById(1L);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -73,11 +72,9 @@ class OrderControllerTest {
     @Test
     @DisplayName("确认订单 - 成功更新状态")
     void confirmOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(orderService).confirmOrder(anyLong());
 
-        Result<Void> result = orderController.confirmOrder(obfuscatedId);
+        Result<Void> result = orderController.confirmOrder(1L);
 
         assertEquals(200, result.getCode());
         verify(orderService).confirmOrder(1L);
@@ -86,11 +83,9 @@ class OrderControllerTest {
     @Test
     @DisplayName("开始服务 - 成功更新状态")
     void startService_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(orderService).startService(anyLong());
 
-        Result<Void> result = orderController.startService(obfuscatedId);
+        Result<Void> result = orderController.startService(1L);
 
         assertEquals(200, result.getCode());
         verify(orderService).startService(1L);
@@ -99,11 +94,9 @@ class OrderControllerTest {
     @Test
     @DisplayName("完成服务 - 成功更新状态")
     void completeOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(orderService).completeOrder(anyLong());
 
-        Result<Void> result = orderController.completeOrder(obfuscatedId);
+        Result<Void> result = orderController.completeOrder(1L);
 
         assertEquals(200, result.getCode());
         verify(orderService).completeOrder(1L);
@@ -112,11 +105,9 @@ class OrderControllerTest {
     @Test
     @DisplayName("取消订单 - 成功更新状态")
     void cancelOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(orderService).cancelOrder(anyLong(), anyString());
 
-        Result<Void> result = orderController.cancelOrder(obfuscatedId, "用户主动取消");
+        Result<Void> result = orderController.cancelOrder(1L, "用户主动取消");
 
         assertEquals(200, result.getCode());
         verify(orderService).cancelOrder(1L, "用户主动取消");
@@ -125,13 +116,12 @@ class OrderControllerTest {
     @Test
     @DisplayName("查询用户活跃订单 - 成功返回列表")
     void getActiveOrdersByUserId_shouldReturnOrderList() {
-        String obfuscatedUserId = IdObfuscateUtils.encode(1L);
         OrderVO vo = new OrderVO();
         vo.setId(1L);
 
         when(orderService.getActiveOrdersByUserId(1L)).thenReturn(List.of(vo));
 
-        Result<List<OrderVO>> result = orderController.getActiveOrdersByUserId(obfuscatedUserId);
+        Result<List<OrderVO>> result = orderController.getActiveOrdersByUserId(1L);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -141,13 +131,12 @@ class OrderControllerTest {
     @Test
     @DisplayName("查询陪玩师所有订单 - 成功返回列表")
     void getOrdersByCompanionId_shouldReturnOrderList() {
-        String obfuscatedCompanionId = IdObfuscateUtils.encode(2L);
         OrderVO vo = new OrderVO();
         vo.setId(1L);
 
         when(orderService.getOrdersByCompanionId(2L)).thenReturn(List.of(vo));
 
-        Result<List<OrderVO>> result = orderController.getOrdersByCompanionId(obfuscatedCompanionId);
+        Result<List<OrderVO>> result = orderController.getOrdersByCompanionId(2L);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());

@@ -5,7 +5,6 @@ import com.delta.common.dto.WorkOrderConfirmDTO;
 import com.delta.common.dto.WorkOrderCreateDTO;
 import com.delta.common.dto.WorkOrderSubmitDTO;
 import com.delta.common.service.WorkOrderService;
-import com.delta.common.util.IdObfuscateUtils;
 import com.delta.common.vo.Result;
 import com.delta.common.vo.WorkOrderVO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -83,7 +82,6 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("获取工单详情 - 成功返回详情")
     void getWorkOrderDetail_shouldReturnDetail() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
 
         WorkOrderVO vo = new WorkOrderVO();
@@ -91,7 +89,7 @@ class WorkOrderControllerTest {
 
         when(workOrderService.getWorkOrderDetail(eq(1L), eq(1L), eq("CS_STAFF"))).thenReturn(vo);
 
-        Result<WorkOrderVO> result = workOrderController.getWorkOrderDetail(obfuscatedId, request);
+        Result<WorkOrderVO> result = workOrderController.getWorkOrderDetail(1L, request);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -115,13 +113,12 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("更新工单 - 成功更新")
     void updateWorkOrder_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
         WorkOrderCreateDTO dto = new WorkOrderCreateDTO();
 
         doNothing().when(workOrderService).updateWorkOrder(eq(1L), any(WorkOrderCreateDTO.class), eq(1L), eq("CS_STAFF"));
 
-        Result<Void> result = workOrderController.updateWorkOrder(obfuscatedId, dto, request);
+        Result<Void> result = workOrderController.updateWorkOrder(1L, dto, request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).updateWorkOrder(eq(1L), any(WorkOrderCreateDTO.class), eq(1L), eq("CS_STAFF"));
@@ -130,12 +127,11 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("接手工单 - 成功接手")
     void acceptWorkOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
 
         doNothing().when(workOrderService).acceptWorkOrder(eq(1L), eq(1L), eq("staff1"));
 
-        Result<Void> result = workOrderController.acceptWorkOrder(obfuscatedId, request);
+        Result<Void> result = workOrderController.acceptWorkOrder(1L, request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).acceptWorkOrder(1L, 1L, "staff1");
@@ -144,7 +140,6 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("提交处理 - 成功提交")
     void submitWorkOrder_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
 
         WorkOrderSubmitDTO dto = new WorkOrderSubmitDTO();
@@ -152,7 +147,7 @@ class WorkOrderControllerTest {
 
         doNothing().when(workOrderService).submitWorkOrder(eq(1L), any(WorkOrderSubmitDTO.class), eq(1L), eq("CS_STAFF"));
 
-        Result<Void> result = workOrderController.submitWorkOrder(obfuscatedId, dto, request);
+        Result<Void> result = workOrderController.submitWorkOrder(1L, dto, request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).submitWorkOrder(eq(1L), any(WorkOrderSubmitDTO.class), eq(1L), eq("CS_STAFF"));
@@ -161,15 +156,13 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("确认完成 - 成功确认")
     void confirmWorkOrder_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         WorkOrderConfirmDTO dto = new WorkOrderConfirmDTO();
         dto.setSatisfactionScore(5);
         dto.setSatisfactionRemark("服务很好");
 
         doNothing().when(workOrderService).confirmWorkOrder(eq(1L), any(WorkOrderConfirmDTO.class));
 
-        Result<Void> result = workOrderController.confirmWorkOrder(obfuscatedId, dto);
+        Result<Void> result = workOrderController.confirmWorkOrder(1L, dto);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).confirmWorkOrder(eq(1L), any(WorkOrderConfirmDTO.class));
@@ -178,12 +171,11 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("关闭工单 - 成功关闭")
     void closeWorkOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_LEADER", "leader1");
 
         doNothing().when(workOrderService).closeWorkOrder(eq(1L), eq("问题已解决"), eq(1L), eq("CS_LEADER"));
 
-        Result<Void> result = workOrderController.closeWorkOrder(obfuscatedId, "问题已解决", request);
+        Result<Void> result = workOrderController.closeWorkOrder(1L, "问题已解决", request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).closeWorkOrder(1L, "问题已解决", 1L, "CS_LEADER");
@@ -192,12 +184,11 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("取消工单 - 成功取消")
     void cancelWorkOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
 
         doNothing().when(workOrderService).cancelWorkOrder(eq(1L), eq("用户主动取消"), eq(1L), eq("CS_STAFF"));
 
-        Result<Void> result = workOrderController.cancelWorkOrder(obfuscatedId, "用户主动取消", request);
+        Result<Void> result = workOrderController.cancelWorkOrder(1L, "用户主动取消", request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).cancelWorkOrder(1L, "用户主动取消", 1L, "CS_STAFF");
@@ -206,12 +197,11 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("重新打开工单 - 成功重新打开")
     void reopenWorkOrder_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "SYS_ADMIN", "admin");
 
         doNothing().when(workOrderService).reopenWorkOrder(eq(1L), eq("需要重新处理"), eq(1L));
 
-        Result<Void> result = workOrderController.reopenWorkOrder(obfuscatedId, "需要重新处理", request);
+        Result<Void> result = workOrderController.reopenWorkOrder(1L, "需要重新处理", request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).reopenWorkOrder(1L, "需要重新处理", 1L);
@@ -220,13 +210,12 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("添加工单记录 - 成功添加")
     void addRecord_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
         com.delta.common.dto.WorkOrderRecordDTO dto = new com.delta.common.dto.WorkOrderRecordDTO();
 
         doNothing().when(workOrderService).addRecord(eq(1L), any(com.delta.common.dto.WorkOrderRecordDTO.class), eq(1L), eq("staff1"), eq("CS_STAFF"));
 
-        Result<Void> result = workOrderController.addRecord(obfuscatedId, dto, request);
+        Result<Void> result = workOrderController.addRecord(1L, dto, request);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).addRecord(eq(1L), any(com.delta.common.dto.WorkOrderRecordDTO.class), eq(1L), eq("staff1"), eq("CS_STAFF"));
@@ -235,12 +224,11 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("预约服务跟踪 - 成功预约")
     void bookServiceTrack_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         com.delta.common.dto.ServiceTrackBookDTO dto = new com.delta.common.dto.ServiceTrackBookDTO();
 
         doNothing().when(workOrderService).bookServiceTrack(eq(1L), any(com.delta.common.dto.ServiceTrackBookDTO.class));
 
-        Result<Void> result = workOrderController.bookServiceTrack(obfuscatedId, dto);
+        Result<Void> result = workOrderController.bookServiceTrack(1L, dto);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).bookServiceTrack(eq(1L), any(com.delta.common.dto.ServiceTrackBookDTO.class));
@@ -249,12 +237,9 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("开始服务跟踪 - 成功开始")
     void startServiceTrack_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-        String obfuscatedCompanionId = IdObfuscateUtils.encode(2L);
-
         doNothing().when(workOrderService).startServiceTrack(eq(1L), eq(2L), eq("陪玩师A"));
 
-        Result<Void> result = workOrderController.startServiceTrack(obfuscatedId, obfuscatedCompanionId, "陪玩师A");
+        Result<Void> result = workOrderController.startServiceTrack(1L, 2L, "陪玩师A");
 
         assertEquals(200, result.getCode());
         verify(workOrderService).startServiceTrack(1L, 2L, "陪玩师A");
@@ -263,12 +248,11 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("结束服务跟踪 - 成功结束")
     void endServiceTrack_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         com.delta.common.dto.ServiceTrackEndDTO dto = new com.delta.common.dto.ServiceTrackEndDTO();
 
         doNothing().when(workOrderService).endServiceTrack(eq(1L), any(com.delta.common.dto.ServiceTrackEndDTO.class));
 
-        Result<Void> result = workOrderController.endServiceTrack(obfuscatedId, dto);
+        Result<Void> result = workOrderController.endServiceTrack(1L, dto);
 
         assertEquals(200, result.getCode());
         verify(workOrderService).endServiceTrack(eq(1L), any(com.delta.common.dto.ServiceTrackEndDTO.class));
@@ -277,11 +261,9 @@ class WorkOrderControllerTest {
     @Test
     @DisplayName("确认服务跟踪 - 成功确认")
     void confirmServiceTrack_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(workOrderService).confirmServiceTrack(eq(1L), eq(5), eq("非常满意"));
 
-        Result<Void> result = workOrderController.confirmServiceTrack(obfuscatedId, 5, "非常满意");
+        Result<Void> result = workOrderController.confirmServiceTrack(1L, 5, "非常满意");
 
         assertEquals(200, result.getCode());
         verify(workOrderService).confirmServiceTrack(1L, 5, "非常满意");

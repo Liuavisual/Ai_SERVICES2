@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.dto.GameConfigDTO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -27,7 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/game-configs")
 @PermAuth("game_config:view")
-public class GameConfigController extends BaseController {
+public class GameConfigController {
 
     private final GameConfigService gameConfigService;
 
@@ -42,22 +43,21 @@ public class GameConfigController extends BaseController {
     public Result<Page<GameConfigVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "clubConfigId", required = false) String clubConfigId) {
-        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
-        Page<GameConfigVO> pageResult = gameConfigService.getPage(page, size, decodedClubConfigId);
+            @RequestParam(name = "clubConfigId", required = false) @DecodeId(required = false) Long clubConfigId) {
+        Page<GameConfigVO> pageResult = gameConfigService.getPage(page, size, clubConfigId);
         return Result.success(pageResult);
     }
 
     @Operation(summary = "获取俱乐部的游戏配置")
     @GetMapping("/club/{clubConfigId}")
-    public Result<List<GameConfigVO>> getByClubId(@PathVariable("clubConfigId") String clubConfigId) {
-        return Result.success(gameConfigService.getByClubId(decodeId(clubConfigId)));
+    public Result<List<GameConfigVO>> getByClubId(@PathVariable("clubConfigId") @DecodeId Long clubConfigId) {
+        return Result.success(gameConfigService.getByClubId(clubConfigId));
     }
 
     @Operation(summary = "获取游戏配置详情")
     @GetMapping("/{id}")
-    public Result<GameConfigVO> getById(@PathVariable("id") String id) {
-        return Result.success(gameConfigService.getById(decodeId(id)));
+    public Result<GameConfigVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(gameConfigService.getById(id));
     }
 
     @Operation(summary = "新增游戏配置")
@@ -79,8 +79,8 @@ public class GameConfigController extends BaseController {
     @Operation(summary = "删除游戏配置")
     @DeleteMapping("/{id}")
     @PermAuth("game_config:edit")
-    public Result<String> delete(@PathVariable("id") String id) {
-        gameConfigService.delete(decodeId(id));
+    public Result<String> delete(@PathVariable("id") @DecodeId Long id) {
+        gameConfigService.delete(id);
         return Result.success("删除成功");
     }
 
@@ -88,8 +88,8 @@ public class GameConfigController extends BaseController {
     @GetMapping("/club/{clubConfigId}/export")
     @PermAuth("game_config:export")
     public void exportExcel(HttpServletResponse response,
-                            @PathVariable("clubConfigId") String clubConfigId) throws IOException {
-        List<GameConfigVO> list = gameConfigService.getByClubId(decodeId(clubConfigId));
+                            @PathVariable("clubConfigId") @DecodeId Long clubConfigId) throws IOException {
+        List<GameConfigVO> list = gameConfigService.getByClubId(clubConfigId);
         LinkedHashMap<String, String> headers = new LinkedHashMap<>();
         headers.put("id", "ID");
         headers.put("gameName", "游戏名称");
@@ -116,15 +116,14 @@ public class GameConfigController extends BaseController {
     @Operation(summary = "导入游戏配置Excel")
     @PostMapping("/club/{clubConfigId}/import")
     @PermAuth("game_config:edit")
-    public Result<Map<String, Object>> importExcel(@PathVariable("clubConfigId") String clubConfigId,
+    public Result<Map<String, Object>> importExcel(@PathVariable("clubConfigId") @DecodeId Long clubConfigId,
                                                     @RequestParam("file") MultipartFile file) throws IOException {
-        Long decodedClubConfigId = decodeId(clubConfigId);
         List<Map<String, String>> rows = ExcelUtils.importExcel(file.getInputStream());
         int success = 0, fail = 0;
         for (Map<String, String> row : rows) {
             try {
                 GameConfigDTO dto = new GameConfigDTO();
-                dto.setClubConfigId(decodedClubConfigId);
+                dto.setClubConfigId(clubConfigId);
                 dto.setGameName(row.getOrDefault("游戏名称", row.getOrDefault("gameName", "")));
                 dto.setGameCode(row.getOrDefault("游戏编码", row.getOrDefault("gameCode", "")));
                 dto.setGameType(row.getOrDefault("游戏类型", row.getOrDefault("gameType", "")));

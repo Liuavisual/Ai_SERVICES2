@@ -92,7 +92,8 @@ export const authStorage = {
     const map: Record<string, string> = {
       SYS_ADMIN: '/dashboard',
       CS_LEADER: '/pending-messages',
-      CS_STAFF: '/pending-messages'
+      CS_STAFF: '/pending-messages',
+      COMPANION: '/companion-orders'
     }
     return map[role] || '/dashboard'
   }

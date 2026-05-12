@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.BusinessStatusConstants;
 import com.delta.common.constant.ExportConstants;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.dto.FaqItemDTO;
 import com.delta.common.service.CacheService;
@@ -29,7 +30,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConstants.V1 + "/faq-items")
 @RequiredArgsConstructor
 @PermAuth("faq_item:view")
-public class FaqItemController extends BaseController {
+public class FaqItemController {
 
     private final FaqItemService faqItemService;
 
@@ -66,8 +67,8 @@ public class FaqItemController extends BaseController {
     @Operation(summary = "删除FAQ")
     @DeleteMapping("/{id}")
     @PermAuth("faq_item:edit")
-    public Result<String> deleteFaqItem(@PathVariable("id") String id) {
-        faqItemService.deleteFaqItem(decodeId(id));
+    public Result<String> deleteFaqItem(@PathVariable("id") @DecodeId Long id) {
+        faqItemService.deleteFaqItem(id);
         cacheService.reloadFaqItems();
         return Result.success("删除成功");
     }

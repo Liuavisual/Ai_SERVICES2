@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CustomerOrderRecordDTO;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(ApiVersionConstants.V1 + "/customer-profiles")
 @RequiredArgsConstructor
 @PermAuth("customer_profile:view")
-public class CustomerProfileController extends BaseController {
+public class CustomerProfileController {
 
     private final CustomerProfileService customerProfileService;
 
@@ -45,8 +46,8 @@ public class CustomerProfileController extends BaseController {
 
     @Operation(summary = "根据客户ID获取画像")
     @GetMapping("/user/{userId}")
-    public Result<CustomerProfileVO> getProfileByUserId(@PathVariable("userId") String userId) {
-        CustomerProfileVO vo = customerProfileService.getProfileByUserId(decodeId(userId));
+    public Result<CustomerProfileVO> getProfileByUserId(@PathVariable("userId") @DecodeId Long userId) {
+        CustomerProfileVO vo = customerProfileService.getProfileByUserId(userId);
         return Result.success(vo);
     }
 
@@ -71,19 +72,18 @@ public class CustomerProfileController extends BaseController {
     public Result<Page<CustomerOrderRecordVO>> getOrderRecordPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "userId", required = false) String userId,
+            @RequestParam(name = "userId", required = false) @DecodeId(required = false) Long userId,
             @RequestParam(name = "orderType", required = false) String orderType,
             @RequestParam(name = "status", required = false) String status) {
-        Long decodedUserId = userId != null ? decodeId(userId) : null;
-        Page<CustomerOrderRecordVO> pageResult = customerProfileService.getOrderRecordPage(page, size, decodedUserId, orderType, status);
+        Page<CustomerOrderRecordVO> pageResult = customerProfileService.getOrderRecordPage(page, size, userId, orderType, status);
         return Result.success(pageResult);
     }
 
     @Operation(summary = "刷新客户画像数据")
     @PostMapping("/refresh/{userId}")
     @PermAuth("customer_profile:edit")
-    public Result<Void> refreshProfile(@PathVariable("userId") String userId) {
-        customerProfileService.refreshProfile(decodeId(userId));
+    public Result<Void> refreshProfile(@PathVariable("userId") @DecodeId Long userId) {
+        customerProfileService.refreshProfile(userId);
         return Result.success();
     }
 }

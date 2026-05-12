@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.CustomerLifecycleService;
@@ -24,7 +25,7 @@ import java.util.List;
 @RequestMapping(ApiVersionConstants.V1 + "/customer-lifecycle")
 @RequiredArgsConstructor
 @PermAuth("customer_lifecycle:view")
-public class CustomerLifecycleController extends BaseController {
+public class CustomerLifecycleController {
 
     /** 客户生命周期服务 */
     private final CustomerLifecycleService lifecycleService;
@@ -59,9 +60,8 @@ public class CustomerLifecycleController extends BaseController {
      */
     @Operation(summary = "判断客户生命周期阶段")
     @GetMapping("/stage/{userId}")
-    public Result<String> getLifecycleStage(@PathVariable String userId) {
-        Long id = decodeId(userId);
-        return Result.success(lifecycleService.determineLifecycleStage(id));
+    public Result<String> getLifecycleStage(@PathVariable @DecodeId Long userId) {
+        return Result.success(lifecycleService.determineLifecycleStage(userId));
     }
 
     /**

@@ -192,7 +192,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { orderApi, companionApi } from '@/api'
@@ -458,6 +458,14 @@ onMounted(() => {
     loadCompanionByUser()
   }
   loadCompanions()
+})
+
+onActivated(() => {
+  if (activeTab.value === 'pending') {
+    fetchPendingOrders()
+  } else {
+    fetchAllOrders()
+  }
 })
 </script>
 

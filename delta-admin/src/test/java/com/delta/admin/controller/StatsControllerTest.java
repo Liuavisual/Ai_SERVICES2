@@ -1,7 +1,7 @@
 package com.delta.admin.controller;
 
 import com.delta.common.service.StatsService;
-import com.delta.common.util.IdObfuscateUtils;
+
 import com.delta.common.vo.Result;
 import com.delta.common.vo.StatsVO;
 import org.junit.jupiter.api.DisplayName;
@@ -65,14 +65,12 @@ class StatsControllerTest {
     @Test
     @DisplayName("获取个人统计数据 - 带指定客服ID")
     void getPersonalStats_withCsUserId_shouldReturnStatsData() {
-        String obfuscatedCsUserId = IdObfuscateUtils.encode(1L);
-
         StatsVO statsVO = new StatsVO();
         statsVO.setOverview(new StatsVO.Overview());
 
         when(statsService.getPersonalStats(eq(1L), eq("WEEKLY"), any())).thenReturn(statsVO);
 
-        Result<StatsVO> result = statsController.getPersonalStats(obfuscatedCsUserId, "WEEKLY", null);
+        Result<StatsVO> result = statsController.getPersonalStats(1L, "WEEKLY", null);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());

@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.constant.ApiVersionConstants;
@@ -27,19 +28,18 @@ public class MessageController extends BaseController {
     public Result<Page<MessageVO>> getMessagePage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "20") Integer size,
-            @RequestParam(name = "userId", required = false) String userId,
+            @RequestParam(name = "userId", required = false) @DecodeId(required = false) Long userId,
             @RequestParam(name = "platform", required = false) String platform,
             @RequestParam(name = "direction", required = false) String direction,
             @RequestParam(name = "isAi", required = false) Boolean isAi,
             @RequestParam(name = "keywordTriggered", required = false) Boolean keywordTriggered,
             @RequestParam(name = "keyword", required = false) String keyword,
             HttpServletRequest request) {
-        Long decodedUserId = userId != null ? decodeId(userId) : null;
         String role = getCurrentUserRole(request);
         if (BusinessStatusConstants.ROLE_CS_STAFF.equals(role)) {
-            decodedUserId = getCurrentUserId(request);
+            userId = getCurrentUserId(request);
         }
-        Page<MessageVO> pageResult = messageService.getMessagePage(page, size, decodedUserId, platform, direction, isAi, keywordTriggered, keyword);
+        Page<MessageVO> pageResult = messageService.getMessagePage(page, size, userId, platform, direction, isAi, keywordTriggered, keyword);
         return Result.success(pageResult);
     }
 }

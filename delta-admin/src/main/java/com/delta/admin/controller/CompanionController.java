@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CompanionDTO;
@@ -27,7 +28,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConstants.V1 + "/companions")
 @RequiredArgsConstructor
 @PermAuth("companion:view")
-public class CompanionController extends BaseController {
+public class CompanionController {
 
     private final CompanionService companionService;
 
@@ -36,11 +37,10 @@ public class CompanionController extends BaseController {
     public Result<Page<CompanionVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "levelId", required = false) String levelId,
+            @RequestParam(name = "levelId", required = false) @DecodeId(required = false) Long levelId,
             @RequestParam(name = "nickname", required = false) String nickname,
             @RequestParam(name = "enabled", required = false) Integer enabled) {
-        Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
-        Page<CompanionVO> pageResult = companionService.getPage(page, size, decodedLevelId, nickname, enabled);
+        Page<CompanionVO> pageResult = companionService.getPage(page, size, levelId, nickname, enabled);
         return Result.success(pageResult);
     }
 
@@ -55,16 +55,15 @@ public class CompanionController extends BaseController {
     @GetMapping("/available")
     public Result<List<CompanionVO>> getAvailable(
             @RequestParam(name = "date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
-            @RequestParam(name = "levelId", required = false) String levelId) {
-        Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
-        List<CompanionVO> list = companionService.getAvailableByDateAndLevel(date, decodedLevelId);
+            @RequestParam(name = "levelId", required = false) @DecodeId(required = false) Long levelId) {
+        List<CompanionVO> list = companionService.getAvailableByDateAndLevel(date, levelId);
         return Result.success(list);
     }
 
     @Operation(summary = "获取陪玩师详情")
     @GetMapping("/{id}")
-    public Result<CompanionVO> getById(@PathVariable("id") String id) {
-        CompanionVO vo = companionService.getById(decodeId(id));
+    public Result<CompanionVO> getById(@PathVariable("id") @DecodeId Long id) {
+        CompanionVO vo = companionService.getById(id);
         return Result.success(vo);
     }
 
@@ -96,8 +95,8 @@ public class CompanionController extends BaseController {
     @DeleteMapping("/{id}")
     @PermAuth("companion:edit")
     @AuditLog(module = "陪玩师管理", action = "删除陪玩师")
-    public Result<Void> delete(@PathVariable("id") String id) {
-        companionService.delete(decodeId(id));
+    public Result<Void> delete(@PathVariable("id") @DecodeId Long id) {
+        companionService.delete(id);
         return Result.success();
     }
 
@@ -105,11 +104,10 @@ public class CompanionController extends BaseController {
     @GetMapping("/export")
     @PermAuth("companion:export")
     public void exportExcel(HttpServletResponse response,
-                            @RequestParam(name = "levelId", required = false) String levelId,
+                            @RequestParam(name = "levelId", required = false) @DecodeId(required = false) Long levelId,
                             @RequestParam(name = "nickname", required = false) String nickname,
                             @RequestParam(name = "enabled", required = false) Integer enabled) {
-        Long decodedLevelId = levelId != null ? decodeId(levelId) : null;
-        companionService.exportCompanions(response, decodedLevelId, nickname, enabled);
+        companionService.exportCompanions(response, levelId, nickname, enabled);
     }
 
     @Operation(summary = "导入陪玩师Excel")
@@ -123,8 +121,8 @@ public class CompanionController extends BaseController {
     @Operation(summary = "获取陪玩师综合评分数据看板")
     @GetMapping("/ratings/dashboard/{companionId}")
     @PermAuth("companion:rating")
-    public Result<Map<String, Object>> getRatingDashboard(@PathVariable("companionId") String companionId) {
-        return Result.success(companionService.getRatingDashboard(decodeId(companionId)));
+    public Result<Map<String, Object>> getRatingDashboard(@PathVariable("companionId") @DecodeId Long companionId) {
+        return Result.success(companionService.getRatingDashboard(companionId));
     }
 
     @Operation(summary = "获取所有陪玩师综合评分排名")

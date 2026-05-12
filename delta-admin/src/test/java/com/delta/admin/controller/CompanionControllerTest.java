@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.dto.CompanionDTO;
 import com.delta.common.dto.ImportResultDTO;
 import com.delta.common.service.CompanionService;
-import com.delta.common.util.IdObfuscateUtils;
 import com.delta.common.vo.CompanionVO;
 import com.delta.common.vo.Result;
 import org.junit.jupiter.api.DisplayName;
@@ -56,14 +55,12 @@ class CompanionControllerTest {
     @Test
     @DisplayName("分页查询陪玩师 - 带等级ID过滤")
     void getPage_withLevelIdFilter_shouldReturnFilteredData() {
-        String obfuscatedLevelId = IdObfuscateUtils.encode(1L);
-
         Page<CompanionVO> page = new Page<>(1, 10, 0);
         page.setRecords(List.of());
 
         when(companionService.getPage(anyInt(), anyInt(), eq(1L), any(), any())).thenReturn(page);
 
-        Result<Page<CompanionVO>> result = companionController.getPage(1, 10, obfuscatedLevelId, null, null);
+        Result<Page<CompanionVO>> result = companionController.getPage(1, 10, 1L, null, null);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -90,7 +87,6 @@ class CompanionControllerTest {
     @Test
     @DisplayName("获取指定日期和等级的可用陪玩师 - 成功返回列表")
     void getAvailable_shouldReturnAvailableList() {
-        String obfuscatedLevelId = IdObfuscateUtils.encode(1L);
         LocalDate date = LocalDate.of(2026, 1, 1);
 
         CompanionVO vo = new CompanionVO();
@@ -99,7 +95,7 @@ class CompanionControllerTest {
 
         when(companionService.getAvailableByDateAndLevel(eq(date), eq(1L))).thenReturn(List.of(vo));
 
-        Result<List<CompanionVO>> result = companionController.getAvailable(date, obfuscatedLevelId);
+        Result<List<CompanionVO>> result = companionController.getAvailable(date, 1L);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -109,14 +105,13 @@ class CompanionControllerTest {
     @Test
     @DisplayName("获取陪玩师详情 - 成功返回详情")
     void getById_shouldReturnCompanionInfo() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         CompanionVO vo = new CompanionVO();
         vo.setId(1L);
         vo.setNickname("小明同学");
 
         when(companionService.getById(1L)).thenReturn(vo);
 
-        Result<CompanionVO> result = companionController.getById(obfuscatedId);
+        Result<CompanionVO> result = companionController.getById(1L);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -162,11 +157,9 @@ class CompanionControllerTest {
     @Test
     @DisplayName("删除陪玩师 - 成功删除")
     void delete_withValidId_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         doNothing().when(companionService).delete(anyLong());
 
-        Result<Void> result = companionController.delete(obfuscatedId);
+        Result<Void> result = companionController.delete(1L);
 
         assertEquals(200, result.getCode());
         verify(companionService).delete(1L);

@@ -243,7 +243,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onActivated } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowRight } from '@element-plus/icons-vue'
 import { orderApi, satisfactionApi } from '@/api'
@@ -355,14 +355,14 @@ interface StatusHistoryItem {
 async function fetchData(): Promise<void> {
   loading.value = true
   try {
-    const params = {
+    const params: Record<string, unknown> = {
       page: queryParams.pageNum,
-      size: queryParams.pageSize,
-      orderNo: queryParams.orderNo || null,
-      orderStatus: queryParams.orderStatus || null,
-      userId: queryParams.userId || null,
-      companionId: queryParams.companionId || null
+      size: queryParams.pageSize
     }
+    if (queryParams.orderNo) params.orderNo = queryParams.orderNo
+    if (queryParams.orderStatus) params.orderStatus = queryParams.orderStatus
+    if (queryParams.userId) params.userId = queryParams.userId
+    if (queryParams.companionId) params.companionId = queryParams.companionId
     const res: Result<PageResult<OrderVO>> = await orderApi.getPage(params)
     if (res.code === 200) {
       tableData.value = res.data?.records || []
@@ -521,6 +521,10 @@ async function confirmReview(): Promise<void> {
 }
 
 onMounted(() => {
+  fetchData()
+})
+
+onActivated(() => {
   fetchData()
 })
 </script>

@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.constant.ExportConstants;
@@ -40,7 +41,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConstants.V1 + "/sys-users")
 @RequiredArgsConstructor
 @PermAuth("sys_user:view")
-public class SysUserController extends BaseController {
+public class SysUserController {
 
     private final SysUserService sysUserService;
 
@@ -57,8 +58,8 @@ public class SysUserController extends BaseController {
 
     @Operation(summary = "获取系统用户详情")
     @GetMapping("/{id}")
-    public Result<SysUserVO> getUserById(@PathVariable("id") String id) {
-        SysUserVO vo = sysUserService.getUserById(decodeId(id));
+    public Result<SysUserVO> getUserById(@PathVariable("id") @DecodeId Long id) {
+        SysUserVO vo = sysUserService.getUserById(id);
         return Result.success(vo);
     }
 
@@ -84,8 +85,8 @@ public class SysUserController extends BaseController {
     @DeleteMapping("/{id}")
     @PermAuth("sys_user:edit")
     @AuditLog(module = "用户管理", action = "删除用户")
-    public Result<Void> deleteUser(@PathVariable("id") String id) {
-        sysUserService.deleteUser(decodeId(id));
+    public Result<Void> deleteUser(@PathVariable("id") @DecodeId Long id) {
+        sysUserService.deleteUser(id);
         return Result.success();
     }
 

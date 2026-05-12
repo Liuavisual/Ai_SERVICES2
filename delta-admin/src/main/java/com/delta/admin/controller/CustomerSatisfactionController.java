@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CustomerSatisfactionDTO;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(ApiVersionConstants.V1 + "/satisfaction")
 @RequiredArgsConstructor
 @Tag(name = "客户满意度评价")
-public class CustomerSatisfactionController extends BaseController {
+public class CustomerSatisfactionController {
 
     /** 满意度评价服务 */
     private final CustomerSatisfactionService satisfactionService;
@@ -64,12 +65,10 @@ public class CustomerSatisfactionController extends BaseController {
     public Result<Page<CustomerSatisfactionVO>> getSatisfactions(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String companionId,
+            @RequestParam(required = false) @DecodeId(required = false) Long companionId,
             @RequestParam(required = false) Integer minRating,
             @RequestParam(required = false) Integer maxRating) {
-        // 解码混淆后的陪玩师ID
-        Long decodedCompanionId = companionId != null ? decodeId(companionId) : null;
-        return Result.success(satisfactionService.getSatisfactions(page, size, decodedCompanionId, minRating, maxRating));
+        return Result.success(satisfactionService.getSatisfactions(page, size, companionId, minRating, maxRating));
     }
 
     /**
@@ -80,8 +79,8 @@ public class CustomerSatisfactionController extends BaseController {
      */
     @Operation(summary = "获取陪玩师平均评分")
     @GetMapping("/average/{companionId}")
-    public Result<Double> getAverageRating(@PathVariable String companionId) {
-        return Result.success(satisfactionService.getAverageRating(decodeId(companionId)));
+    public Result<Double> getAverageRating(@PathVariable @DecodeId Long companionId) {
+        return Result.success(satisfactionService.getAverageRating(companionId));
     }
 
     @Operation(summary = "通过订单提交评价(含陪玩师评分联动)")

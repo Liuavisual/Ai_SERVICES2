@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.ClubSubscriptionService;
@@ -28,22 +29,21 @@ public class ClubSubscriptionController extends BaseController {
     public Result<Page<ClubSubscriptionVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "clubConfigId", required = false) String clubConfigId,
+            @RequestParam(name = "clubConfigId", required = false) @DecodeId(required = false) Long clubConfigId,
             @RequestParam(name = "status", required = false) String status) {
-        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
-        return Result.success(clubSubscriptionService.getPage(page, size, decodedClubConfigId, status));
+        return Result.success(clubSubscriptionService.getPage(page, size, clubConfigId, status));
     }
 
     @Operation(summary = "获取订阅详情")
     @GetMapping("/{id}")
-    public Result<ClubSubscriptionVO> getById(@PathVariable("id") String id) {
-        return Result.success(clubSubscriptionService.getById(decodeId(id)));
+    public Result<ClubSubscriptionVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(clubSubscriptionService.getById(id));
     }
 
     @Operation(summary = "获取俱乐部当前订阅")
     @GetMapping("/by-club/{clubConfigId}")
-    public Result<ClubSubscriptionVO> getByClubConfigId(@PathVariable("clubConfigId") String clubConfigId) {
-        return Result.success(clubSubscriptionService.getByClubConfigId(decodeId(clubConfigId)));
+    public Result<ClubSubscriptionVO> getByClubConfigId(@PathVariable("clubConfigId") @DecodeId Long clubConfigId) {
+        return Result.success(clubSubscriptionService.getByClubConfigId(clubConfigId));
     }
 
     @Operation(summary = "开通订阅")
@@ -71,8 +71,8 @@ public class ClubSubscriptionController extends BaseController {
     @PutMapping("/{id}/cancel")
     @PermAuth("subscription:edit")
     @AuditLog(module = "订阅管理", action = "取消订阅")
-    public Result<Void> cancel(@PathVariable("id") String id) {
-        clubSubscriptionService.cancelSubscription(decodeId(id));
+    public Result<Void> cancel(@PathVariable("id") @DecodeId Long id) {
+        clubSubscriptionService.cancelSubscription(id);
         return Result.success();
     }
 
@@ -80,8 +80,8 @@ public class ClubSubscriptionController extends BaseController {
     @PutMapping("/{id}/renew")
     @PermAuth("subscription:edit")
     @AuditLog(module = "订阅管理", action = "续费订阅")
-    public Result<Void> renew(@PathVariable("id") String id, @RequestBody Map<String, Integer> params) {
-        clubSubscriptionService.renewSubscription(decodeId(id), params.getOrDefault("months", 1));
+    public Result<Void> renew(@PathVariable("id") @DecodeId Long id, @RequestBody Map<String, Integer> params) {
+        clubSubscriptionService.renewSubscription(id, params.getOrDefault("months", 1));
         return Result.success();
     }
 }

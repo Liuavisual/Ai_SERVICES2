@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.ReferralRecordService;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(ApiVersionConstants.V1 + "/referrals")
 @RequiredArgsConstructor
 @PermAuth("referral:view")
-public class ReferralRecordController extends BaseController {
+public class ReferralRecordController {
 
     private final ReferralRecordService referralRecordService;
 
@@ -26,27 +27,25 @@ public class ReferralRecordController extends BaseController {
     public Result<Page<ReferralRecordVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "campaignId", required = false) String campaignId,
-            @RequestParam(name = "referrerUserId", required = false) String referrerUserId,
+            @RequestParam(name = "campaignId", required = false) @DecodeId(required = false) Long campaignId,
+            @RequestParam(name = "referrerUserId", required = false) @DecodeId(required = false) Long referrerUserId,
             @RequestParam(name = "conversionStatus", required = false) String conversionStatus,
             @RequestParam(name = "rewardStatus", required = false) String rewardStatus) {
-        Long decodedCampaignId = campaignId != null ? decodeId(campaignId) : null;
-        Long decodedReferrerUserId = referrerUserId != null ? decodeId(referrerUserId) : null;
-        return Result.success(referralRecordService.getPage(page, size, decodedCampaignId, decodedReferrerUserId, conversionStatus, rewardStatus));
+        return Result.success(referralRecordService.getPage(page, size, campaignId, referrerUserId, conversionStatus, rewardStatus));
     }
 
     @Operation(summary = "获取推荐记录详情")
     @GetMapping("/{id}")
-    public Result<ReferralRecordVO> getById(@PathVariable("id") String id) {
-        return Result.success(referralRecordService.getById(decodeId(id)));
+    public Result<ReferralRecordVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(referralRecordService.getById(id));
     }
 
     @Operation(summary = "发放推荐奖励")
     @PutMapping("/{id}/issue-reward")
     @PermAuth("referral:edit")
     @AuditLog(module = "裂变推荐", action = "发放奖励")
-    public Result<Void> issueReward(@PathVariable("id") String id) {
-        referralRecordService.issueReward(decodeId(id));
+    public Result<Void> issueReward(@PathVariable("id") @DecodeId Long id) {
+        referralRecordService.issueReward(id);
         return Result.success();
     }
 
@@ -54,8 +53,8 @@ public class ReferralRecordController extends BaseController {
     @PutMapping("/{id}/cancel-reward")
     @PermAuth("referral:edit")
     @AuditLog(module = "裂变推荐", action = "取消奖励")
-    public Result<Void> cancelReward(@PathVariable("id") String id) {
-        referralRecordService.cancelReward(decodeId(id));
+    public Result<Void> cancelReward(@PathVariable("id") @DecodeId Long id) {
+        referralRecordService.cancelReward(id);
         return Result.success();
     }
 }

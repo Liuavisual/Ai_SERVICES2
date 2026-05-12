@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ImportResultDTO;
@@ -52,8 +53,8 @@ public class ReplyController extends BaseController {
 
     @Operation(summary = "获取回复话术详情")
     @GetMapping("/{id}")
-    public Result<ReplyVO> getReplyById(@PathVariable("id") String id) {
-        ReplyVO replyVO = replyService.getReplyById(decodeId(id));
+    public Result<ReplyVO> getReplyById(@PathVariable("id") @DecodeId Long id) {
+        ReplyVO replyVO = replyService.getReplyById(id);
         return Result.success(replyVO);
     }
 
@@ -80,8 +81,8 @@ public class ReplyController extends BaseController {
     @Operation(summary = "删除回复话术")
     @DeleteMapping("/{id}")
     @PermAuth("reply:edit")
-    public Result<Void> deleteReply(@PathVariable("id") String id) {
-        replyService.deleteReply(decodeId(id));
+    public Result<Void> deleteReply(@PathVariable("id") @DecodeId Long id) {
+        replyService.deleteReply(id);
         log.info("删除回复话术，刷新回复话术缓存");
         cacheService.reloadReplies();
         return Result.success();

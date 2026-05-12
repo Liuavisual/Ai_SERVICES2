@@ -1,5 +1,6 @@
 package com.delta.admin.controller;
 
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.StatsService;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(ApiVersionConstants.V1 + "/stats")
 @PermAuth("stats:view")
-public class StatsController extends BaseController {
+public class StatsController {
 
     private final StatsService statsService;
 
@@ -32,11 +33,10 @@ public class StatsController extends BaseController {
      */
     @GetMapping("/personal")
     public Result<StatsVO> getPersonalStats(
-            @RequestParam(name = "csUserId", required = false) String csUserId,
+            @RequestParam(name = "csUserId", required = false) @DecodeId(required = false) Long csUserId,
             @RequestParam(name = "period", defaultValue = "DAILY") String period,
             @RequestParam(name = "date", required = false) String date) {
-        Long decodedCsUserId = csUserId != null ? decodeId(csUserId) : null;
-        StatsVO stats = statsService.getPersonalStats(decodedCsUserId, period, date);
+        StatsVO stats = statsService.getPersonalStats(csUserId, period, date);
         return Result.success(stats);
     }
 

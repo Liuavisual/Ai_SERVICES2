@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.ImportResultDTO;
@@ -31,7 +32,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConstants.V1 + "/keywords")
 @PermAuth("keyword:view")
 @RequiredArgsConstructor
-public class KeywordController extends BaseController {
+public class KeywordController {
 
     private static final Logger log = LoggerFactory.getLogger(KeywordController.class);
 
@@ -52,8 +53,8 @@ public class KeywordController extends BaseController {
     @Operation(summary = "获取关键词详情")
     @GetMapping("/{id}")
     @PermAuth("keyword:edit")
-    public Result<KeywordVO> getKeywordById(@PathVariable("id") String id) {
-        KeywordVO keywordVO = keywordService.getKeywordById(decodeId(id));
+    public Result<KeywordVO> getKeywordById(@PathVariable("id") @DecodeId Long id) {
+        KeywordVO keywordVO = keywordService.getKeywordById(id);
         return Result.success(keywordVO);
     }
 
@@ -80,8 +81,8 @@ public class KeywordController extends BaseController {
     @Operation(summary = "删除关键词")
     @DeleteMapping("/{id}")
     @PermAuth("keyword:edit")
-    public Result<Void> deleteKeyword(@PathVariable("id") String id) {
-        keywordService.deleteKeyword(decodeId(id));
+    public Result<Void> deleteKeyword(@PathVariable("id") @DecodeId Long id) {
+        keywordService.deleteKeyword(id);
         log.info("删除关键词，刷新关键词缓存");
         cacheService.reloadKeywords();
         return Result.success();

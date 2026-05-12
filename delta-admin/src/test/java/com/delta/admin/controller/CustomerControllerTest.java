@@ -96,7 +96,6 @@ class CustomerControllerTest {
     @Test
     @DisplayName("获取客户详情 - 成功返回客户信息")
     void getCustomerById_shouldReturnCustomerInfo() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
         mockRequestAttributes(1L, "CS_STAFF", "staff1");
 
         CustomerVO vo = new CustomerVO();
@@ -104,7 +103,7 @@ class CustomerControllerTest {
 
         when(customerService.getCustomerById(eq(1L), eq(1L), eq("CS_STAFF"))).thenReturn(vo);
 
-        Result<CustomerVO> result = customerController.getCustomerById(obfuscatedId, request);
+        Result<CustomerVO> result = customerController.getCustomerById(1L, request);
 
         assertEquals(200, result.getCode());
         assertNotNull(result.getData());
@@ -114,17 +113,14 @@ class CustomerControllerTest {
     @Test
     @DisplayName("分配客户 - 成功分配")
     void assignCustomer_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-        String obfuscatedCsUserId = IdObfuscateUtils.encode(2L);
-
         CustomerController.AssignCustomerDTO dto = new CustomerController.AssignCustomerDTO();
-        dto.setCsUserId(obfuscatedCsUserId);
+        dto.setCsUserId(IdObfuscateUtils.encode(2L));
         dto.setAssignType("MANUAL");
         dto.setRemark("手动分配");
 
         doNothing().when(customerService).assignCustomer(eq(1L), eq(2L), eq("MANUAL"), eq("手动分配"));
 
-        Result<Void> result = customerController.assignCustomer(obfuscatedId, dto);
+        Result<Void> result = customerController.assignCustomer(1L, dto);
 
         assertEquals(200, result.getCode());
         verify(customerService).assignCustomer(1L, 2L, "MANUAL", "手动分配");
@@ -133,14 +129,12 @@ class CustomerControllerTest {
     @Test
     @DisplayName("切换AI启用状态 - 成功切换")
     void toggleAiEnabled_withValidData_shouldReturnSuccess() {
-        String obfuscatedId = IdObfuscateUtils.encode(1L);
-
         CustomerController.ToggleAiEnabledDTO dto = new CustomerController.ToggleAiEnabledDTO();
         dto.setAiEnabled(true);
 
         doNothing().when(customerService).toggleAiEnabled(eq(1L), eq(true));
 
-        Result<Void> result = customerController.toggleAiEnabled(obfuscatedId, dto);
+        Result<Void> result = customerController.toggleAiEnabled(1L, dto);
 
         assertEquals(200, result.getCode());
         verify(customerService).toggleAiEnabled(1L, true);

@@ -2,6 +2,7 @@ package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.delta.common.annotation.AuditLog;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.service.CampaignService;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(ApiVersionConstants.V1 + "/campaigns")
 @RequiredArgsConstructor
 @PermAuth("campaign:view")
-public class CampaignController extends BaseController {
+public class CampaignController {
 
     private final CampaignService campaignService;
 
@@ -27,17 +28,16 @@ public class CampaignController extends BaseController {
     public Result<Page<CampaignVO>> getPage(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer size,
-            @RequestParam(name = "clubConfigId", required = false) String clubConfigId,
+            @RequestParam(name = "clubConfigId", required = false) @DecodeId(required = false) Long clubConfigId,
             @RequestParam(name = "campaignType", required = false) String campaignType,
             @RequestParam(name = "status", required = false) String status) {
-        Long decodedClubConfigId = clubConfigId != null ? decodeId(clubConfigId) : null;
-        return Result.success(campaignService.getPage(page, size, decodedClubConfigId, campaignType, status));
+        return Result.success(campaignService.getPage(page, size, clubConfigId, campaignType, status));
     }
 
     @Operation(summary = "获取营销活动详情")
     @GetMapping("/{id}")
-    public Result<CampaignVO> getById(@PathVariable("id") String id) {
-        return Result.success(campaignService.getById(decodeId(id)));
+    public Result<CampaignVO> getById(@PathVariable("id") @DecodeId Long id) {
+        return Result.success(campaignService.getById(id));
     }
 
     @Operation(summary = "创建营销活动")
@@ -62,8 +62,8 @@ public class CampaignController extends BaseController {
     @PutMapping("/{id}/start")
     @PermAuth("campaign:edit")
     @AuditLog(module = "营销活动", action = "启动活动")
-    public Result<Void> start(@PathVariable("id") String id) {
-        campaignService.startCampaign(decodeId(id));
+    public Result<Void> start(@PathVariable("id") @DecodeId Long id) {
+        campaignService.startCampaign(id);
         return Result.success();
     }
 
@@ -71,8 +71,8 @@ public class CampaignController extends BaseController {
     @PutMapping("/{id}/pause")
     @PermAuth("campaign:edit")
     @AuditLog(module = "营销活动", action = "暂停活动")
-    public Result<Void> pause(@PathVariable("id") String id) {
-        campaignService.pauseCampaign(decodeId(id));
+    public Result<Void> pause(@PathVariable("id") @DecodeId Long id) {
+        campaignService.pauseCampaign(id);
         return Result.success();
     }
 
@@ -80,8 +80,8 @@ public class CampaignController extends BaseController {
     @PutMapping("/{id}/end")
     @PermAuth("campaign:edit")
     @AuditLog(module = "营销活动", action = "结束活动")
-    public Result<Void> end(@PathVariable("id") String id) {
-        campaignService.endCampaign(decodeId(id));
+    public Result<Void> end(@PathVariable("id") @DecodeId Long id) {
+        campaignService.endCampaign(id);
         return Result.success();
     }
 
@@ -89,8 +89,8 @@ public class CampaignController extends BaseController {
     @DeleteMapping("/{id}")
     @PermAuth("campaign:edit")
     @AuditLog(module = "营销活动", action = "删除活动")
-    public Result<Void> delete(@PathVariable("id") String id) {
-        campaignService.delete(decodeId(id));
+    public Result<Void> delete(@PathVariable("id") @DecodeId Long id) {
+        campaignService.delete(id);
         return Result.success();
     }
 }

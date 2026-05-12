@@ -1,6 +1,7 @@
 package com.delta.admin.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.delta.common.annotation.DecodeId;
 import com.delta.common.annotation.PermAuth;
 import com.delta.common.constant.ApiVersionConstants;
 import com.delta.common.dto.CompanionLevelDTO;
@@ -29,7 +30,7 @@ import java.util.Map;
 @RequestMapping(ApiVersionConstants.V1 + "/companion-levels")
 @RequiredArgsConstructor
 @PermAuth("companion_level:view")
-public class CompanionLevelController extends BaseController {
+public class CompanionLevelController {
 
     private final CompanionLevelService companionLevelService;
 
@@ -52,8 +53,8 @@ public class CompanionLevelController extends BaseController {
 
     @Operation(summary = "获取陪玩师等级详情")
     @GetMapping("/{id}")
-    public Result<CompanionLevelVO> getById(@PathVariable("id") String id) {
-        CompanionLevelVO vo = companionLevelService.getById(decodeId(id));
+    public Result<CompanionLevelVO> getById(@PathVariable("id") @DecodeId Long id) {
+        CompanionLevelVO vo = companionLevelService.getById(id);
         return Result.success(vo);
     }
 
@@ -76,8 +77,8 @@ public class CompanionLevelController extends BaseController {
     @Operation(summary = "删除陪玩师等级")
     @DeleteMapping("/{id}")
     @PermAuth("companion_level:edit")
-    public Result<Void> delete(@PathVariable("id") String id) {
-        companionLevelService.delete(decodeId(id));
+    public Result<Void> delete(@PathVariable("id") @DecodeId Long id) {
+        companionLevelService.delete(id);
         return Result.success();
     }
 
